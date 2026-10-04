@@ -417,22 +417,20 @@ async function searchDahl(word) {
   return '<div class="src-block"><h4>Словарь Даля</h4><p class="empty">Статья не найдена.</p></div>';
 }
 async function searchWiktionary(word) {
+  const w = toModern(word.trim());
   try {
-    const data = await fetchJson('https://ru.wiktionary.org/api/rest_v1/page/definition/' + encodeURIComponent(word) + '/ru');
-    const defs = (data.ru || []).slice(0, 5).map(d =>
-      '<li><b>' + escapeHtml(d.partOfSpeech || '') + '</b> ' + escapeHtml((d.definitions && d.definitions[0] && d.definitions[0].definition) || '') + '</li>').join('');
-    if (defs) return '<div class="src-block"><h4>Викисловарь</h4><ul>' + defs + '</ul><p><a href="https://ru.wiktionary.org/wiki/' + encodeURIComponent(word) + '" target="_blank" rel="noopener">Открыть статью</a></p></div>';
-  } catch (e) { /* нет статьи */ }
-  return '<div class="src-block"><h4>Викисловарь</h4><p class="empty">Статья не найдена.</p></div>';
-}
-async function searchWikipedia(word) {
-  try {
-    const data = await fetchJson('https://ru.wikipedia.org/api/rest_v1/page/summary/' + encodeURIComponent(word));
-    if (data.type === 'standard' && data.extract) {
-      return '<div class="src-block"><h4>Википедия — ' + escapeHtml(data.title) + '</h4><p>' + escapeHtml(data.extract.slice(0, 400)) + '…</p><p><a href="' + data.content_urls.desktop.page + '" target="_blank" rel="noopener">Читать далее</a></p></div>';
+    const data = await fetchJson('https://ru.wiktionary.org/w/api.php?action=query&format=json&origin=*&prop=extracts&explaintext=1&redirects=1&titles=' + encodeURIComponent(w));
+    const pages = data.query && data.query.pages;
+    if (pages) {
+      const pid = Object.keys(pages)[0];
+      const ext = pages[pid] && pages[pid].extract;
+      if (ext && ext.trim()) {
+        const short = ext.replace(/\n{2,}/g, '\n').split('\n').filter(Boolean).slice(0, 10).join('\n');
+        return '<div class="src-block"><h4>Викисловарь</h4><p>' + escapeHtml(short) + '</p><p><a href="https://ru.wiktionary.org/wiki/' + encodeURIComponent(w) + '" target="_blank" rel="noopener">Читать далее</a></p></div>';
+      }
     }
   } catch (e) { /* нет статьи */ }
-  return '';
+  return '<div class="src-block"><h4>Викисловарь</h4><p class="empty">Статья не найдена.</p></div>';
 }
 async function searchOnline(query, slot) {
   const w = query.trim();

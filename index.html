@@ -156,6 +156,7 @@ nav { margin-top: 1.2rem; }
 
 .block-title{font-family:'Gardenia Decor',Georgia,serif;color:var(--gold-bright,#d4b46a);font-size:1.15rem;letter-spacing:.06em;margin:1.7rem 0 .8rem;padding-bottom:.4rem;border-bottom:1px solid rgba(212,180,106,.35)}
 .block-title .n{opacity:.75;font-size:.85rem;font-family:Georgia,serif}
+mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.55);padding:0 1px;border-radius:2px;}
 
 </style>
 </head>
@@ -278,10 +279,10 @@ function normKey(s) {
 function hl(text, qt) {
   const safe = escapeHtml(text);
   if (!qt.length) return safe;
-  const parts = safe.split(/([^A-Za-z0-9а-яёіѣѳѵІѢѲѴъЪйЙ]+)/);
+  const parts = safe.split(/([^A-Za-z0-9а-яёѣіѳѵА-ЯЁѢІѲѴ]+)/);
   return parts.map(function(p) {
     if (!p) return '';
-    if (/^[A-Za-z0-9а-яёіѣѳѵІѢѲѴъЪйЙ]+$/.test(p)) {
+    if (/^[A-Za-z0-9а-яёѣіѳѵА-ЯЁѢІѲѴ]+$/.test(p)) {
       const norm = normKey(p);
       if (norm) {
         for (const x of qt) {

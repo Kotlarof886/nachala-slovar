@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<!-- сборка 2026-10-05H · статей: 1124 · оформление: образец · поиск: 3 блока + живой поиск · версия v13 -->
+<!-- сборка 2026-10-05H · статей: 1115 · оформление: образец · поиск: 3 блока + живой поиск · версия v14 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>НАЧАЛА — Сводный алфавитный лексиконъ къ роману, 1896 годъ</title>
 <style>
@@ -118,24 +118,168 @@ nav { margin-top: 1.2rem; }
   outline: none;
 }
 #search-box::placeholder { color: rgba(207, 196, 168, 0.6); }
-#search-box:focus { border-color: var(--gold-bright); box-shadow: 0 0 12px rgba(212,176,106,0.25); }
-#results { margin-top: 1.2rem; }
+#search-box {
+  transition: box-shadow 1.7s ease, border-color 1.7s ease, background 1.7s ease,
+              filter 0.5s ease;
+}
+#search-box:focus {
+  transition: box-shadow 1.7s ease, border-color 1.7s ease, background 1.7s ease,
+              filter 0.9s ease 0.7s;
+  border-color: var(--gold-bright);
+  background: rgba(40, 33, 68, 0.85);
+  box-shadow:
+    0 0 6px rgba(212, 176, 106, 0.55),
+    0 0 22px rgba(212, 176, 106, 0.25);
+  filter: drop-shadow(0 0 10px rgba(240, 150, 60, 0.45));
+}
+/* ---------- Декоративная рамка статьи ---------- */
+.card-frame {
+  --u: 0.06;
+  position: relative;
+  background: var(--card, #1a1520);
+  width: 100%;
+  margin: 0 0 1.2rem;
+  margin: 0 auto 1.2rem;
+}
+.fr-corner {
+  position: absolute;
+  width:  calc(var(--u) * 760px);
+  height: calc(var(--u) * 760px);
+  background: url('images/corner.png') 0 0 / calc(var(--u) * 1431px) calc(var(--u) * 1398px) no-repeat;
+  z-index: 3;
+}
+.tl { top: 0;    left: 0; }
+.tr { top: 0;    right: 0; transform: rotate(90deg); }
+.br { bottom: 0; right: 0; transform: rotate(180deg); }
+.bl { bottom: 0; left: 0;  transform: rotate(270deg); }
+.fr-line { position: absolute; z-index: 1; }
+.ht1 { top: 0;                        height: calc(var(--u) * 39px); background: #C3A464; }
+.ht2 { top:    calc(var(--u) * 90px);  height: calc(var(--u) * 39px); background: #2B2449; }
+.ht3 { top:    calc(var(--u) * 168px); height: calc(var(--u) * 39px); background: #2B2449; }
+.ht4 { top:    calc(var(--u) * 256px); height: calc(var(--u) * 39px); background: #C3A464; }
+.hb1 { bottom: 0;                       height: calc(var(--u) * 39px); background: #C3A464; }
+.hb2 { bottom: calc(var(--u) * 90px);   height: calc(var(--u) * 40px); background: #2B2449; }
+.hb3 { bottom: calc(var(--u) * 168px);  height: calc(var(--u) * 40px); background: #2B2449; }
+.hb4 { bottom: calc(var(--u) * 256px);  height: calc(var(--u) * 40px); background: #C3A464; }
+.vl1 { left: 0;                       width: calc(var(--u) * 39px); background: #C3A464; }
+.vl2 { left:    calc(var(--u) * 90px);  width: calc(var(--u) * 40px); background: #2B2449; }
+.vl3 { left:    calc(var(--u) * 168px); width: calc(var(--u) * 40px); background: #2B2449; }
+.vl4 { left:    calc(var(--u) * 256px); width: calc(var(--u) * 40px); background: #C3A464; }
+.vr1 { right: 0;                      width: calc(var(--u) * 39px); background: #C3A464; }
+.vr2 { right:  calc(var(--u) * 90px);   width: calc(var(--u) * 39px); background: #2B2449; }
+.vr3 { right:  calc(var(--u) * 168px);  width: calc(var(--u) * 39px); background: #2B2449; }
+.vr4 { right:  calc(var(--u) * 256px);  width: calc(var(--u) * 39px); background: #C3A464; }
+.ht1, .ht2, .ht3, .ht4, .hb1, .hb2, .hb3, .hb4 {
+  left:  calc(var(--u) * 760px);
+  right: calc(var(--u) * 760px);
+}
+.vl1, .vl2, .vl3, .vl4, .vr1, .vr2, .vr3, .vr4 {
+  top:    calc(var(--u) * 760px);
+  bottom: calc(var(--u) * 760px);
+}
+.card-body {
+  position: relative;
+  z-index: 4;
+  padding: 44px 60px;;
+}
+/* свеча: фильтр статичный, меняется только прозрачность слоёв */
+@property --gold  { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --flame { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --flick { syntax: '<number>'; inherits: false; initial-value: 1; }
+
+/* золотой слой — копия узора, ровный тёплый свет */
+.fr-corner::before,
+.fr-line::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  border: inherit;
+  border-radius: inherit;
+  clip-path: inherit;
+  pointer-events: none;
+  --gold: 0;
+  opacity: var(--gold);
+  filter: drop-shadow(0 0 4px rgba(212, 176, 106, 0.8))
+          drop-shadow(0 0 14px rgba(212, 176, 106, 0.35));
+  transition: --gold 3s ease;
+}
+
+/* пламя — оранжевый слой, он же мерцает */
+.fr-corner::after,
+.fr-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  border: inherit;
+  border-radius: inherit;
+  clip-path: inherit;
+  pointer-events: none;
+  --flame: 0;
+  opacity: calc(var(--flame) * var(--flick));
+  filter: drop-shadow(0 0 10px rgba(240, 150, 60, 0.55));
+  transition: --flame 1.5s ease;
+  animation: flicker 2.6s ease-in-out infinite;
+  animation-play-state: paused;
+}
+
+.card-frame:hover .fr-corner::before,
+.card-frame:hover .fr-line::before {
+  --gold: 1;
+  transition: --gold 2.7s ease;
+}
+
+.card-frame:hover .fr-corner::after,
+.card-frame:hover .fr-line::after {
+  --flame: 1;
+  transition: --flame 2.7s cubic-bezier(0.75, 0, 0.25, 1);
+  animation-play-state: running;
+}
+
+@keyframes flicker {
+  0%, 100% { --flick: 1; }
+  8%  { --flick: 0.70; }
+  17% { --flick: 1; }
+  31% { --flick: 0.55; }
+  45% { --flick: 1; }
+  58% { --flick: 0.75; }
+  74% { --flick: 0.90; }
+}
+/* плавное появление карточек */
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.card-frame {
+  animation: card-in 0.5s ease backwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-frame:hover .fr-corner,
+  .card-frame:hover .fr-line { animation: none; }
+}
 .entry {
-  background: var(--card);
-  border: 1px solid var(--card-border);
-  border-radius: 0.375rem;
-  padding: 0.9rem 1.1rem;
-  margin-bottom: 0.6rem;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+  margin-bottom: 0;
 }
 .entry-word {
   font-family: 'Elizabeth Unicode', 'Cormorant Garamond', Georgia, serif;
-  font-size: 1.35rem;
+  font-size: 1.55rem;
   font-weight: bold;
   color: var(--gold-bright);
 }
 .entry-region { font-size: 0.85rem; color: var(--text-dim); margin-top: 0.3rem; }
 .entry-def { margin-top: 0.35rem; line-height: 1.55; }
+
+.primer {
+  color: var(--gold);
+  font-style: italic;
+  margin-top: 0.35rem;
+  line-height: 1.5;
+}
+
+.primer mark {
+  color: inherit;
+}
 .highlight { background: var(--highlight); color: #fff; border-radius: 2px; padding: 0 2px; }
 .wiktionary-btn {
   margin-top: 0.6rem;
@@ -382,14 +526,30 @@ function render() {
   bindButtons(out, allCards);
 }
 
+// ---------- Разделение толкования и примера ----------
+function defParts(e, q) {
+  const m = e.d.match(/(;)?\s*(Пример|Пр\.)\s*:/);
+  if (!m) return highlight(e.d, q);
+  const main = e.d.slice(0, m.index).replace(/[;\s]+$/, '');
+  const ex = e.d.slice(m.index + m[0].length).trim();
+  return (main ? highlight(main, q) + ' ' : '') +
+    '<div class="primer">' + (m[1] ? '; ' : '') + m[2] + ': ' + highlight(ex, q) + '</div>';
+}
+
 function cardHtml(e, q, idx) {
-  return '<div class="entry">' +
+  return '<div class="card-frame">' +
+    '<div class="fr-corner tl"></div><div class="fr-corner tr"></div>' +
+    '<div class="fr-corner br"></div><div class="fr-corner bl"></div>' +
+    '<span class="fr-line ht1"></span><span class="fr-line ht2"></span><span class="fr-line ht3"></span><span class="fr-line ht4"></span>' +
+    '<span class="fr-line hb1"></span><span class="fr-line hb2"></span><span class="fr-line hb3"></span><span class="fr-line hb4"></span>' +
+    '<span class="fr-line vl1"></span><span class="fr-line vl2"></span><span class="fr-line vl3"></span><span class="fr-line vl4"></span>' +
+    '<span class="fr-line vr1"></span><span class="fr-line vr2"></span><span class="fr-line vr3"></span><span class="fr-line vr4"></span>' +
+    '<div class="card-body"><div class="entry">' +
     '<div class="entry-word">' + highlight(e.w, q) + '</div>' +
-    '<div class="entry-def">' + highlight(e.d, q) + '</div>' +
-    
+    '<div class="entry-def">' + defParts(e, q) + '</div>' +
     '<button class="wiktionary-btn" data-w="' + escapeHtml(e.w) + '">Уточнить у адъютантовъ</button>' +
     '<div class="online-results" id="onl-' + idx + '"></div>' +
-    '</div>';
+    '</div></div></div>';
 }
 
 function bindButtons(out, list) {

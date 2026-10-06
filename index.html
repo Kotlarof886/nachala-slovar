@@ -135,6 +135,20 @@ nav { margin-top: 1.2rem; }
   margin: 0 0 1.2rem;
   margin: 0 auto 1.2rem;
 }
+/* узорная подложка карточки с затуханием к рамке */
+.card-frame::before {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url('images/diamond_tile2.png');
+  background-repeat: repeat;
+  background-size: 20px 20px;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 82%);
+  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 82%);
+}
+
 .fr-corner {
   position: absolute;
   width:  calc(var(--u) * 760px);
@@ -339,7 +353,7 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
   display: flex; align-items: center; justify-content: center;
   font-family: inherit;
   font-size: 1.05rem; font-weight: bold;
-  color: var(--text);
+  color: var(--gold-bright);
   cursor: pointer; user-select: none;
   background:
     radial-gradient(circle at 32% 28%, rgba(255,255,255,0.12), rgba(255,255,255,0) 45%),
@@ -470,6 +484,28 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
 @keyframes pdfIn {
   from { opacity: 0; transform: translateY(12px); }
   to   { opacity: 1; transform: translateY(0); }
+}
+/* едва заметное мигание клавиш по слову «НАЧАЛО» */
+@keyframes kb-glow {
+  0%, 100% {
+    border-color: var(--card-border);
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.08),
+      inset 0 -3px 6px rgba(0,0,0,0.5),
+      0 3px 6px rgba(0,0,0,0.45);
+  }
+  50% {
+    border-color: rgba(232, 207, 142, 0.8);
+    box-shadow:
+      inset 0 2px 4px rgba(255,255,255,0.08),
+      inset 0 -3px 6px rgba(0,0,0,0.5),
+      0 0 10px rgba(212,176,106,0.30),
+      0 0 4px rgba(212,176,106,0.20);
+  }
+}
+.letter.glow { animation: kb-glow 1.8s ease-in-out; }
+@media (prefers-reduced-motion: reduce) {
+  .letter.glow { animation: none; }
 }
 </style>
 </head>
@@ -840,6 +876,20 @@ async function searchOnline(query, slot) {
 searchBox.addEventListener('input', render);
 buildAlphabet();
 render();
+// ---------- Мигание клавиш: Н А Ч А Л О ----------
+(function () {
+  const seq = ['Н', 'А', 'Ч', 'А', 'Л', 'А'];
+  let i = 0;
+  setInterval(function () {
+    const key = document.querySelector('#alphabet-bar .letter[data-letter="' + seq[i] + '"]');
+    if (key) {
+      key.classList.remove('glow');
+      void key.offsetWidth;      // перезапуск анимации, если буква повторяется
+      key.classList.add('glow');
+    }
+    i = (i + 1) % seq.length;    // следующая буква по порядку
+  }, 3000);
+})();
 
 </script>
   <!-- Секретный ключ для поисковых роботов -->

@@ -379,13 +379,21 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
   align-self: center;
 }
 @media (max-width: 560px) {
-  .alphabet-bar { padding: 10px 8px 16px; gap: 8px; }
-  .kb-row { gap: 5px; }
+  .alphabet-bar { padding: 10px 6px 18px; gap: 8px; }
+  .kb-row { gap: 4px; justify-content: center; }
   .kb-row.r2, .kb-row.r3 { margin-left: 0; }
-  .letter { width: 30px; height: 30px; font-size: 0.82rem; }
-  .letter.key-all { height: 26px; font-size: 0.68rem; padding: 0 8px; margin-right: 6px; }
+  .letter {
+    width: clamp(24px, 6.5vw, 30px);
+    height: clamp(24px, 6.5vw, 30px);
+    font-size: 0.75rem;
+  }
+  .letter.key-all {
+    height: 24px;
+    font-size: 0.62rem;
+    padding: 0 8px;
+    margin-right: 5px;
+  }
 }
-
 </style>
 </head>
 <body>

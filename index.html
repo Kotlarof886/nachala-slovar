@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», 1896 годъ. Словарь устарѣвшихъ словъ съ поискомъ и тайной запиской.">
+<meta name="keywords" content="Начала, словарь, лексикон, 1896, устаревшие слова, код Морзе">
 <meta charset="UTF-8">
 <!-- сборка 2026-10-05H · статей: 1115 · оформление: образец · поиск: 3 блока + живой поиск · версия v14 -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>НАЧАЛА — Сводный алфавитный лексиконъ къ роману, 1896 годъ</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 
 @font-face {
@@ -410,14 +413,16 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
 .pdf-view {
   width: 100%;
   height: 72vh;
+  overflow-y: auto;
   border: 1px solid var(--card-border);
   border-radius: 0.25rem;
   background: #fff;
   margin-bottom: 14px;
 }
-@keyframes pdfIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
+.pdf-page {
+  display: block;
+  width: 100%;
+  margin: 0 auto 8px;
 }
   .letter.key-all {
     height: 24px;
@@ -580,10 +585,38 @@ function showPdf() {
   resultsEl.innerHTML =
     '<div class="pdf-frame">' +
       '<div class="pdf-title">— Записка адъютанта —</div>' +
-      '<iframe class="pdf-view" src="nachala.pdf" type="application/pdf"></iframe>' +
+      '<div class="pdf-view" id="pdf-view">Загружаю документъ…</div>' +
       '<button class="wiktionary-btn" onclick="closePdf()">Скрыть документъ</button>' +
     '</div>';
+  renderPdf();
   resultsEl.scrollIntoView({ behavior: 'smooth' });
+}
+
+function renderPdf() {
+  const container = document.getElementById('pdf-view');
+  if (!window.pdfjsLib) {
+    container.innerHTML = '<p style="padding:20px;color:#333">Библиотека не загрузилась. <a href="nachala.pdf" target="_blank">Открыть отдельно</a></p>';
+    return;
+  }
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  pdfjsLib.getDocument('nachala.pdf').promise.then(function(pdf) {
+    container.innerHTML = '';
+    for (let n = 1; n <= pdf.numPages; n++) {
+      pdf.getPage(n).then(function(page) {
+        const base = page.getViewport({ scale: 1 });
+        const scale = (container.clientWidth - 24) / base.width;
+        const vp = page.getViewport({ scale: scale });
+        const cv = document.createElement('canvas');
+        cv.width = vp.width;
+        cv.height = vp.height;
+        cv.className = 'pdf-page';
+        container.appendChild(cv);
+        page.render({ canvasContext: cv.getContext('2d'), viewport: vp });
+      });
+    }
+  }).catch(function() {
+    container.innerHTML = '<p style="padding:20px;color:#333">Не удалось открыть документъ. <a href="nachala.pdf" target="_blank">Открыть отдельно</a></p>';
+  });
 }
 
 function closePdf() {
@@ -604,7 +637,6 @@ function setLetter(ch) {
   }
   render();
 }
-
 // ---------- Подсветка ----------
 function escapeHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');

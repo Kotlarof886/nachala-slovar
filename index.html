@@ -4,7 +4,7 @@
 <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», 1896 годъ. Словарь устарѣвшихъ словъ съ поискомъ и тайной запиской.">
 <meta name="keywords" content="Начала, словарь, лексикон, 1896, устаревшие слова, код Морзе">
 <meta charset="UTF-8">
-<!-- сборка 2026-10-07 · статей: 1115 · оформление: образец · поиск: 3 блока + живой поиск · версія v22 · клавиатура-машинка + телеграфная лента (пробѣлъ — включатель эфира) -->
+<!-- сборка 2026-10-07 · статей: 1115 · оформление: образец · поиск: 3 блока + живой поиск · версія v29 · удары телеграфиста по клавишамъ · клавиатура-машинка + телеграфная лента (пробѣлъ — включатель эфира) -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>НАЧАЛА — Сводный алфавитный лексиконъ къ роману, 1896 годъ</title>
 
@@ -114,10 +114,9 @@ nav { margin-top: 1.2rem; }
   color: var(--text);
   outline: none;
 }
-/* строка поиска и телеграфная лента — в одной оболочке:
-   лента накрывает строку по построению, высота совпадает всегда */
-.search-shell { position: relative; margin-top: 1.2rem; }
-#search-box { margin-top: 0; }
+#search-box {
+  margin-top: 0;
+}
 #search-box::placeholder { color: rgba(207, 196, 168, 0.6); }
 #search-box {
   transition: box-shadow 1.7s ease, border-color 1.7s ease, background 1.7s ease,
@@ -462,20 +461,17 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
 #tele-tape {
   display: none;
   position: absolute;
-  inset: 0; /* накрывает строку поиска точно — высота совпадает по построению */
+  inset: 0;   /* накрываетъ строку поиска одинъ въ одинъ — высота совпадаетъ по построенію */
+  padding: 0.8rem 1rem;
   border: 3.0px solid var(--card-border);
   border-radius: 0.375rem;
   overflow: hidden;
   background: rgba(12, 10, 30, 0.6);
   box-shadow: inset 0 0 14px rgba(0,0,0,0.55);
 }
-/* дрожаніе отъ ударовъ литеръ — трясётся только бумажная лента въ окнѣ,
-   само окно и рамка стоятъ намертво */
-#tape-shaker {
-  position: absolute;
-  inset: 0;
-  animation: tape-shake 0.16s linear infinite;
-}
+/* оболочка держитъ высоту строки поиска; трясётся только бумага внутри рамки */
+.tape-slot { position: relative; margin-top: 1.2rem; }
+.tape-shaker { position: absolute; inset: 0; animation: tape-shake 0.16s linear infinite; }
 @keyframes tape-shake {
   0%   { transform: translateY(0); }
   20%  { transform: translateY(-0.6px); }
@@ -546,6 +542,14 @@ body.telegraph-on .letter:not(.key-space):hover:active {
     inset 0 -3px 6px rgba(0,0,0,0.5),
     0 3px 6px rgba(0,0,0,0.45);
 }
+/* ударъ телеграфиста: клавиша проседаетъ, загорается только контуръ —
+   внутренность клавиши не трогаемъ */
+.letter.tg-strike {
+  transform: translateY(2px);
+  border-color: var(--gold-bright);
+  box-shadow:
+    0 0 14px rgba(212,176,106,0.45);
+}
 /* пробѣлъ горитъ, покуда телеграфъ работаетъ */
 body.telegraph-on .letter.key-space,
 .letter.key-space.tg-on {
@@ -576,7 +580,8 @@ body.telegraph-on .letter.key-space,
 body.telegraph-on .letter.key-space .tg-label,
 .letter.key-space.tg-on .tg-label { display: block; }
 @media (max-width: 560px) {
-    .tape-msg { font-size: 22px; padding-right: 40px; }
+  #tele-tape { padding: 0.4rem 0.7rem; }
+  .tape-msg { font-size: 22px; padding-right: 40px; }
   .letter.key-space .tg-label { font-size: 9px; }
 }
 /* ===== Секретный документ: «НАЧАЛА» на клавиатуре ===== */
@@ -649,9 +654,9 @@ body.telegraph-on .letter.key-space .tg-label,
       <button class="tab" onclick="switchTab('online')">Изысканіе въ эфирѣ</button>
     </div>
   </nav>
-  <div class="search-shell">
+  <div class="tape-slot">
     <input id="search-box" type="text" placeholder="Изысканіе по словамъ...">
-    <div id="tele-tape" aria-hidden="true"><div id="tape-shaker"><div id="tape-track"><div id="tape-inner"></div></div></div></div>
+    <div id="tele-tape" aria-hidden="true"><div class="tape-shaker"><div id="tape-track"><div id="tape-inner"></div></div></div></div>
   </div>
   <div class="alphabet-bar" id="alphabet-bar"></div>
   <div class="count-note" id="count-note"></div>
@@ -835,6 +840,7 @@ function setLetter(ch) {
 }// ---------- Телеграфная лента ----------
 var telegraphOn = false;
 var teleRAF = null, teleX = 0, teleQueue = [], teleLast = 0;
+var strikeKeyMap = null, strikeArr = [], strikeIdx = 0;
 var TELE_SPEED = 64;   // px/сек — скорость движения ленты
 
 function teleShuffle(a) {
@@ -880,6 +886,13 @@ function teleAppend() {
     html += teleCharsHTML('\u00A0\u00A0\u00A0—\u00A0\u00A0\u00A0');
     s.innerHTML = html;
     inner.appendChild(s);
+    // каждая буква знаетъ свою клавишу — для ударовъ телеграфиста
+    var spans = s.querySelectorAll('.tpc');
+    for (var t = 0; t < spans.length; t++) {
+      var ch = (spans[t].textContent || '').charAt(0).toUpperCase();
+      var keyEl = strikeKeyMap && strikeKeyMap[ch];
+      if (keyEl) strikeArr.push({ span: spans[t], key: keyEl });
+    }
   }
 }
 /* Уходящія влѣво депеши не «выдёргиваются» изъ строки, а убираются съ компенсаціей:
@@ -904,6 +917,45 @@ function teleMaintain() {
   var guard = 0;
   while (teleX + inner.offsetWidth < avail * 1.7 && guard++ < 60) teleAppend();
 }
+/* Удары телеграфиста: буква въезжаетъ изъ-за угла рамки — её клавиша проседаетъ
+   на мигъ и отпускается. Пробѣлы бьютъ по клавишѣ «<». Буквы, которыхъ на
+   клавиатурѣ нѣтъ (і, ѳ, ѵ, ы, латиница, цифры, знаки) — игнорируются молча.
+   Ударъ совпадаетъ съ моментомъ въезда: клавиша жмётъ въ томъ же кадрѣ,
+   въ которомъ лѣвый край буквы пересекаетъ правую рамку окна. */
+function teleBuildKeyMap() {
+  strikeKeyMap = {};
+  var nodes = document.querySelectorAll('#alphabet-bar .letter[data-letter]');
+  for (var i = 0; i < nodes.length; i++) {
+    var ch = (nodes[i].dataset.letter || '').toUpperCase();
+    if (ch) strikeKeyMap[ch] = nodes[i];
+  }
+  var arrow = document.querySelector('#alphabet-bar .key-arrow');
+  if (arrow) { strikeKeyMap[' '] = arrow; strikeKeyMap['\u00A0'] = arrow; }
+}
+function telePressKey(keyEl) {
+  if (!keyEl) return;
+  if (keyEl._tgTimer) clearTimeout(keyEl._tgTimer);
+  keyEl.classList.add('tg-strike');
+  keyEl._tgTimer = setTimeout(function() {
+    keyEl.classList.remove('tg-strike');
+    keyEl._tgTimer = null;
+  }, 150);
+}
+function teleStrike() {
+  if (!strikeArr.length) return;
+  var tapeBox = document.getElementById('tele-tape');
+  if (!tapeBox) return;
+  var edge = tapeBox.getBoundingClientRect().right;   // правая рамка окна: буква нажимает клавишу в момент въезда
+  var guard = 0;
+  while (strikeIdx < strikeArr.length && guard++ < 8) {
+    var o = strikeArr[strikeIdx];
+    if (!o.span.isConnected) { strikeIdx++; continue; }
+    var r = o.span.getBoundingClientRect();
+    if (r.left < edge) { telePressKey(o.key); strikeIdx++; }
+    else break;
+  }
+  if (strikeIdx > 1000) { strikeArr = strikeArr.slice(strikeIdx); strikeIdx = 0; }
+}
 function teleFrame(ts) {
   if (!telegraphOn) { teleRAF = null; return; }
   if (!teleLast) teleLast = ts;
@@ -913,6 +965,7 @@ function teleFrame(ts) {
   teleMaintain();
   var track = document.getElementById('tape-track');
   if (track) track.style.transform = 'translateX(' + teleX.toFixed(2) + 'px)';
+  teleStrike();
   teleRAF = requestAnimationFrame(teleFrame);
 }
 function toggleTelegraph() {
@@ -929,6 +982,9 @@ function toggleTelegraph() {
     resultsEl.style.display = 'none';
     if (countNote) countNote.style.display = 'none';
     searchBox.blur();
+    // карта «буква → клавиша» для ударовъ телеграфиста
+    teleBuildKeyMap();
+    strikeArr = []; strikeIdx = 0;
     requestAnimationFrame(function() {
       var track = document.getElementById('tape-track');
       var inner = document.getElementById('tape-inner');
@@ -942,6 +998,11 @@ function toggleTelegraph() {
   } else {
     if (teleRAF) cancelAnimationFrame(teleRAF);
     teleRAF = null;
+    document.querySelectorAll('#alphabet-bar .letter').forEach(function(el) {
+      el.classList.remove('tg-strike');
+      if (el._tgTimer) { clearTimeout(el._tgTimer); el._tgTimer = null; }
+    });
+    strikeArr = []; strikeIdx = 0;
     resultsEl.style.display = '';
     if (countNote) countNote.style.display = '';
     searchBox.value = '';

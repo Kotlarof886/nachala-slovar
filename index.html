@@ -4,7 +4,7 @@
 <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», 1896 годъ. Словарь устарѣвшихъ словъ съ поискомъ и тайной запиской.">
 <meta name="keywords" content="Начала, словарь, лексикон, 1896, устаревшие слова, код Морзе">
 <meta charset="UTF-8">
-<!-- сборка 2026-10-07 · статей: 1115 · оформление: образец · поиск: 3 блока + живой поиск · версія v29 · удары телеграфиста по клавишамъ · клавиатура-машинка + телеграфная лента (пробѣлъ — включатель эфира) -->
+<!-- сборка 2026-10-08 · статей: 1115 · оформление: образец · поиск: 3 блока + живой поиск · версія v32 · удары + ругательства (/ … /, скорость ×1,25, перепечатка слова, блокировка букв) · клавиатура-машинка + телеграфная лента (пробѣлъ — включатель эфира) -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>НАЧАЛА — Сводный алфавитный лексиконъ къ роману, 1896 годъ</title>
 
@@ -668,6 +668,7 @@ body.telegraph-on .letter.key-space .tg-label,
 
 <script src="news.js"></script>
 <script src="words.js"></script>
+<script src="rugatelstva.js"></script>
 <script>
 // ---------- Данные: подключается words.js ----------
 const DICT = ENTRIES.map(function(e) {
@@ -825,7 +826,7 @@ function closePdf() {
 }
 
 function setLetter(ch) {
-  if (telegraphOn) return;   // въ эфирѣ клавиши бездѣйственны
+  if (telegraphOn) { teleUserType(ch); return; }   // въ эфирѣ буква въстаётъ въ ленту
   currentLetter = ch;
   document.querySelectorAll('#alphabet-bar .letter').forEach(el => {
     el.classList.toggle('active', (el.dataset.letter || null) === ch && !el.classList.contains('key-arrow') && !el.classList.contains('key-space'));
@@ -889,9 +890,9 @@ function teleAppend() {
     // каждая буква знаетъ свою клавишу — для ударовъ телеграфиста
     var spans = s.querySelectorAll('.tpc');
     for (var t = 0; t < spans.length; t++) {
-      var ch = (spans[t].textContent || '').charAt(0).toUpperCase();
-      var keyEl = strikeKeyMap && strikeKeyMap[ch];
-      if (keyEl) strikeArr.push({ span: spans[t], key: keyEl });
+      var ch = (spans[t].textContent || '').charAt(0);
+      var keyEl = strikeKeyMap && strikeKeyMap[ch.toUpperCase()];
+      strikeArr.push({ span: spans[t], key: keyEl || null, ch: ch, dep: true });   // буквы безъ клавиши — пустые удары (нужны для перепечатки слова)
     }
   }
 }
@@ -941,6 +942,119 @@ function telePressKey(keyEl) {
     keyEl._tgTimer = null;
   }, 150);
 }
+
+/* ---------- Пасхалка: буквы въ ленту и ругательства телеграфиста ----------
+   Пользователь бьёт по клавишамъ въ эфирѣ — его буква въставляется прямо у точки
+   печати съ тем же оттискомъ, что и казенныя. Послѣ двухъ нажатій подрядъ
+   телеграфистъ срывается: обычная депеша прерывается, печатаются ругательства
+   (три уровня по нарастанію, случайные, безъ повторовъ), затѣмъ нѣсколько
+   пробѣловъ — и депеша продолжается съ того мѣста, гдѣ ея оборвали. */
+// Ругательства телеграфиста вынесены въ отдельный файлъ rugatelstva.js —
+// правятся безъ пересборки: списокъ, загрузка на GitHub, обновление страницы.
+
+var curseLevel = 1, curseLastIdx = -1, curseUntil = 0, curseBusy = false, curseLastTime = 0;
+var userStrikeTimes = [];
+var teleCurseActive = false, teleSpeedMul = 1;   // отповедь идётъ — буквы заблокированы; скорость ×1,25
+function teleInject(html) {
+  var anchor = null, parent;
+  var o = strikeArr[strikeIdx];
+  if (o && o.span && o.span.isConnected) { anchor = o.span; parent = anchor.parentNode; }
+  else parent = document.getElementById('tape-inner');
+  if (!parent) return null;
+  var tmp = document.createElement('span');
+  tmp.innerHTML = html;
+  var inserted = [];
+  while (tmp.firstChild) {
+    var n = tmp.firstChild;
+    tmp.removeChild(n);
+    parent.insertBefore(n, anchor);
+    inserted.push(n);
+  }
+  var recs = [];
+  for (var i = 0; i < inserted.length; i++) {
+    var ch = (inserted[i].textContent || '').charAt(0);
+    var keyEl = strikeKeyMap && strikeKeyMap[ch.toUpperCase()];
+    recs.push({ span: inserted[i], key: keyEl || null, ch: ch, dep: false });   // вставка не изъ депеши
+  }
+  if (recs.length) strikeArr.splice.apply(strikeArr, [strikeIdx, 0].concat(recs));
+  return { spans: inserted, recs: recs };
+}
+function teleUserType(ch) {
+  if (!ch || !strikeKeyMap) return;
+  var up = ch.toUpperCase();
+  var keyEl = strikeKeyMap[up];
+  if (!keyEl) return;   // нетъ клавиши — игнорируемъ молча
+  telePressKey(keyEl);  // клавиша проседаетъ въ то же мгновеніе — анімація всегда
+  if (teleCurseActive) return;   // телеграфистъ ругаетсяъ: буквы пользователя въ ленту не влѣзаютъ
+  var r = teleInject(teleCharsHTML(ch));
+  if (r && r.recs.length) strikeIdx += r.recs.length;   // свою клавишу пользователь уже нажалъ самъ
+  var now = Date.now();
+  if (userStrikeTimes.length && now - userStrikeTimes[userStrikeTimes.length - 1] > 6000) userStrikeTimes = [];
+  userStrikeTimes.push(now);
+  if (userStrikeTimes.length >= 2 && !curseBusy && now > curseUntil) {
+    userStrikeTimes = [];
+    teleCurseOut(now);
+  }
+}
+function teleCurseOut(now) {
+  curseBusy = true;
+  teleCurseActive = true;
+  if (now - curseLastTime > 120000) curseLevel = 1;              // остылъ — начинаемъ съ лёгкой
+  else curseLevel = Math.min(3, curseLevel + 1);                 // чемъ дольше досаждаютъ, темъ злѣе
+  curseLastTime = now;
+  var pool = window.CURSES_LEVEL_1 || [];
+  if (curseLevel === 2) pool = window.CURSES_LEVEL_2 || [];
+  if (curseLevel >= 3) pool = window.CURSES_LEVEL_3 || [];
+  if (!pool.length) { curseBusy = false; teleCurseActive = false; return; }   // файла нѣтъ — молчимъ
+  var idx;
+  do { idx = Math.floor(Math.random() * pool.length); } while (pool.length > 1 && idx === curseLastIdx);
+  curseLastIdx = idx;
+  // оборванное слово: напечатанная частъ + остатокъ за точкой печати
+  var word = '', rem = [], partial = [];
+  var i = strikeIdx;
+  while (i < strikeArr.length) {
+    var rr = strikeArr[i];
+    if (!rr || !rr.dep) break;
+    var c = rr.ch || (rr.span.textContent || '').charAt(0);
+    if (c === ' ' || c === '\u00A0') break;
+    rem.push(c); i++;
+    if (rem.length > 30) break;
+  }
+  if (rem.length && rem.length <= 30) {
+    var j = strikeIdx - 1;
+    while (j >= 0) {
+      var rp = strikeArr[j];
+      if (!rp) break;
+      if (!rp.dep) { j--; continue; }              // чужія вставки пропускаемъ
+      if (!rp.span || !rp.span.isConnected) break;
+      var cp = rp.ch || (rp.span.textContent || '').charAt(0);
+      if (cp === ' ' || cp === '\u00A0') break;
+      partial.push(cp); j--;
+      if (partial.length > 30) { partial = []; break; }
+    }
+    partial.reverse();
+    word = partial.join('') + rem.join('');
+  }
+  // знаки-разделители: / передъ ругательствомъ и / послѣ — и перепечатка слова
+  teleInject(teleCharsHTML('/'));
+  var r1 = teleInject(teleCharsHTML(pool[idx]));
+  if (r1.recs.length) r1.recs[0].mark = 'curse-open';   // въездъ ругательства — лента ускоряется
+  teleInject(teleCharsHTML('/'));
+  var r2 = teleInject(teleCharsHTML('\u00A0'));
+  if (r2.recs.length) r2.recs[0].mark = 'curse-close';  // возвратъ къ депешѣ — скоростьъ обычная
+  if (word) {
+    teleInject(teleCharsHTML(word));                    // слово печатается заново съ начала
+    strikeIdx += rem.length;                            // остатокъ въ исходной лентѣ пропускается
+  }
+  var w = 0;
+  for (var i2 = 0; i2 < r1.spans.length; i2++) w += r1.spans[i2].offsetWidth;
+  var dur = w / (TELE_SPEED * 1.25) * 1000 + 2500;
+  curseUntil = now + dur;
+  setTimeout(function() {
+    curseBusy = false;
+    if (teleCurseActive) { teleCurseActive = false; teleSpeedMul = 1; }   // страховка, если замѣтка не сработала
+  }, dur + 2000);
+}
 function teleStrike() {
   if (!strikeArr.length) return;
   var tapeBox = document.getElementById('tele-tape');
@@ -951,7 +1065,12 @@ function teleStrike() {
     var o = strikeArr[strikeIdx];
     if (!o.span.isConnected) { strikeIdx++; continue; }
     var r = o.span.getBoundingClientRect();
-    if (r.left < edge) { telePressKey(o.key); strikeIdx++; }
+    if (r.left < edge) {
+      telePressKey(o.key);
+      if (o.mark === 'curse-open') teleSpeedMul = 1.25;              // ругательство — наборъ быстрее
+      if (o.mark === 'curse-close') { teleSpeedMul = 1; teleCurseActive = false; }   // депеша пошла дальше — снова можно печатать
+      strikeIdx++;
+    }
     else break;
   }
   if (strikeIdx > 1000) { strikeArr = strikeArr.slice(strikeIdx); strikeIdx = 0; }
@@ -961,7 +1080,7 @@ function teleFrame(ts) {
   if (!teleLast) teleLast = ts;
   var dt = Math.min(50, ts - teleLast);   // жёсткій потолокъ шага — скоростьъ не разгоняется
   teleLast = ts;
-  teleX -= TELE_SPEED * dt / 1000;
+  teleX -= TELE_SPEED * teleSpeedMul * dt / 1000;
   teleMaintain();
   var track = document.getElementById('tape-track');
   if (track) track.style.transform = 'translateX(' + teleX.toFixed(2) + 'px)';

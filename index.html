@@ -738,8 +738,8 @@ body.telegraph-on .letter:not(.key-space):hover:active {
 #s-msg span { display: inline-block; white-space: pre; }
 #s-tape .tpc { font-size: inherit; letter-spacing: inherit; }
 #s-caret {
-  position: absolute; right: 2px; top: 50%; transform: translateY(-50%);
-  width: 2px; height: 52%; background: #c9a45a; box-shadow: 0 0 6px rgba(201, 164, 90, .8);
+  position: absolute; right: 1px; top: 76%; transform: translateY(-50%);
+  width: 3px; height: 52%; background: #c9a45a; box-shadow: 0 0 6px rgba(201, 164, 90, .8);
   z-index: 6; pointer-events: none; opacity: 0;
 }
 #s-tape.s-on #s-caret { opacity: 1; animation: s-caret-blink 1.1s steps(1) infinite; }
@@ -749,7 +749,7 @@ body.telegraph-on .letter:not(.key-space):hover:active {
 #s-tape::after { right: 0; background: linear-gradient(-90deg, rgba(10, 8, 24, .9), rgba(10, 8, 24, 0)); }
 #s-tape.typing { animation: s-tape-shake .1s linear infinite; }
 @keyframes s-tape-shake { 0% { transform: translateY(0); } 50% { transform: translateY(1px); } 100% { transform: translateY(0); } }
-@media (max-width: 600px) { #s-tape-inner { font-size: 22px; } #s-ph { font-size: inherit; } }
+@media (max-width: 60px) { #s-tape-inner { font-size: 22px; } #s-ph { font-size: inherit; } }
 </style>
 </head>
 <body>

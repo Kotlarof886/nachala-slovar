@@ -1181,6 +1181,7 @@ function teleRec(ch, span, dep) {
   }
   return { span: span, key: keyEl || null, aux: aux || null, ch: ch, dep: dep };
 }
+
 function teleAppend() {
   var inner = document.getElementById('tape-inner');
   if (!inner) return;
@@ -1455,7 +1456,7 @@ function toggleTelegraph() {
       // «Телеграфъ пущенъ» — первая надпись на лентѣ при включеніи
       var greet = document.createElement('span');
       greet.className = 'tape-msg';
-      greet.innerHTML = teleCharsHTML('Телеграфъ пущенъ') + teleCharsHTML('\u00A0\u00A0\u00A0—\u00A0\u00A0\u00A0');
+      greet.innerHTML = teleCharsHTML('   Телеграфъ пущенъ') + teleCharsHTML('\u00A0\u00A0\u00A0—\u00A0\u00A0\u00A0');
       inner.appendChild(greet);
       var gs = greet.querySelectorAll('.tpc');
       for (var gi = 0; gi < gs.length; gi++) {

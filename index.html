@@ -192,7 +192,7 @@ nav { margin-top: 1.2rem; }
 body.telegraph-on #s-tape { display: none; }
 @media (max-width: 560px) {
   #s-tape { padding: 0.4rem 0.7rem; }
-  #s-ph, #s-tape-inner .tpc { font-size: 1.15rem; }
+  #s-ph, #s-tape-inner .tpc { font-size: 22px; }
 }
 #search-box {
   transition: box-shadow 1.7s ease, border-color 1.7s ease, background 1.7s ease,
@@ -273,9 +273,9 @@ body.telegraph-on #s-tape { display: none; }
   padding: 44px 60px;;
 }
 /* свеча: фильтр статичный, меняется только прозрачность слоёв */
-@property --gold  { syntax: '<number>'; inherits: false; initial-value: 0; }
-@property --flame { syntax: '<number>'; inherits: false; initial-value: 0; }
-@property --flick { syntax: '<number>'; inherits: false; initial-value: 1; }
+@property --c-glow  { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --c-flame { syntax: '<number>'; inherits: false; initial-value: 0; }
+@property --c-flick { syntax: '<number>'; inherits: false; initial-value: 1; }
 
 /* золотой слой — копия узора, ровный тёплый свет */
 .fr-corner::before,
@@ -288,11 +288,11 @@ body.telegraph-on #s-tape { display: none; }
   border-radius: inherit;
   clip-path: inherit;
   pointer-events: none;
-  --gold: 0;
-  opacity: var(--gold);
+  --c-glow: 0;
+  opacity: var(--c-glow);
   filter: drop-shadow(0 0 4px rgba(212, 176, 106, 0.8))
           drop-shadow(0 0 14px rgba(212, 176, 106, 0.35));
-  transition: --gold 3s ease;
+  transition: --c-glow 3s ease;
 }
 
 /* пламя — оранжевый слой, он же мерцает */
@@ -306,35 +306,35 @@ body.telegraph-on #s-tape { display: none; }
   border-radius: inherit;
   clip-path: inherit;
   pointer-events: none;
-  --flame: 0;
-  opacity: calc(var(--flame) * var(--flick));
+  --c-flame: 0;
+  opacity: calc(var(--c-flame) * var(--c-flick));
   filter: drop-shadow(0 0 10px rgba(240, 150, 60, 0.55));
-  transition: --flame 1.5s ease;
+  transition: --c-flame 1.5s ease;
   animation: flicker 2.6s ease-in-out infinite;
   animation-play-state: paused;
 }
 
 .card-frame:hover .fr-corner::before,
 .card-frame:hover .fr-line::before {
-  --gold: 1;
-  transition: --gold 2.7s ease;
+  --c-glow: 1;
+  transition: --c-glow 2.7s ease;
 }
 
 .card-frame:hover .fr-corner::after,
 .card-frame:hover .fr-line::after {
-  --flame: 1;
-  transition: --flame 2.7s cubic-bezier(0.75, 0, 0.25, 1);
+  --c-flame: 1;
+  transition: --c-flame 2.7s cubic-bezier(0.75, 0, 0.25, 1);
   animation-play-state: running;
 }
 
 @keyframes flicker {
-  0%, 100% { --flick: 1; }
-  8%  { --flick: 0.70; }
-  17% { --flick: 1; }
-  31% { --flick: 0.55; }
-  45% { --flick: 1; }
-  58% { --flick: 0.75; }
-  74% { --flick: 0.90; }
+  0%, 100% { --c-flick: 1; }
+  8%  { --c-flick: 0.70; }
+  17% { --c-flick: 1; }
+  31% { --c-flick: 0.55; }
+  45% { --c-flick: 1; }
+  58% { --c-flick: 0.75; }
+  74% { --c-flick: 0.90; }
 }
 /* плавное появление карточек */
 @keyframes card-in {
@@ -381,7 +381,7 @@ body.telegraph-on #s-tape { display: none; }
 }
 .wiktionary-btn:hover { filter: brightness(1.1); }
 .src-block { margin-top: 0.6rem; padding: 0.7rem 0.9rem; background: rgba(12, 10, 30, 0.7); border-left: 3px solid var(--gold); border-radius: 0.25rem; }
-.src-block h4 { margin: 0 0 0.3rem; font-size: 0.9rem; color: var(--gold); }
+.src-block h4 { margin: 0 0 0.3rem; font-size: 0.9rem; color: #d4b06a; }
 .src-block p, .src-block li { font-size: 0.92rem; line-height: 1.5; margin: 0.2rem 0; }
 .src-block a { color: var(--gold-bright); }
 .loading, .empty { color: var(--text-dim); font-style: italic; }
@@ -448,13 +448,14 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
     0 3px 6px rgba(0,0,0,0.45);
   transition: transform 0.08s, box-shadow 0.08s, border-color 0.2s, color 0.2s, background 0.2s;
 }
-/* ножка клавиши */
+/* ножка клавиши (подъ клавишами — въ зазорахъ видна, на клавишахъ скрыта) */
 .letter::after {
   content: '';
   position: absolute;
   left: 50%; top: -26px;
   width: 3px; height: 26px;
   transform: translateX(-50%);
+  z-index: -1;
   background: linear-gradient(0deg, rgba(212,176,106,0.55), rgba(212,176,106,0.26) 45%, rgba(212,176,106,0) 92%);
   border-radius: 2px 2px 0 0;
   pointer-events: none;
@@ -473,6 +474,7 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
 }
 /* «Всѣ» — прямоугольная боковая клавиша */
 .letter.key-all {
+  white-space: nowrap;
   width: calc(2 * 42px + 8px); height: 30px;
   border-radius: 0.25rem;
   padding: 0;
@@ -502,15 +504,16 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
   border-radius: 13px;
   margin-top: 12px;
 }
-/* двѣ ножки планки (вверхъ, какъ у буквъ) */
+/* двѣ ножки планки (вверхъ, какъ у буквъ) — длиннѣе ножекъ буквъ */
 .letter.key-space::before,
 .letter.key-space::after {
   content: '';
   position: absolute;
-  top: -26px;
+  top: -34px;
   width: 3px;
-  height: 26px;
+  height: 34px;
   transform: none;
+  z-index: -1;
   background: linear-gradient(0deg, rgba(212,176,106,0.55), rgba(212,176,106,0.26) 45%, rgba(212,176,106,0) 92%);
   border-radius: 2px 2px 0 0;
   pointer-events: none;
@@ -527,6 +530,7 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
     font-size: 0.75rem;
   }
   .letter.key-all {
+    white-space: nowrap;
     width: calc(clamp(24px, 6.5vw, 30px) * 2 + 4px);
     height: 22px;
     font-size: 0.58rem;
@@ -723,14 +727,16 @@ body.telegraph-on .letter:not(.key-space):hover:active {
   white-space: nowrap; will-change: transform;
 }
 #s-ph { position: static; transform: none; flex: 0 0 auto; font-size: inherit;
-  color: rgba(36, 26, 14, 0.55); text-shadow: 0 1px 0 rgba(255, 244, 214, 0.55); letter-spacing: 0.04em; }
+  color: #241a0e; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.18); letter-spacing: 0.04em; }
 #s-run { display: inline-block; }
 #s-msg { display: inline-block; white-space: nowrap; }
 #s-msg span { display: inline-block; white-space: pre; }
 #s-tape .tpc { font-size: inherit; letter-spacing: inherit; }
 #s-caret {
   position: absolute; right: 2px; top: 50%; transform: translateY(-50%);
-  width: 2px; height: 52%; background: #c9a45a; box-shadow: 0 0 6px rgba(201, 164, 90, .8);
+  width: 5px; height: 78%; margin-top: 0;
+  background: #0e0802; border-radius: 1.5px;
+  box-shadow: 0 0 0 1.5px rgba(255, 246, 220, 0.45), 0 0 6px rgba(20, 12, 4, 0.9);
   z-index: 6; pointer-events: none; opacity: 0;
 }
 #s-tape.s-on #s-caret { opacity: 1; animation: s-caret-blink 1.1s steps(1) infinite; }
@@ -741,6 +747,11 @@ body.telegraph-on .letter:not(.key-space):hover:active {
 #s-tape.typing { animation: s-tape-shake .1s linear infinite; }
 @keyframes s-tape-shake { 0% { transform: translateY(0); } 50% { transform: translateY(1px); } 100% { transform: translateY(0); } }
 @media (max-width: 600px) { #s-tape-inner { font-size: 22px; } #s-ph { font-size: inherit; } }
+
+/* бумага поиска всегда доходитъ до правой рамки — безъ обрыва и тёмной полосы */
+#s-tape-inner { padding-right: 220px; }
+#s-tape-inner { min-width: 400vw; }
+#tape-track { min-width: 400vw; }
 </style>
 </head>
 <body>
@@ -836,8 +847,11 @@ function buildAlphabet() {
     div.className = 'kb-row ' + row.shift;
     if (ri === 0) {
       const all = document.createElement('span');
-      all.textContent = 'Всѣ';
       all.className = 'letter key-all key-vs';
+      const allLbl = document.createElement('span');
+      allLbl.className = 'key-label';
+      allLbl.textContent = 'Всѣ';
+      all.appendChild(allLbl);
       all.onclick = function() { setLetter(null); };
       div.appendChild(all);
     }
@@ -861,9 +875,13 @@ function buildAlphabet() {
     }
     if (ri === 0) {   // включатель эфира — гдѣ была «<»
       const tg = document.createElement('span');
-      tg.textContent = 'Телеграфъ';
       tg.className = 'letter key-all key-tg';
+      const tgLbl = document.createElement('span');
+      tgLbl.className = 'key-label';
+      tgLbl.textContent = 'Телеграфъ';
+      tg.appendChild(tgLbl);
       tg.title = 'Пустить / остановить телеграфъ';
+      tg.onmousedown = function(e) { e.preventDefault(); };   // фокусъ остаётся у строки — плейсхолдеръ не дёргается
       tg.onclick = function() { toggleTelegraph(); };
       div.appendChild(tg);
     }
@@ -912,9 +930,21 @@ function buildAlphabet() {
     }
     fitKeyboard();
   });
+  bar.addEventListener('mousedown', function (e) { e.preventDefault(); }, false);
 }
 // Клавиша «<» убрана: включатель эфира теперь «Телеграфъ» (см. buildAlphabet)
 // Если клавиатура шире панели — уменьшаем её целиком
+// Надписи «Всѣ» и «Телеграфъ» масштабируютсяъ подъ ширину своей клавиши
+function fitKeyAll() {
+  document.querySelectorAll('#alphabet-bar .letter.key-all .key-label').forEach(function(lb) {
+    lb.style.transform = 'none';
+    var k = lb.parentElement;
+    var kw = k.clientWidth - 4;   // запасъ на рамку и лёгкую тень
+    var lw = lb.scrollWidth;
+    if (kw > 0 && lw > kw) lb.style.transform = 'scale(' + (kw / lw).toFixed(3) + ')';
+  });
+}
+
 function fitKeyboard() {
   const bar = document.getElementById('alphabet-bar');
   const wrap = document.getElementById('kb-wrap');
@@ -932,10 +962,13 @@ function fitKeyboard() {
   if (maxW > 0 && avail > 0 && maxW > avail) {
     wrap.style.transform = 'scale(' + (avail / maxW) + ')';
   }
+  fitKeyAll();   // и подъ свои клавиши подгоняемъ надписи
 }
 window.addEventListener('resize', function() {
   fitKeyboard();
 });
+if (window.visualViewport) window.visualViewport.addEventListener('resize', function() { fitKeyboard(); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(function() { fitKeyboard(); });
 // ---------- Секретная последовательность: Н А Ч А Л А ----------
 const SECRET = 'НАЧАЛА';
 let secretBuf = '';
@@ -987,6 +1020,8 @@ var strikeKeyMap = null, strikeArr = [], strikeIdx = 0;
 var shiftKeyEl = null, specKeyEl = null, specHeld = false;   // шифтъ и спец-клавиша
 var sndOn = true, teleAudio = null;                          // звонокъ: звукъ включёнъ по умолчанію
 var TELE_SPEED = 64;   // px/сек — скорость движения ленты
+/* обратный переходъ: обрывъ ленты, печатаніе «Изысканіе по словамъ...» и возвратъ въ поискъ */
+var teleRev = false, revLast = null, revPh = null, revStart = 0, teleBoost = false, teleBoostN = 0, revSettle = false, revD = 0, revRest = -1;
 /* Спец-клавиша ϕ: при зажатой ϕ буква даётъ знакъ препинанія — вся палитра
    раскладки въ шифтовомъ регистрѣ живётъ на буквенных клавишахъ */
 var LETTER_TO_SYM = {}, SYM_TO_LETTER = {};
@@ -1018,10 +1053,10 @@ function sndTryLoad(name, url) {
     var a = new Audio();
     a.addEventListener('canplaythrough', function() {
       sndSample[name] = a;
-      try { console.log('Звукъ «' + name + '»: сэмплъ подключёнъ'); } catch (e2) {}
+      try { } catch (e2) {}
     }, { once: true });
     a.addEventListener('error', function() {
-      try { console.log('Звукъ «' + name + '»: файлъ не найденъ — играю синтезъ'); } catch (e2) {}
+      try { } catch (e2) {}
     }, { once: true });
     a.src = url; a.load();
   } catch (e) {}
@@ -1185,6 +1220,7 @@ function teleRec(ch, span, dep) {
 function teleAppend() {
   var inner = document.getElementById('tape-inner');
   if (!inner) return;
+  if (teleRev) return;   // обратный переходъ: лента обрывается, новыхъ депешъ нѣтъ
   for (var k = 0; k < 3; k++) {
     var m = teleNext();
     if (!m) break;
@@ -1224,7 +1260,7 @@ function teleMaintain() {
     } else break;
   }
   var guard = 0;
-  while (teleX + inner.offsetWidth < avail * 1.7 && guard++ < 60) teleAppend();
+  if (!teleRev) while (teleX + inner.offsetWidth < avail * 1.7 && guard++ < 60) teleAppend();
 }
 /* Удары телеграфиста: буква въезжаетъ изъ-за угла рамки — её клавиша проседаетъ
    на мигъ и отпускается. Пробѣлы бьютъ по клавишѣ «<». Буквы, которыхъ на
@@ -1409,31 +1445,254 @@ function teleStrike() {
       if (o.mark === 'curse-open') teleSpeedMul = 1.5;               // ругательство — наборъ въ полтора раза быстрее
       if (o.mark === 'curse-close') { teleSpeedMul = 1; teleCurseActive = false; }   // депеша пошла дальше — снова можно печатать
       strikeIdx++;
+      if (teleBoost && !o.span.closest('.tape-greet') && (o.span.textContent || '').trim()) {
+        teleBoost = false;                          // первая видимая буква депеши — обычная скорость
+        if (teleSpeedMul === 2) teleSpeedMul = 1;   // пробѣлы и хвостъ приветствія — ещё на ускореніи
+      }
     }
     else break;
   }
   if (strikeIdx > 1000) { strikeArr = strikeArr.slice(strikeIdx); strikeIdx = 0; }
 }
 function teleFrame(ts) {
-  if (!telegraphOn) { teleRAF = null; return; }
+  if (!telegraphOn && !teleRev) { teleRAF = null; return; }
   if (!teleLast) teleLast = ts;
   var dt = Math.min(50, ts - teleLast);   // жёсткій потолокъ шага — скоростьъ не разгоняется
   teleLast = ts;
-  teleX -= TELE_SPEED * teleSpeedMul * dt / 1000;
+  if (teleRev && revPh && !revSettle) {
+    var L0 = teleX + revPh.offsetLeft;
+    if (revRest > 0 && L0 - revRest <= revD) revSettle = true;   // надпись въ тормозной зонѣ передъ мѣстомъ покоя
+  }
+  if (teleRev && revPh && revSettle) {
+    if (!(revRest > 0)) { teleEndReverse(); return; }
+    var Ls = teleX + revPh.offsetLeft;
+    var dxS = (Ls - revRest) * (1 - Math.exp(-dt / 55));   // торможеніе въ темпѣ поисковой ленты (TAU = 55 мс)
+    teleX -= dxS;
+    if (Math.abs(Ls - revRest) < 0.4) {
+      teleX -= (Ls - revRest);
+      teleEndReverse();   // стыкъ: скорость нулевая, надпись точно на мѣстѣ покоя
+      return;
+    }
+  } else {
+    teleX -= TELE_SPEED * teleSpeedMul * dt / 1000;
+  }
   teleMaintain();
   var track = document.getElementById('tape-track');
   if (track) track.style.transform = 'translateX(' + teleX.toFixed(2) + 'px)';
   teleStrike();
+  if (teleRev) teleReverseCheck();
   teleRAF = requestAnimationFrame(teleFrame);
 }
-function toggleTelegraph() {
-  telegraphOn = !telegraphOn;
-  document.body.classList.toggle('telegraph-on', telegraphOn);
+/* ---------- Обратный переходъ: обрывъ ленты и бесшовный возвратъ въ поискъ ---------- */
+function teleStartReverse() {
+  if (teleRev) return;
+  teleRev = true;
+  document.body.classList.add('telegraph-on');   // лента телеграфа видна до стыка
+  teleQueue = [];
+  teleBoost = false;
+  teleSpeedMul = 4; teleCurseActive = false;   // обратный ходъ — печать и прокрутка вчетверо быстрее
+  revSettle = false;
+  revD = TELE_SPEED * teleSpeedMul * 0.055;    // тормозной путь надписи (TAU поисковой ленты — 55 мс)
+  revStart = performance.now();
+  var tapeBox = document.getElementById('tele-tape');
+  var track = document.getElementById('tape-track');
+  var inner = document.getElementById('tape-inner');
+  if (!tapeBox || !track || !inner) { teleEndReverse(); return; }
+  /* свежій кадръ: transformъ ставится до всякихъ замеровъ */
+  track.style.transform = 'translateX(' + teleX.toFixed(2) + 'px)';
+  var Wt = tapeBox.clientWidth;
+  var frameR = tapeBox.getBoundingClientRect().right - 3;   // внутренняя грань правой рамки
+  /* обрывъ: срезается всё, что ещё не пересекло правую рамку — напечатанное остаётся */
+  var chars = inner.querySelectorAll('.tpc');
+  for (var i = 0; i < chars.length; i++) {
+    if (chars[i].getBoundingClientRect().right > frameR) chars[i].remove();
+  }
+  var kids = inner.children;
+  while (kids.length && !kids[kids.length - 1].querySelector('.tpc')) inner.removeChild(kids[kids.length - 1]);
+  if (kids.length && kids[kids.length - 1].classList.contains('tape-msg')) kids[kids.length - 1].style.paddingRight = '0px';
+  revLast = null;
+  var left = inner.querySelectorAll('.tpc');
+  if (left.length) revLast = left[left.length - 1];
+  /* надпись поиска — на той же лентѣ, съ тѣмъ же эффектомъ печати */
+  revPh = document.createElement('span');
+  revPh.className = 'tape-msg';
+  revPh.innerHTML = teleCharsHTML('Изысканіе по словамъ...');
+  revPh.style.paddingRight = '0px';   /* безъ хвостовой отбивки — ширина как у плейсхолдера поиска */
+  inner.appendChild(revPh);
+  /* точная точка покоя: замеряемъ, гдѣ надпись встанетъ въ режимѣ поиска. Поисковая
+     лента на мигъ раскрывается скрытой (visibility:hidden) — рисованія не будетъ,
+     а замеръ дастъ истинную координату со всѣми особенностями шрифта */
+  revRest = -1;
+  var stBox = document.getElementById('s-tape');
+  if (stBox && window.sTapeIdleRect) {
+    var sd0 = stBox.style.display, sv0 = stBox.style.visibility;
+    stBox.style.display = 'block'; stBox.style.visibility = 'hidden';
+    revRest = window.sTapeIdleRect();
+    stBox.style.display = sd0; stBox.style.visibility = sv0;
+  }
+  if (!(revRest > 0)) revRest = Wt / 2 - revPh.offsetWidth / 2;   // запасной расчётъ
+  /* порогъ запуска: надпись въезжаетъ, когда правый край послѣдней буквы проходитъ
+     точку Wt − revRest — чуть за серединой окна. Путь буквы и путь надписи равны,
+     поэтому буква уйдётъ за лѣвую рамку ровно въ моментъ посадки на мѣсто покоя */
+  var T = Wt - revRest;
+  var R0 = revLast ? (teleX + revLast.offsetLeft + revLast.offsetWidth) : Wt;
+  var spW = Math.round(Wt - teleX + (R0 - T) - revPh.offsetLeft);   // всѣ велiчины — въ локальныхъ координатахъ ленты
+  if (spW > 0) {
+    var sp = document.createElement('span');
+    sp.style.display = 'inline-block';
+    sp.style.width = spW + 'px';
+    inner.insertBefore(sp, revPh);
+  }
+  /* пустая бумага за надписью — окно остаётся полнымъ до самого стыка */
+  var fill = document.createElement('span');
+  fill.style.display = 'inline-block';
+  fill.style.width = Math.round(Wt * 2 + 300) + 'px';
+  inner.appendChild(fill);
+  var pcs = revPh.querySelectorAll('.tpc');
+  for (var p = 0; p < pcs.length; p++) {
+    strikeArr.push(teleRec((pcs[p].textContent || '').charAt(0), pcs[p], true));
+  }
+  if (!teleRAF) teleRAF = requestAnimationFrame(teleFrame);
+}
+function teleReverseCheck() {
+  if (!revPh) { teleEndReverse(); return; }
+  if (performance.now() - revStart > 60000) { teleEndReverse(); return; }   // страховка отъ зависанія
+  /* конецъ хода ведётъ тормозная зона въ teleFrame: стыкъ только на нулевой скорости */ 
+}
+function teleEndReverse() {
+  /* дрейфъ: насколько надпись ушла отъ мѣста покоя за послѣдній кадръ —
+     поисковая лента стартуетъ съ этой же точки и плавно осаживается */
+  var drift = 0;
+  if (revPh) drift = (teleX + revPh.offsetLeft) - ((revRest > 0) ? revRest : 0);
+  teleRev = false; revLast = null; revPh = null;
+  teleBoost = false;
+  teleSpeedMul = 1;
+  if (teleRAF) { cancelAnimationFrame(teleRAF); teleRAF = null; }
+  var track = document.getElementById('tape-track');
+  var inner = document.getElementById('tape-inner');
+  var bgPos = track ? (parseFloat(track.style.backgroundPositionX) || 0) : 0;
+  var phase = bgPos + teleX;   // фаза бумажной фактуры на моментъ стыка
+  if (inner) inner.innerHTML = '';
+  teleX = 0; teleLast = 0;
+  document.querySelectorAll('#alphabet-bar .letter').forEach(function (el) {
+    el.classList.remove('tg-strike');
+    if (el._tgTimer) { clearTimeout(el._tgTimer); el._tgTimer = null; }
+  });
+  strikeArr = []; strikeIdx = 0;
   var tgKey = document.querySelector('#alphabet-bar .key-tg');
-  if (tgKey) tgKey.classList.toggle('held', telegraphOn);
+  if (tgKey) tgKey.classList.remove('held');
+  document.body.classList.remove('telegraph-on');
+  resultsEl.style.display = '';
+  if (countNote) countNote.style.display = '';
+  searchBox.value = ''; sPrevLen = 0;
+  if (window.sTapeRestore) window.sTapeRestore(phase, drift);
+  render();
+}
+/* ---------- Метеосводка для приветствия: «Барнаулъ, дата, температура» ----------
+   open-meteo изъ россійскихъ сѣтей часто молчитъ (блокировка), wttr.in работаетъ «черезъ разъ».
+   Поэтому запросъ идётъ ПАРАЛЛЕЛЬНО по нѣсколькимъ путямъ — corsproxy.io, allorigins, r.jina.ai,
+   напрямую open-meteo и wttr.in; побѣждаетъ первый успѣшный. Печать ленты погоду НЕ ждётъ:
+   если температура ещё не готова — приветствие идётъ безъ нея, а запросъ дозаполняетъ кэшъ фономъ. */
+var wxVal = null, wxTs = 0, wxBusy = false, wxLastTry = 0;
+function wxLoadCache() {
+  try {
+    var raw = localStorage.getItem('barnaul-wx');
+    if (raw) { var o = JSON.parse(raw); if (o && typeof o.t === 'number') { wxVal = o.t; wxTs = o.ts; } }
+  } catch (e) {}
+}
+function wxSaveCache() {
+  try { localStorage.setItem('barnaul-wx', JSON.stringify({ t: wxVal, ts: wxTs })); } catch (e) {}
+}
+function wxDone(ok) {
+  wxBusy = false;
+  if (ok) wxSaveCache();
+  setTimeout(wxFetch, ok ? 30 * 60 * 1000 : 15000);   /* успѣхъ — обновленіе въ полчаса, неудача — повторка черезъ 15 сек. */
+}
+function wxTry(url, parse, T) {
+  return new Promise(function (res) {
+    var fin = false;
+    var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var to = setTimeout(function () {
+      if (ctl) { try { ctl.abort(); } catch (e) {} }
+      if (!fin) { fin = true; res(null); }
+    }, T);
+    fetch(url, ctl ? { signal: ctl.signal } : undefined)
+      .then(function (r) { return r.ok ? r.text() : null; })
+      .then(function (t) {
+        clearTimeout(to);
+        if (fin) return; fin = true;
+        var v = t ? parse(String(t)) : null;
+        res(v);
+      })
+      .catch(function () { clearTimeout(to); if (fin) return; fin = true; res(null); });
+  });
+}
+function wxParseOM(t) {
+  var m = /"temperature_2m"\s*:\s*(-?\d+(?:\.\d+)?)/.exec(t);
+  return m ? Math.round(parseFloat(m[1])) : null;
+}
+function wxParseWttr(t) {
+  var m = /([+\u2212-]?\d+)\s*\u00B0?C/i.exec(String(t).replace(/\u2212/g, '-'));
+  return m ? Math.round(parseInt(m[1], 10)) : null;
+}
+function wxFetch() {
+  if (wxBusy) return;
+  wxBusy = true;
+  var OM = 'https://api.open-meteo.com/v1/forecast?latitude=53.35&longitude=83.78&current=temperature_2m';
+  var enc = encodeURIComponent(OM);
+  var tries = [
+    wxTry('https://corsproxy.io/?url=' + enc, wxParseOM, 5000),
+    wxTry('https://api.allorigins.win/raw?url=' + enc, wxParseOM, 5000),
+    wxTry('https://r.jina.ai/' + OM, wxParseOM, 6000),
+    wxTry(OM, wxParseOM, 5000),
+    wxTry('https://wttr.in/Barnaul?format=%t', wxParseWttr, 5000)
+  ];
+  var settled = false;
+  tries.forEach(function (p) {
+    p.then(function (v) {
+      if (v !== null && v !== undefined && !settled) {
+        settled = true;
+        wxVal = Math.round(v); wxTs = Date.now();
+        console.log('[погода] маршрутъ ответилъ: ' + wxVal + ' C');
+        wxDone(true);
+      }
+    });
+  });
+  Promise.all(tries).then(function () {
+    if (!settled) { console.log('[погода] всѣ маршруты молчатъ — повторка черезъ 15 сек.'); wxDone(false); }
+  });
+}
+function wxKick() {   /* лёгкая повторка при нажатіи «Телеграфъ» — не чаще раза въ 8 сек. */
+  if (wxBusy || wxVal !== null) return;
+  if (Date.now() - wxLastTry < 8000) return;
+  wxLastTry = Date.now();
+  wxFetch();
+}
+function wxStart() {
+  wxLoadCache();
+  if (wxVal === null || Date.now() - wxTs > 30 * 60 * 1000) wxFetch();   /* фономъ, ничего не ждётъ */
+}
+function wxDateStr() {
+  var M = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  var d = new Date();
+  return d.getDate() + ' ' + M[d.getMonth()];
+}
+function wxLine() {
+  var s = ' Барнаулъ, ' + wxDateStr();
+  if (wxVal !== null) s += ', ' + (wxVal < 0 ? '−' : '+') + Math.abs(wxVal) + '*\u0421';
+  return s;
+}
+function toggleTelegraph() {
+  if (teleRev) return;   // идётъ обратный переходъ — клавиша молчитъ
+  telegraphOn = !telegraphOn;
+  /* замеръ надписи — до переключенія класса, пока #s-tape ещё виденъ */
+  var tgHand = (telegraphOn && window.sTapeHandoff) ? window.sTapeHandoff() : null;
+  if (telegraphOn) document.body.classList.add('telegraph-on');   // при выключеніи классъ снимаетъ teleEndReverse по стыкѣ
+  var tgKey = document.querySelector('#alphabet-bar .key-tg');
+  if (tgKey && telegraphOn) tgKey.classList.add('held');   // отпускаетъ teleEndReverse по стыкѣ
   sndBell(telegraphOn);
   if (telegraphOn) {
-    sTapeTeleOut();                       // набранный текстъ уходитъ влѣво за рамку
+    if (window.sTapeHideInstant) window.sTapeHideInstant();   // поисковая лента отдаётъ надписи и мгновенно уходитъ
     searchBox.value = ''; sPrevLen = 0;
     // гасимъ всё, что горѣло до эфира
     document.querySelectorAll('#alphabet-bar .letter').forEach(function(el) {
@@ -1450,34 +1709,76 @@ function toggleTelegraph() {
       var track = document.getElementById('tape-track');
       var inner = document.getElementById('tape-inner');
       if (!track || !inner) return;
+      if (!telegraphOn || teleRev) return;   // обратный переходъ успелъ начаться — сборку отмѣняемъ
       inner.innerHTML = '';
-      teleX = track.parentElement.clientWidth;
       teleQueue = []; teleLast = 0;
-      // «Телеграфъ пущенъ» — первая надпись на лентѣ при включеніи
-      var greet = document.createElement('span');
-      greet.className = 'tape-msg';
-      greet.innerHTML = teleCharsHTML('   Телеграфъ пущенъ') + teleCharsHTML('\u00A0\u00A0\u00A0—\u00A0\u00A0\u00A0');
-      inner.appendChild(greet);
-      var gs = greet.querySelectorAll('.tpc');
-      for (var gi = 0; gi < gs.length; gi++) {
-        strikeArr.push(teleRec((gs[gi].textContent || '').charAt(0), gs[gi], true));
+      /* Бесшовный переходъ: надписи поиска встаютъ на лентѣ тамъ же, гдѣ стояли.
+         Фаза бумажной фактуры выравнивается фоновой позицiей — шовъ невиденъ. */
+      var hnd = tgHand; tgHand = null;
+      var carryText = (hnd && hnd.text) ? hnd.text : '';
+      var carryLeft = (hnd && carryText) ? hnd.left : 0;
+      teleX = (carryText && carryLeft < 0) ? carryLeft : 0;
+      /* transformъ обновляется до всякихъ замеровъ — устарѣвшій кадръ больше не рисуется */
+      track.style.transform = 'translateX(' + teleX.toFixed(2) + 'px)';
+      if (carryText) {
+        if (carryLeft < 0) carryLeft = 0;
+        if (carryLeft > 0) {
+          var spacer = document.createElement('span');
+          spacer.style.display = 'inline-block';
+          spacer.style.width = Math.round(carryLeft) + 'px';
+          inner.appendChild(spacer);
+        }
+        var carry = document.createElement('span');
+        carry.className = 'tape-msg';
+        carry.innerHTML = teleCharsHTML(carryText) + (hnd && hnd.typed ? teleCharsHTML('  ') : '');
+        inner.appendChild(carry);
+        track.style.backgroundPositionX = Math.round(hnd.bgX - teleX) + 'px';
+      } else {
+        track.style.backgroundPositionX = '0px';
       }
-      teleMaintain();
-      teleRAF = requestAnimationFrame(teleFrame);
+      /* «Телеграфъ пущенъ —» становится у правой рамки окна: между переносимыми
+         надписями и приветствіемъ — пустая бумага, буквы въезжаютъ изъ-за угла
+         по одной, съ ударомъ клавиши и звукомъ литеръ. */
+      /* приветствие печатается сразу: если температура ещё не готова — безъ
+         градуса; запросъ идётъ фономъ и попадётъ въ кэшъ къ следующему пуску. */
+      var buildGreet = function () {
+        if (!telegraphOn || teleRev) return;   // пока ждали погоду — телеграфъ выключили
+        var greet = document.createElement('span');
+        greet.className = 'tape-msg tape-greet';
+        greet.innerHTML = teleCharsHTML('   Телеграфъ пущенъ') + teleCharsHTML('\u00A0\u00A0\u00A0—\u00A0\u00A0\u00A0') + teleCharsHTML(wxLine());
+        var tapeBox = document.getElementById('tele-tape');
+        if (tapeBox) {
+          inner.appendChild(greet);
+          var edgeX = tapeBox.getBoundingClientRect().right;
+          var gRect = greet.getBoundingClientRect();
+          var gapW = Math.round(edgeX - gRect.left);
+          if (gapW > 0) {   // подтягиваемъ приветствіе въплотную къ правой рамкѣ
+            var gsp = document.createElement('span');
+            gsp.style.display = 'inline-block';
+            gsp.style.width = gapW + 'px';
+            inner.insertBefore(gsp, greet);
+          }
+          /* если надпись ушла за правый край (длинный запросъ) — гэпъ не нужен:
+             буквы и такъ въѣзжаютъ постепенно */
+        } else {
+          inner.appendChild(greet);
+        }
+        /* приветствие всегда «набирается» ударами — звукъ литеръ идётъ съ перваго кадра */
+        var gs = greet.querySelectorAll('.tpc');
+        for (var gi = 0; gi < gs.length; gi++) {
+          strikeArr.push(teleRec((gs[gi].textContent || '').charAt(0), gs[gi], true));
+        }
+        teleBoostN = gs.length;
+        teleBoost = true;          /* «Телеграфъ пущенъ» печатается вдвое быстрее */
+        teleSpeedMul = 2;          /* пока не пошла первая депеша */
+        teleMaintain();
+        teleRAF = requestAnimationFrame(teleFrame);
+      };
+      if (wxVal === null) wxKick();   /* погода дойдётъ фономъ — лента не ждётъ нисколько */
+      buildGreet();
     });
   } else {
-    if (teleRAF) cancelAnimationFrame(teleRAF);
-    teleRAF = null;
-    document.querySelectorAll('#alphabet-bar .letter').forEach(function(el) {
-      el.classList.remove('tg-strike');
-      if (el._tgTimer) { clearTimeout(el._tgTimer); el._tgTimer = null; }
-    });
-    strikeArr = []; strikeIdx = 0;
-    resultsEl.style.display = '';
-    if (countNote) countNote.style.display = '';
-    searchBox.value = '';
-    sTapeReset();
-    render();
+    teleStartReverse();   // обрывъ ленты и бесшовный возвратъ въ поискъ
   }
 }
 // ---------- Подсветка ----------
@@ -1727,7 +2028,7 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
   if (!tape || !eng || !ph || !msg || !run || !pre) return;
   var GAP = 6, TAU = 55, DUR_RET = 700, FLOW = 1100;
   var mode = 'idle';   // idle | focused | flow | hidden
-  var x = 0, tx = 0, raf = null, last = 0, onDone = null;
+  var x = 0, tx = 0, raf = null, last = 0, onDone = null, clr = null;
 
   function W() { return tape.clientWidth || 700; }
   function layout() { var w = (W() + 80) + 'px'; pre.style.width = w; run.style.width = w; }
@@ -1746,13 +2047,24 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
         msg.innerHTML = ''; var cb = onDone; onDone = null;
         if (cb) { cb(); } else { mode = 'idle'; setTarget(xIdle()); }
       }
+    } else if (mode === 'clear') {
+      var dC = clr.xF - x;
+      if (Math.abs(dC) <= clr.v * 0.055) {   /* тормозная зона перед посадкой */
+        x += dC * (1 - Math.exp(-dt * 1000 / 55));
+        if (Math.abs(clr.xF - x) < 0.4) { x = clr.xF; endClear(true); }
+      } else {
+        var stC = clr.v * dt;
+        if (Math.abs(dC) <= stC) { x = clr.xF; endClear(true); }
+        else x += (dC > 0 ? stC : -stC);
+      }
     } else {
-      var a = 1 - Math.exp(-dt * 1000 / TAU);
+      var tau = (mode === 'focused' && Math.abs(tx - x) < 80) ? 130 : TAU;
+      var a = 1 - Math.exp(-dt * 1000 / tau);
       x += (tx - x) * a;
       if (Math.abs(tx - x) < .4) x = tx;
     }
     eng.style.transform = 'translateX(' + x.toFixed(2) + 'px)';
-    if (mode === 'flow' || Math.abs(tx - x) >= .4) raf = requestAnimationFrame(frame); else last = 0;
+    if (mode === 'flow' || mode === 'clear' || Math.abs(tx - x) >= .4) raf = requestAnimationFrame(frame); else last = 0;
   }
   function mkSp(ch) {
     var s = document.createElement('span');
@@ -1770,6 +2082,7 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
     for (var i = 0; i < v.length; i++) msg.appendChild(mkSp(v[i]));
   }
   window.sTapeSync = function () {
+    if (mode === 'clear') endClear(true);
     if (mode === 'hidden' || mode === 'flow') return;
     var v = searchBox.value, ch = msg.childNodes;
     var same = ch.length === v.length;
@@ -1782,6 +2095,7 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
   };
   window.sTapePush = function (ch) {
     if (!ch || mode === 'hidden') return;
+    if (mode === 'clear') endClear(true);
     msg.appendChild(mkSp(ch));
     mode = 'focused'; tape.classList.add('s-on');
     sound(); window.sTyping(); setTarget(xType());
@@ -1793,6 +2107,7 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
     setTarget(msg.childNodes.length ? xType() : xFocus());
   };
   window.sTapeFocus = function () {
+    if (mode === 'clear') endClear(true);
     if (mode === 'hidden' || mode === 'flow') return;
     if (mode === 'idle') mode = 'focused';
     tape.classList.add('s-on');
@@ -1801,18 +2116,117 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
   window.sTapeBlur = function () {
     if (mode === 'hidden') return;
     if (!msg.childNodes.length) { mode = 'idle'; setTarget(xIdle()); }
-    else { mode = 'flow'; onDone = null; start(); }
+    else startClear((msg.offsetWidth >= W() / 2) ? -1 : 1);
     tape.classList.remove('s-on');
   };
   window.sTapeTeleOut = function (cb) {
     if (msg.childNodes.length) { mode = 'flow'; onDone = function () { mode = 'hidden'; if (cb) cb(); }; start(); }
     else { msg.innerHTML = ''; mode = 'hidden'; if (cb) cb(); }
   };
+  /* ---------- Сброс набранного: текст уходит за свой крайъ, надпись входитъ съ противоположного ---------- */
+  function startClear(dir) {
+    if (!msg.childNodes.length) { mode = 'idle'; setTarget(xIdle()); return; }
+    var tW = msg.offsetWidth, phW = ph.offsetWidth, w = W();
+    var tmp = [];
+    flushDying();
+    searchBox.value = ''; sPrevLen = 0;
+    render();
+    if (dir > 0) {   /* короткій текстъ: лента едетъ вправо, надпись въезжаетъ слѣва */
+      var z = Math.round(w / 2 - phW / 2 - tW + 40);
+      if (z < 40) z = 40;
+      var sp = document.createElement('span');
+      sp.style.display = 'inline-block'; sp.style.width = z + 'px';
+      eng.insertBefore(sp, msg);
+      tmp.push(sp);
+      var xN = x - z;   /* компенсация: текстъ остаётся на том же экранном мѣстѣ */
+      x = tx = xN;
+      eng.style.transform = 'translateX(' + xN.toFixed(2) + 'px)';
+      clr = { xF: xIdle(), v: FLOW, tmp: tmp, dir: dir };
+    } else {         /* длинный текстъ: лента едетъ влѣво, надпись входитъ справа */
+      var gapL = Math.round(Math.max(60, w / 2 - phW / 2));
+      var sp1 = document.createElement('span');
+      sp1.style.display = 'inline-block'; sp1.style.width = gapL + 'px';
+      var ph2 = ph.cloneNode(true); ph2.removeAttribute('id');
+      var pcs = getComputedStyle(ph);   /* клонъ теряетъ id #s-ph — копируемъ рендеръ плейсхолдера */
+      ph2.style.fontFamily = pcs.fontFamily;
+      ph2.style.fontSize = pcs.fontSize;
+      ph2.style.letterSpacing = pcs.letterSpacing;
+      ph2.style.color = pcs.color;
+      ph2.style.textShadow = pcs.textShadow;
+      var tail2 = document.createElement('span');
+      tail2.style.display = 'inline-block'; tail2.style.width = Math.round(w) + 'px';
+      eng.appendChild(sp1); eng.appendChild(ph2); eng.appendChild(tail2);
+      tmp.push(sp1, ph2, tail2);
+      clr = { xF: (w / 2 - phW / 2) - (msg.offsetLeft + tW + gapL), v: FLOW, tmp: tmp, dir: dir };
+    }
+    mode = 'clear';
+    tape.classList.remove('s-on'); tape.classList.remove('typing');
+    start();
+  }
+  function endClear(toIdle) {
+    if (!clr) return;
+    var xF0 = clr.xF, tmp = clr.tmp;
+    clr = null;
+    for (var i = 0; i < tmp.length; i++) if (tmp[i].parentNode) tmp[i].parentNode.removeChild(tmp[i]);
+    msg.innerHTML = '';
+    if (toIdle) {
+      x = tx = xIdle();
+      var d = x - xF0;
+      if (Math.abs(d) > 0.5) {   /* фактура не мигаетъ при переносе точки покоя */
+        var bgX = parseFloat(eng.style.backgroundPositionX) || 0;
+        eng.style.backgroundPositionX = (bgX - d) + 'px';
+      }
+    }
+    mode = 'idle';
+    eng.style.transform = 'translateX(' + x.toFixed(2) + 'px)';
+  }
+    /* бесшовный переходъ: лента телеграфа подхватываетъ надписи поиска */
+  window.sTapeHandoff = function () {
+    if (mode === 'hidden') return null;
+    var tR = tape.getBoundingClientRect();
+    var el = (msg.childNodes.length && msg.textContent) ? msg : ph;
+    if (!el || !el.textContent) return { text: '', left: 0, bgX: x };
+    var sBgPos = parseFloat(eng.style.backgroundPositionX) || 0;
+    return { text: el.textContent, left: el.getBoundingClientRect().left - tR.left, bgX: x + sBgPos, typed: el === msg };
+  };
+  window.sTapeHideInstant = function () {
+    if (mode === 'clear') endClear(true);
+    flushDying();
+    msg.innerHTML = '';
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    last = 0; onDone = null;
+    tape.classList.remove('s-on');
+    tape.classList.remove('typing');
+    mode = 'hidden';
+  };
+  /* возвратъ изъ телеграфа: надпись уже напечатана — ставимъ её въ точку покоя,
+     а фазу бумажной фактуры выравниваемъ по телеграфной, чтобы стыкъ былъ невидимъ */
+  window.sTapeRestore = function (phase, drift) {
+    flushDying();
+    msg.innerHTML = '';
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    last = 0; onDone = null;
+    tape.classList.remove('s-on'); tape.classList.remove('typing');
+    mode = 'idle';
+    /* надпись стартуетъ ровно тамъ, гдѣ её остановила лента телеграфа, —
+       и плавно осаживается на мѣсто покоя, безъ рывка */
+    var d = (typeof drift === 'number' && Math.abs(drift) < 200) ? drift : 0;
+    if (Math.abs(d) < 1.5) {   /* посадка точная — надпись уже на мѣстѣ, дожимать нечего */
+      x = tx = xIdle();
+    } else { x = xIdle() + d; tx = xIdle(); }
+    eng.style.transform = 'translateX(' + x.toFixed(2) + 'px)';
+    if (typeof phase === 'number') eng.style.backgroundPositionX = (phase - x) + 'px';
+    if (Math.abs(tx - x) >= .4) start();
+  };
+  /* точная локальная координата покоя надписи (для стыка съ телеграфомъ):
+     вызывается, когда поисковая лента временно раскрыта съ visibility:hidden */
+  window.sTapeIdleRect = function () { return xIdle() + ph.offsetLeft; };
   window.sTapeReset = function () { mode = 'idle'; setTarget(xIdle()); };
   window.sTapeClearAll = function () {
-    msg.innerHTML = '';
     if (searchBox.value) searchBox.value = '';
-    if (mode === 'hidden') return;
+    if (mode === 'hidden') { msg.innerHTML = ''; return; }
+    if (msg.childNodes.length) { startClear((msg.offsetWidth >= W() / 2) ? -1 : 1); return; }
+    msg.innerHTML = '';
     if (document.activeElement === searchBox) { mode = 'focused'; setTarget(xFocus()); }
     else { mode = 'idle'; setTarget(xIdle()); }
   };
@@ -1832,6 +2246,7 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
 searchBox.addEventListener('input', function () { render(); sTapeSync(); });
 searchBox.addEventListener('focus', sTapeFocus);
 searchBox.addEventListener('blur', sTapeBlur);
+wxStart();
 sTapeReset();
 buildAlphabet();
 render();
@@ -1840,7 +2255,7 @@ render();
   const seq = ['Н', 'А', 'Ч', 'А', 'Л', 'А'];
   let i = 0;
   setInterval(function () {
-    if (telegraphOn) return;   // въ эфирѣ лента печатаетъ сама — мерцаніе молчитъ
+    if (telegraphOn || teleRev) return;   // въ эфирѣ и при обратномъ переходѣ мерцаніе молчитъ
     const key = document.querySelector('#alphabet-bar .letter[data-letter="' + seq[i] + '"]');
     if (key) {
       key.classList.remove('glow');

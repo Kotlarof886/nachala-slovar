@@ -113,7 +113,20 @@ nav { margin-top: 1.2rem; }
   background: linear-gradient(135deg, rgba(212,176,106,0.9), rgba(184,149,79,0.9));
   color: #1a1535;
   border-color: var(--gold-bright);
+box-shadow:
+    0 0 8px rgba(212, 176, 106, 0.35),
+    0 0 20px rgba(212, 176, 106, 0.18);
 }
+/* пульсация активной вкладки — какъ отъ старинной лампы накаливанія:
+   тёплый светъ чуть подрагиваетъ, то притухая, то вспыхивая */
+@keyframes lamp-glow {
+  0%   { box-shadow: 0 0 8px rgba(212,176,106,0.35), 0 0 20px rgba(212,176,106,0.18); }
+  38%  { box-shadow: 0 0 6px rgba(212,176,106,0.28), 0 0 17px rgba(212,176,106,0.13); }
+  62%  { box-shadow: 0 0 9px rgba(212,176,106,0.42), 0 0 22px rgba(212,176,106,0.21); }
+  100% { box-shadow: 0 0 8px 0 rgba(212,176,106,0.35), 0 0 20px rgba(212,176,106,0.18); }
+}
+.tab.active { animation: lamp-glow 6s ease-in-out infinite; }
+
 .alpha.active { color: #1a1535; background: var(--gold); border-color: var(--gold-bright); }
 #search-box {
   width: 100%;
@@ -452,6 +465,11 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
     0 3px 6px rgba(0,0,0,0.45);
   transition: transform 0.08s, box-shadow 0.08s, border-color 0.2s, color 0.2s, background 0.2s;
 }
+/* клавиши стоять слегка криво — какъ на старыхъ машинкахъ */
+.alphabet-bar .letter:not([class*="key-"]):nth-child(3n+1) { transform: rotate(-0.55deg); }
+.alphabet-bar .letter:not([class*="key-"]):nth-child(3n+2) { transform: rotate(0.4deg); }
+.alphabet-bar .letter:not([class*="key-"]):nth-child(3n)   { transform: rotate(-0.25deg); }
+
 /* ножка клавиши (подъ клавишами — въ зазорахъ видна, на клавишахъ скрыта) */
 .letter::after {
   content: '';
@@ -464,11 +482,11 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
   border-radius: 2px 2px 0 0;
   pointer-events: none;
 }
-.letter:hover { transform: translateY(-2px); border-color: var(--gold); color: var(--gold-bright); }
+.letter:hover { transform: translateY(-2px); border-color: var(--gold); color: var(--gold-bright); }var(--gold-bright); }
 .letter.active,
 .letter.lit,
 .letter:active {
-  transform: translateY(2px);
+ transform: translateY(2px);
   color: #1a1535;
   background: linear-gradient(135deg, rgba(212,176,106,0.95), rgba(184,149,79,0.95));
   border-color: var(--gold-bright);
@@ -616,6 +634,21 @@ body.telegraph-on #count-note { visibility: hidden; }
   z-index: 2;
   pointer-events: none;
 }
+/* гнѣвъ телеграфиста: окно телеграммъ раскаляется — уровень 1, 2, 3 */
+#tele-tape { transition: box-shadow 3s ease-in-out; }   /* затуханіе — стандартное, 3 сек */
+#tele-tape.curse-1 { box-shadow:   /* 30% от максимума */
+  inset 0 0 14px rgba(0,0,0,0.55),
+  0 0 9px rgba(212,176,106,0.27),
+  0 0 18px rgba(212,176,106,0.14); }
+#tele-tape.curse-2 { box-shadow:   /* 50% */
+  inset 0 0 14px rgba(0,0,0,0.55),
+  0 0 14px rgba(212,176,106,0.45),
+  0 0 34px rgba(212,176,106,0.22); }
+#tele-tape.curse-3 { box-shadow:   /* 100% — максимумъ */
+  inset 0 0 14px rgba(0,0,0,0.55),
+  0 0 24px rgba(226,190,120,0.9),
+  0 0 60px rgba(226,150,90,0.45); }
+
 #tele-tape::before { left: 0;  background: linear-gradient(90deg, rgba(18,14,38,0.9), rgba(18,14,38,0)); }
 #tele-tape::after  { right: 0; background: linear-gradient(270deg, rgba(18,14,38,0.9), rgba(18,14,38,0)); }
 /* въ режимѣ эфира клавиши не подсвѣчиваются — только анімація нажатія */
@@ -761,14 +794,6 @@ body.telegraph-on .letter:not(.key-space):hover:active {
 #s-tape-inner { padding-right: 220px; }
 #s-tape-inner { min-width: 400vw; }
 #tape-track { min-width: 400vw; }
-.build-info {
-  text-align: center;
-  font-size: 0.75rem;
-  color: var(--text-dim, #999);
-  opacity: 0.7;
-  margin-top: 2.5rem;
-  letter-spacing: 0.08em;
-}
 .build-info {
   text-align: center;
   font-size: 0.75rem;
@@ -1332,10 +1357,19 @@ function telePressKey(keyEl, soft) {
 // Ругательства телеграфиста вынесены въ отдельный файлъ rugatelstva.js —
 // правятся безъ пересборки: списокъ, загрузка на GitHub, обновление страницы.
 
-var curseLevel = 1, curseDecks = { 1: [], 2: [], 3: [] }, curseUntil = 0, curseBusy = false, curseLastTime = 0;   // curseDecks — тасуемыя колоды фразъ по уровнямъ
-var userStrikeTimes = [];
-var teleCurseActive = false, teleSpeedMul = 1;   // отповедь идётъ — буквы заблокированы; скорость ×1,5
-function teleInject(html) {
+var teleGlowLevel = 0;   // на каком уровне сейчас горит окно
+function teleGlowSet(level) {
+  level = level >= 1 ? Math.min(3, level) : 0;
+  if (level === teleGlowLevel) return;   /* уровень не изменился — светъ стоитъ ровно */
+  var down = level && level < teleGlowLevel;   /* сравненіе — ДО обновленія */
+  teleGlowLevel = level;
+  var tape = document.getElementById('tele-tape');
+  if (!tape) return;
+  tape.style.transitionDuration = down ? '3s' : (level ? '1.5s' : '3s');
+  tape.classList.remove('curse-1', 'curse-2', 'curse-3');
+  if (level) tape.classList.add('curse-' + level);
+}
+ function teleInject(html) {
   var anchor = null, parent;
   var o = strikeArr[strikeIdx];
   if (o && o.span && o.span.isConnected) { anchor = o.span; parent = anchor.parentNode; }
@@ -1351,30 +1385,6 @@ function teleInject(html) {
     inserted.push(n);
   }
   var recs = [];
-  for (var i = 0; i < inserted.length; i++) {
-    var ch = (inserted[i].textContent || '').charAt(0);
-    recs.push(teleRec(ch, inserted[i], false));   // вставка не изъ депеши
-  }
-  if (recs.length) strikeArr.splice.apply(strikeArr, [strikeIdx, 0].concat(recs));
-  return { spans: inserted, recs: recs };
-}
-function teleUserType(ch) {
-  if (!ch || !strikeKeyMap) return;
-  if (ch === ' ') {   // планка печатаетъ пробѣлъ
-    var spEl = strikeKeyMap[' '];
-    if (spEl) telePressKey(spEl);
-    if (teleCurseActive) return;   // во время отповеди пробѣлъ не встаётъ
-    var rsp = teleInject(teleCharsHTML('\u00A0'));
-    if (rsp && rsp.recs.length) strikeIdx += rsp.recs.length;
-    var nowS = Date.now();   // пробѣлъ считается какъ нажатіе: телеграфистъ реагируетъ и на него
-    if (userStrikeTimes.length && nowS - userStrikeTimes[userStrikeTimes.length - 1] > 6000) userStrikeTimes = [];
-    userStrikeTimes.push(nowS);
-    if (userStrikeTimes.length >= 2 && !curseBusy && nowS > curseUntil) {
-      userStrikeTimes = [];
-      teleCurseOut(nowS);
-    }
-    return;
-  }
   var out = ch;   // при зажатой ϕ буква даётъ знакъ препинанія
   if (specHeld && LETTER_TO_SYM[ch]) out = LETTER_TO_SYM[ch];
   var keyEl = SYM_TO_LETTER[out] ? strikeKeyMap[SYM_TO_LETTER[out]] : strikeKeyMap[out.toUpperCase()];
@@ -1393,12 +1403,38 @@ function teleUserType(ch) {
     teleCurseOut(now);
   }
 }
+var teleGlowLevel = 0;   // на каком уровне сейчас горит окно
+function teleGlowSet(level) {
+  level = level >= 1 ? Math.min(3, level) : 0;
+  if (level === teleGlowLevel) return;   /* уровень не изменился — светъ стоитъ ровно */
+  var down = level && level < teleGlowLevel;   /* сравненіе — ДО обновленія */
+  teleGlowLevel = level;
+  var tape = document.getElementById('tele-tape');
+  if (!tape) return;
+  tape.style.transitionDuration = down ? '3s' : (level ? '1.5s' : '3s');
+  tape.classList.remove('curse-1', 'curse-2', 'curse-3');
+  if (level) tape.classList.add('curse-' + level);
+}
+/* остываніе: 30 секундъ тишины — ступень внизъ, въ ноль — гнѣвъ забытъ */
+setInterval(function () {
+  if (!teleGlowLevel || !curseLastTime) return;
+  if (Date.now() - curseLastTime > 30000) {
+    var next = teleGlowLevel - 1;
+    curseLevel = next;
+    curseStreak = 0;
+    teleGlowSet(next);
+    if (next) curseLastTime = Date.now();
+  }
+}, 1000);
+
 function teleCurseOut(now) {
   curseBusy = true;
   teleCurseActive = true;
-  if (now - curseLastTime > 120000) curseLevel = 1;              // остылъ — начинаемъ съ лёгкой
-  else curseLevel = Math.min(3, curseLevel + 1);                 // чемъ дольше досаждаютъ, темъ злѣе
+   if (now - curseLastTime > 30000) curseStreak = 0;              // перерывъ больше 30 сек — «подрядъ» сгорѣлъ
+  curseStreak++;                                                 // считаемъ отповѣди подрядъ
+  if (curseStreak >= 3 && curseLevel < 3) { curseLevel++; curseStreak = 0; }   // три подрядъ въ 30 сек — ступень выше
   curseLastTime = now;
+teleGlowSet(curseLevel);
   var pool = window.CURSES_LEVEL_1 || [];
   if (curseLevel === 2) pool = window.CURSES_LEVEL_2 || [];
   if (curseLevel >= 3) pool = window.CURSES_LEVEL_3 || [];
@@ -1523,7 +1559,7 @@ function teleStartReverse() {
   document.body.classList.add('telegraph-on');   // лента телеграфа видна до стыка
   teleQueue = [];
   teleBoost = false;
-  teleSpeedMul = 4; teleCurseActive = false;   // обратный ходъ — печать и прокрутка вчетверо быстрее
+  teleSpeedMul = 4; teleCurseActive = false; teleGlowSet(0);// обратный ходъ — печать и прокрутка вчетверо быстрее
   revSettle = false;
   revD = TELE_SPEED * teleSpeedMul * 0.055;    // тормозной путь надписи (TAU поисковой ленты — 55 мс)
   revStart = performance.now();
@@ -2305,6 +2341,6 @@ render();
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">сборка № 66</div>
+<div class="build-info">сборка № 0.7</div>
 </body>
 </html>

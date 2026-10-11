@@ -656,8 +656,9 @@ body.telegraph-on .letter:not(.key-space):hover:active {
 /* звонокъ: знакъ перекрашивается вмѣстѣ съ клавишей (currentColor) */
 .letter.key-bell { margin-top: -4px; }   /* низъ звонка — на одномъ уровнѣ съ планкой пробѣла */
 @media (max-width: 560px) {
+  .alphabet-bar { gap: 12px; }   /* вместо 8px — больше воздуха между рядами */
   .letter.key-bell { margin-top: 0; }
-  .letter.key-bell::after { top: -6px; height: 6px; }
+  .letter.key-bell::after { top: -11px; height: 11px; }
 }
 .letter.key-bell svg { width: 58%; height: 58%; display: block; }
 .letter.key-shift svg { width: 52%; height: 52%; display: block; }

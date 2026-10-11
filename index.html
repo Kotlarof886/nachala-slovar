@@ -47,7 +47,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
-  font-family: Georgia, 'Times New Roman', serif;
+  font-family: 'Elizabeth Unicode', 'Cormorant Garamond', Georgia, serif;
   color: var(--text);
   min-height: 100vh;
   background-color: var(--ink);
@@ -358,7 +358,11 @@ body.telegraph-on #s-tape { display: none; }
   color: var(--gold-bright);
 }
 .entry-region { font-size: 0.85rem; color: var(--text-dim); margin-top: 0.3rem; }
-.entry-def { margin-top: 0.35rem; line-height: 1.55; }
+.entry-def {
+  font-family: Georgia, 'Times New Roman', serif;
+  margin-top: 0.35rem;
+  line-height: 1.55;
+}
 
 .primer {
   color: #d4b06a;
@@ -651,6 +655,10 @@ body.telegraph-on .letter:not(.key-space):hover:active {
 .letter.key-tg { letter-spacing: 0.06em; }
 /* звонокъ: знакъ перекрашивается вмѣстѣ съ клавишей (currentColor) */
 .letter.key-bell { margin-top: -4px; }   /* низъ звонка — на одномъ уровнѣ съ планкой пробѣла */
+@media (max-width: 560px) {
+  .letter.key-bell { margin-top: 0; }
+  .letter.key-bell::after { top: -6px; height: 6px; }
+}
 .letter.key-bell svg { width: 58%; height: 58%; display: block; }
 .letter.key-shift svg { width: 52%; height: 52%; display: block; }
 .letter.key-spec svg { width: 56%; height: 56%; display: block; }
@@ -674,7 +682,7 @@ body.telegraph-on .letter:not(.key-space):hover:active {
   animation: pdfIn 1.7s ease;
 }
 .pdf-title {
-  font-family: Georgia, serif;
+  font-family: 'Elizabeth Unicode', 'Cormorant Garamond', Georgia, serif;
   font-size: 1.25rem;
   color: var(--gold-bright);
   margin-bottom: 14px;
@@ -752,6 +760,22 @@ body.telegraph-on .letter:not(.key-space):hover:active {
 #s-tape-inner { padding-right: 220px; }
 #s-tape-inner { min-width: 400vw; }
 #tape-track { min-width: 400vw; }
+.build-info {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-dim, #999);
+  opacity: 0.7;
+  margin-top: 2.5rem;
+  letter-spacing: 0.08em;
+}
+.build-info {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-dim, #999);
+  opacity: 0.7;
+  margin-top: 2.5rem;
+  letter-spacing: 0.08em;
+}
 </style>
 </head>
 <body>
@@ -2272,6 +2296,6 @@ render();
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-
+<div class="build-info">сборка № 66</div>
 </body>
 </html>

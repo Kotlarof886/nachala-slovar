@@ -116,6 +116,7 @@ nav { margin-top: 1.2rem; }
 box-shadow:
     0 0 8px rgba(212, 176, 106, 0.35),
     0 0 20px rgba(212, 176, 106, 0.18);
+0 0 34px rgba(212,176,106,0.12)
 }
 /* пульсация активной вкладки — какъ отъ старинной лампы накаливанія:
    тёплый светъ чуть подрагиваетъ, то притухая, то вспыхивая */
@@ -482,11 +483,11 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
   border-radius: 2px 2px 0 0;
   pointer-events: none;
 }
-.letter:hover { transform: translateY(-2px); border-color: var(--gold); color: var(--gold-bright); }var(--gold-bright); }
+letter:hover { transform: translateY(-2px); border-color: var(--gold); color: var(--gold-bright); }
 .letter.active,
 .letter.lit,
 .letter:active {
- transform: translateY(2px);
+ transform: translateY(2px);;
   color: #1a1535;
   background: linear-gradient(135deg, rgba(212,176,106,0.95), rgba(184,149,79,0.95));
   border-color: var(--gold-bright);
@@ -1357,19 +1358,11 @@ function telePressKey(keyEl, soft) {
 // Ругательства телеграфиста вынесены въ отдельный файлъ rugatelstva.js —
 // правятся безъ пересборки: списокъ, загрузка на GitHub, обновление страницы.
 
-var teleGlowLevel = 0;   // на каком уровне сейчас горит окно
-function teleGlowSet(level) {
-  level = level >= 1 ? Math.min(3, level) : 0;
-  if (level === teleGlowLevel) return;   /* уровень не изменился — светъ стоитъ ровно */
-  var down = level && level < teleGlowLevel;   /* сравненіе — ДО обновленія */
-  teleGlowLevel = level;
-  var tape = document.getElementById('tele-tape');
-  if (!tape) return;
-  tape.style.transitionDuration = down ? '3s' : (level ? '1.5s' : '3s');
-  tape.classList.remove('curse-1', 'curse-2', 'curse-3');
-  if (level) tape.classList.add('curse-' + level);
-}
- function teleInject(html) {
+var curseLevel = 1, curseDecks = { 1: [], 2: [], 3: [] }, curseUntil = 0, curseBusy = false, curseLastTime = 0, curseStreak = 0;
+    // curseDecks — тасуемыя колоды фразъ по уровнямъ
+var userStrikeTimes = [];
+var teleCurseActive = false, teleSpeedMul = 1;   // отповедь идётъ — буквы заблокированы; скорость ×1,5
+function teleInject(html) {
   var anchor = null, parent;
   var o = strikeArr[strikeIdx];
   if (o && o.span && o.span.isConnected) { anchor = o.span; parent = anchor.parentNode; }
@@ -1385,6 +1378,30 @@ function teleGlowSet(level) {
     inserted.push(n);
   }
   var recs = [];
+  for (var i = 0; i < inserted.length; i++) {
+    var ch = (inserted[i].textContent || '').charAt(0);
+    recs.push(teleRec(ch, inserted[i], false));   // вставка не изъ депеши
+  }
+  if (recs.length) strikeArr.splice.apply(strikeArr, [strikeIdx, 0].concat(recs));
+  return { spans: inserted, recs: recs };
+}
+function teleUserType(ch) {
+  if (!ch || !strikeKeyMap) return;
+  if (ch === ' ') {   // планка печатаетъ пробѣлъ
+    var spEl = strikeKeyMap[' '];
+    if (spEl) telePressKey(spEl);
+    if (teleCurseActive) return;   // во время отповеди пробѣлъ не встаётъ
+    var rsp = teleInject(teleCharsHTML('\u00A0'));
+    if (rsp && rsp.recs.length) strikeIdx += rsp.recs.length;
+    var nowS = Date.now();   // пробѣлъ считается какъ нажатіе: телеграфистъ реагируетъ и на него
+    if (userStrikeTimes.length && nowS - userStrikeTimes[userStrikeTimes.length - 1] > 6000) userStrikeTimes = [];
+    userStrikeTimes.push(nowS);
+    if (userStrikeTimes.length >= 2 && !curseBusy && nowS > curseUntil) {
+      userStrikeTimes = [];
+      teleCurseOut(nowS);
+    }
+    return;
+  }
   var out = ch;   // при зажатой ϕ буква даётъ знакъ препинанія
   if (specHeld && LETTER_TO_SYM[ch]) out = LETTER_TO_SYM[ch];
   var keyEl = SYM_TO_LETTER[out] ? strikeKeyMap[SYM_TO_LETTER[out]] : strikeKeyMap[out.toUpperCase()];

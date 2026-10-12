@@ -1512,14 +1512,18 @@ function teleGlowSet(level) {
   teleGlowLevel = level;
   var tape = document.getElementById('tele-tape');
   if (!tape) return;
-  tape.style.transitionDuration = down ? '3s' : (level ? '1.5s' : '3s');
+  tape.style.transitionDuration = down
+    ? (teleGlowLevel >= 3 ? '5s' : '4s')
+    : (level ? '1.5s' : '3s');
   tape.classList.remove('curse-1', 'curse-2', 'curse-3');
   if (level) tape.classList.add('curse-' + level);
 }
 /* остываніе: 30 секундъ тишины — ступень внизъ, въ ноль — гнѣвъ забытъ */
 setInterval(function () {
   if (!teleGlowLevel || !curseLastTime) return;
-  if (Date.now() - curseLastTime > 30000) {
+  /* шкала остывания: 3-й уровень тупеет за 50 с, 2-й за 40, 1-й за 30 */
+  var coolNeed = teleGlowLevel >= 3 ? 50000 : (teleGlowLevel === 2 ? 40000 : 30000);
+  if (Date.now() - curseLastTime > coolNeed) {
     var next = teleGlowLevel - 1;
     curseLevel = next;
     curseStreak = 0;
@@ -2502,6 +2506,6 @@ render();
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">сборка № 33</div>
+<div class="build-info">сборка № 35</div>
 </body>
 </html>

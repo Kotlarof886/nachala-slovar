@@ -1,6 +1,6 @@
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, версия 0.7, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №62, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -19,7 +19,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Версия 0,7: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №62: Сводный алфавитный лексиконъ</title>
 <style>
 
 @font-face {
@@ -847,7 +847,7 @@ body.telegraph-on .letter.key-shift svg { transform: rotate(0deg); }
   margin-top: 2.5rem;
   letter-spacing: 0.08em;
 }
-/* въ режимѣ эфира сборка прижата къ нижней грани экрана */
+/* въ режимѣ эфира Сшивъ прижата къ нижней грани экрана */
 body.telegraph-on .build-info {
   position: fixed;
   left: 0;
@@ -954,6 +954,7 @@ body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* ср�
 .tgp-w:not(.entered) .tgpc { border-bottom: 0; }
 
 .tgpc-body {
+  padding: 20px 26px 24px 26px;
   position: absolute;                  /* рулонные шторы: ткань пришита къ верху окна — содержимое открывается сверху */
   left: 0;
   right: 0;
@@ -1502,14 +1503,17 @@ function teleAppend() {
     var html = '';
     if (m.city) html += '<span class="tape-city">' + teleCharsHTML(String(m.city).toUpperCase()) + '</span>' + teleCharsHTML(' — ');
     html += teleCharsHTML(String(m.text || ''));
-    html += teleCharsHTML('\u00A0\u00A0\u00A0—\u00A0\u00A0\u00A0');
+    html += '<span data-tgcut="sep">' + teleCharsHTML('\u00A0\u00A0\u00A0—\u00A0\u00A0\u00A0') + '</span>';
     s.innerHTML = html;
     inner.appendChild(s);
     // каждая буква знаетъ свою клавишу — для ударовъ телеграфиста
     var spans = s.querySelectorAll('.tpc');
     for (var t = 0; t < spans.length; t++) {
       var ch = (spans[t].textContent || '').charAt(0);
-      strikeArr.push(teleRec(ch, spans[t], true));   // буквы безъ клавиши — пустые удары (нужны для перепечатки слова)
+      var rr = teleRec(ch, spans[t], true);
+      rr.msg = s;                                    // буква помнитъ свою депешу — разрезка придётъ за ней
+      spans[t]._trec = rr;
+      strikeArr.push(rr);                            // буквы безъ клавиши — пустые удары (нужны для перепечатки слова)
     }
   }
 }
@@ -1528,7 +1532,7 @@ function teleMaintain() {
     if (rightEdge < -80) {
       var second = kids[1];
       var shift = second ? (second.offsetLeft - first.offsetLeft) : first.offsetWidth;
-      if (window.tgBirth && !first.classList.contains('tape-greet')) tgBirth();   // приветствіе плашки не рождаётъ
+      if (window.tgBirth && !first.classList.contains('tape-greet') && !first.classList.contains('tape-carry')) tgBirth(first);   // приветствіе плашки не рождаётъ
       inner.removeChild(first);
       teleX += shift;
     } else break;
@@ -1571,7 +1575,7 @@ function telePressKey(keyEl, soft) {
    (три уровня по нарастанію, случайные, безъ повторовъ), затѣмъ нѣсколько
    пробѣловъ — и депеша продолжается съ того мѣста, гдѣ ея оборвали. */
 // Ругательства телеграфиста вынесены въ отдельный файлъ rugatelstva.js —
-// правятся безъ пересборки: списокъ, загрузка на GitHub, обновление страницы.
+// правятся безъ перешива: списокъ, загрузка на GitHub, обновление страницы.
 
 var curseLevel = 1, curseDecks = { 1: [], 2: [], 3: [] }, curseUntil = 0, curseBusy = false, curseLastTime = 0, curseStreak = 0;
     // curseDecks — тасуемыя колоды фразъ по уровнямъ
@@ -1595,6 +1599,7 @@ function teleInject(html) {
   var recs = [];
   for (var i = 0; i < inserted.length; i++) {
     var ch = (inserted[i].textContent || '').charAt(0);
+    inserted[i].setAttribute('data-tginj', '1');   // чужая буква — на карточкѣ вырезается
     recs.push(teleRec(ch, inserted[i], false));   // вставка не изъ депеши
   }
   if (recs.length) strikeArr.splice.apply(strikeArr, [strikeIdx, 0].concat(recs));
@@ -1692,7 +1697,7 @@ teleGlowSet(curseLevel);
     if (rem.length > 30) break;
   }
   if (rem.length && rem.length <= 30) {
-    var j = strikeIdx - 1;
+    var j = strikeIdx - 1, partialSpans = [];
     while (j >= 0) {
       var rp = strikeArr[j];
       if (!rp) break;
@@ -1700,10 +1705,11 @@ teleGlowSet(curseLevel);
       if (!rp.span || !rp.span.isConnected) break;
       var cp = rp.ch || (rp.span.textContent || '').charAt(0);
       if (cp === ' ' || cp === '\u00A0') break;
-      partial.push(cp); j--;
-      if (partial.length > 30) { partial = []; break; }
+      partial.push(cp); if (rp.span) partialSpans.push(rp.span); j--;
+      if (partial.length > 30) { partial = []; partialSpans = []; break; }
     }
     partial.reverse();
+    for (var ps = 0; ps < partialSpans.length; ps++) partialSpans[ps].setAttribute('data-tgcut', 'partial');   // дубль оборваннаго слова — вырезается
     word = partial.join('') + rem.join('');
   }
 // знаки-разделители: / передъ ругательствомъ и / послѣ — и перепечатка слова.
@@ -1717,12 +1723,17 @@ teleGlowSet(curseLevel);
       if (tailRecs[t] && tailRecs[t].span && tailRecs[t].span.parentNode) tailRecs[t].span.parentNode.removeChild(tailRecs[t].span);
     }
   }
-  if (word) teleInject(teleCharsHTML(word));             // слово печатается заново съ начала
-  teleInject(teleCharsHTML('\u00A0'));
+  var rw = word ? teleInject(teleCharsHTML(word)) : null;   // слово печатается заново съ начала
+  if (rw) for (var rwi = 0; rwi < rw.spans.length; rwi++) {
+    rw.spans[rwi].removeAttribute('data-tginj');            // перепечатка — не чужая вставка, на карточкѣ остаётся
+    rw.recs[rwi].mark = 'reprint';
+  }
+  var rs = teleInject(teleCharsHTML('\u00A0'));
   var rc = teleInject(teleCharsHTML('/'));               // замыкающий знак
   var r1 = teleInject(teleCharsHTML(pool[idx] || ''));   // ругательство
   if (!r1) r1 = { spans: [], recs: [] };                 // страховка отъ нулевой вставки
   var ro = teleInject(teleCharsHTML('/'));               // открывающий знак — первыйъ въ лентѣ
+  tgCutSpans([rs, rc, r1, ro], 'curse');                 // вся отповѣдь — вырезается цѣликомъ
   if (ro && ro.recs.length) ro.recs[0].mark = 'curse-open';    // въездъ — лента ускоряется
   if (rc && rc.recs.length) rc.recs[0].mark = 'curse-close';   // въездъ замыкателя — скорость обычная, печать открыта
   var w = 0;
@@ -2065,7 +2076,7 @@ function toggleTelegraph() {
       var track = document.getElementById('tape-track');
       var inner = document.getElementById('tape-inner');
       if (!track || !inner) return;
-      if (!telegraphOn || teleRev) return;   // обратный переходъ успелъ начаться — сборку отмѣняемъ
+      if (!telegraphOn || teleRev) return;   // обратный переходъ успелъ начаться — сшивку отмѣняемъ
       inner.innerHTML = '';
       teleQueue = []; teleLast = 0;
       /* Бесшовный переходъ: надписи поиска встаютъ на лентѣ тамъ же, гдѣ стояли.
@@ -2085,7 +2096,7 @@ function toggleTelegraph() {
           inner.appendChild(spacer);
         }
         var carry = document.createElement('span');
-        carry.className = 'tape-msg';
+        carry.className = 'tape-msg tape-carry';   // перенесенный запросъ карточекъ не рождаетъ
         carry.innerHTML = teleCharsHTML(carryText) + (hnd && hnd.typed ? teleCharsHTML('  ') : '');
         inner.appendChild(carry);
         track.style.backgroundPositionX = Math.round(hnd.bgX - teleX) + 'px';
@@ -2695,12 +2706,296 @@ function tgAlignClip() {
 }
 window.addEventListener('resize', tgAlignClip);
 if (window.visualViewport) window.visualViewport.addEventListener('resize', tgAlignClip);
-function tgBirth() {
+function tgCutSpans(injs, kind) {   /* помѣтить знаки отповѣди на вырезаніе */
+  if (!injs) return;
+  for (var k = 0; k < injs.length; k++) {
+    var r = injs[k];
+    if (!r || !r.spans) continue;
+    for (var s2 = 0; s2 < r.spans.length; s2++) r.spans[s2].setAttribute('data-tgcut', kind);
+  }
+}
+/* ===== Этапъ 3б: съёмъ ленты и разрѣзка на полосы =====
+   Карточка получаетъ ту же ленту, что только что зашла за левый край рамки:
+   те же живые буквы, тот же шрифтъ, та же бумага. Слова не переносятся,
+   разрывы — только по пробѣламъ; остатки ленты 1–4 мм въ противофазѣ съ
+   чередованіемъ, чтобы у сосѣднихъ строкъ не повторялись одинаковые хвосты. */
+function tgFeed(depot, w) {
+  if (!depot || !w) return;
+  var body = w.querySelector('.tgpc-body');
+  if (!body) return;
+  var go = function() {
+    var bw = body.clientWidth;
+    if (!bw) { requestAnimationFrame(go); return; }
+    tgBuildStrips(body, depot, bw);
+  };
+  if (body.clientWidth) go(); else requestAnimationFrame(go);
+}
+function mkPad(px) {
+  var p = document.createElement('span');
+  p.className = 'tg-pad';
+  p.style.width = px.toFixed(1) + 'px';
+  p.style.height = '1em';
+  return p;
+}
+/* рваные только боковые срезы: верхъ и низъ ровные, какъ у ленты въ окнѣ; ножъ изредка задѣваетъ букву у срѣза */
+function tgJaggedClip(W, H, bleedL, bleedR) {
+  /* Рваная кромка какъ у живой бумаги: частые мелкие зубцы-волокно (шагъ ~2,4px),
+     плавная волна двухъ частотъ, микрошероховатость на каждомъ шагѣ, редкіе
+     глубокіе въкусы и ножъ, изредка задѣвающій букву. Верхъ и низъ — ровные,
+     какъ кромка ленты въ окнѣ телеграфа. */
+  var pts = [[0, 0], [W, 0]];                               /* верхъ ровный */
+  var knifeR = Math.random() < 0.16, knifeL = Math.random() < 0.16;
+  var knifeY = 0.25 + Math.random() * 0.5;
+  var n = Math.max(10, Math.round(H / 2.4)), j;
+  var aR = 0.7 + Math.random() * 1.1, aL = 0.7 + Math.random() * 1.1;
+  var pR = Math.random() * 6.28, pR2 = Math.random() * 6.28;
+  var pL = Math.random() * 6.28, pL2 = Math.random() * 6.28;
+  var y, x, t, und, fib;
+  for (j = 0; j <= n; j++) {
+    t = j / n; y = H * t;
+    und = Math.sin(t * 5.3 + pR) * aR + Math.sin(t * 12.7 + pR2) * aR * 0.45;
+    fib = (Math.random() - 0.5) * 1.5;
+    x = W - 1.0 + und * 0.5 + fib;
+    if (j > 0 && j < n && Math.random() < 0.06) x = W - 3.0 - Math.random() * 2.4;   /* случайный въкусъ */
+    if (knifeR && Math.abs(t - knifeY) < 0.035)
+      x = W - bleedR - (0.5 + Math.random() * 1.5);         /* ножъ задѣваетъ букву */
+    pts.push([Math.max(2, Math.min(W, x)), y]);
+  }
+  pts.push([W, H]);                                          /* низъ ровный */
+  for (j = n; j >= 0; j--) {
+    t = j / n; y = H * t;
+    und = Math.sin(t * 4.9 + pL) * aL + Math.sin(t * 11.3 + pL2) * aL * 0.45;
+    fib = (Math.random() - 0.5) * 1.5;
+    x = 1.0 + und * 0.5 + fib;
+    if (j > 0 && j < n && Math.random() < 0.06) x = 3.0 + Math.random() * 2.4;
+    if (knifeL && Math.abs(t - knifeY) < 0.035)
+      x = bleedL + (0.5 + Math.random() * 1.5);
+    pts.push([Math.max(0, Math.min(W - 2, x)), y]);
+  }
+  var st = 'polygon(';
+  for (j = 0; j < pts.length; j++) st += (j ? ',' : '') + pts[j][0].toFixed(2) + 'px ' + pts[j][1].toFixed(2) + 'px';
+  return st + ')';
+}
+
+function tgBuildStrips(body, depot, bodyW) {
+  /* 1. Съёмъ буквъ: казённая депеша и городъ отправителя остаются;
+        чужія вставки, отповѣди и дубль оборваннаго слова вырезаются —
+        на мѣстѣ вырѣза лента резалась: шовъ со рваными краями. */
+  var all = depot.querySelectorAll('.tpc');
+  var toks = [], cur = null, i, q, ch, sp, pendCut = false;
+  for (i = 0; i < all.length; i++) {
+    sp = all[i];
+    var cut = false;
+    if (sp.closest && sp.closest('[data-tgcut]')) cut = true;                    /* отповѣдь и разделительъ */
+    else if (sp.hasAttribute && sp.hasAttribute('data-tginj')) cut = true;       /* чужая вставка */
+    if (cut) { pendCut = true; cur = null; continue; }
+    ch = sp.textContent || '';
+    var citySp = sp.parentElement && sp.parentElement.classList.contains('tape-city');
+    if (ch === ' ' || ch === '\u00A0') {
+      toks.push({ sp: [sp], space: true, w: 0, el: null, cut1: false, cutBefore: pendCut, city: citySp });
+      pendCut = false; cur = null;
+    } else {
+      if (!cur || cur.space) { cur = { sp: [], space: false, w: 0, el: null, cutBefore: pendCut, city: citySp }; toks.push(cur); pendCut = false; }
+      else if (citySp) cur.city = true;
+      cur.sp.push(sp);
+    }
+  }
+  if (!toks.length) return;
+
+  /* 2. Мѣрки — прямо съ ленты: шрифтъ, кегль, разрядка, цвѣтъ */
+  var cs = getComputedStyle(depot);
+  var meas = document.createElement('div');
+  meas.style.cssText = 'position:absolute;left:-99999px;top:0;visibility:hidden;white-space:nowrap;';
+  meas.style.fontFamily = cs.fontFamily; meas.style.fontSize = cs.fontSize;
+  meas.style.letterSpacing = cs.letterSpacing; meas.style.color = cs.color;
+  body.appendChild(meas);
+  var lineH = 0;
+  for (i = 0; i < toks.length; i++) {
+    var t = toks[i], mspan = document.createElement('span');
+    mspan.style.display = 'inline-block'; mspan.style.whiteSpace = 'pre';
+    if (t.city) mspan.style.letterSpacing = '0.1em';                 /* городъ разряженъ, какъ на лентѣ */
+    for (q = 0; q < t.sp.length; q++) mspan.appendChild(t.sp[q].cloneNode(true));
+    meas.appendChild(mspan);
+    t.w = mspan.offsetWidth;
+    t.el = mspan;                                   /* обёртка годится и въ полосу — мѣрка съ клонами */
+    if (!t.space && mspan.offsetHeight > lineH) lineH = mspan.offsetHeight;
+  }
+  if (!lineH) lineH = Math.round(parseFloat(cs.fontSize) * 1.2) || 38;
+
+  /* 3. Слова съ ихъ пробѣлами; ведущіе пробѣлы передъ началомъ депеши сълѣтаютъ */
+  var words = [], pend = [];
+  for (i = 0; i < toks.length; i++) {
+    if (toks[i].space) pend.push(toks[i]);
+    else { words.push({ t: toks[i], pre: pend }); pend = []; }
+  }
+
+  /* 4. Укладка строкъ: набиваемъ под завязку, рвёмъ только по пробѣламъ */
+  var maxW = bodyW - 96;   /* запасъ: рваные края (до 26px) + правые отбивки всѣхъ кусковъ (по 10px) */
+  var lines = [], curWords = [], curW = 0;
+  for (i = 0; i < words.length; i++) {
+    var it = words[i], preW = 0;
+    for (q = 0; q < it.pre.length; q++) preW += it.pre[q].w;
+    if (curWords.length && curW + preW + it.t.w > maxW) {
+      if (it.pre.length) it.pre[it.pre.length - 1].cut1 = true;   /* пробѣлъ рвётся на padA+padB */
+      lines.push({ words: curWords });
+      curWords = [it];
+      curW = it.t.w;
+    } else {
+      curWords.push(it);
+      curW += preW + it.t.w;
+    }
+  }
+  if (curWords.length) lines.push({ words: curWords });
+
+  /* 5. Остатки ленты въ противофазѣ: сумма — продѣлъ, стороны чередуются */
+  var mmMin = 3.8, mmMax = 15.2;                     /* 1–4 мм */
+  var band = Math.random() < 0.5 ? 0 : 1, prevR = -1;
+  for (i = 0; i < lines.length - 1; i++) {
+    var nxtW = lines[i + 1].words[0];
+    var cutTok = nxtW.pre.length ? nxtW.pre[nxtW.pre.length - 1] : null;
+    if (!cutTok || !cutTok.cut1) continue;
+    var spW = cutTok.w || 10, r;
+    do { r = band === 0 ? (0.12 + Math.random() * 0.28) : (0.6 + Math.random() * 0.28); }
+    while (Math.abs(r - prevR) < 0.08);
+    prevR = r; band = 1 - band;
+    var padA = Math.max(mmMin, Math.min(mmMax, r * spW));
+    if (spW - padA < mmMin) padA = Math.max(mmMin, spW - mmMin);
+    if (padA > mmMax) padA = mmMax;
+    var padB = Math.max(mmMin, Math.min(mmMax, spW - padA));
+    if (padA + padB > spW) padA = Math.max(1, spW - padB);
+    cutTok.padA = padA; cutTok.padB = padB;
+    lines[i].padA = padA;
+    lines[i + 1].padB = padB;
+  }
+
+  /* 6. Фаза бумаги: лента продолжается от полосы къ полосѣ */
+  var track = document.getElementById('tape-track');
+  var bg = track ? getComputedStyle(track).backgroundImage : '';
+  var tapeH = track ? track.clientHeight : 0;
+  var tileW = tapeH ? 360 * tapeH / 96 : 360;        /* плитка въ масштабѣ ленты въ окнѣ */
+  var cum = 0, phase0 = 0;
+  if (tapeH) {
+    phase0 = ((window.teleX || 0) + depot.offsetLeft) % tileW;
+    if (phase0 < 0) phase0 += tileW;
+  }
+
+  /* 7. Полосы и швы: на мѣстѣ вырѣзанныхъ знаковъ лента резалась —
+        куски съ рваными краями, сдвигомъ и поворотомъ, склеены встыкъ */
+  var rnd = function(a, b) { return a + Math.random() * (b - a); };
+  for (i = 0; i < lines.length; i++) {
+    var ln = lines[i], isLast = (i === lines.length - 1);
+    /* плоскій списокъ знаковъ строки: отбивки, слова, свободные концы */
+    var seq = [];
+    if (i === 0) seq.push({ pad: rnd(8, 38) });                 /* начало ленты — свободный остатокъ */
+    if (ln.padB) seq.push({ pad: ln.padB });
+    for (var w2 = 0; w2 < ln.words.length; w2++) {
+      var wIt = ln.words[w2];
+      for (q = 0; q < wIt.pre.length; q++) if (!wIt.pre[q].cut1) seq.push(wIt.pre[q]);
+      seq.push(wIt.t);
+    }
+    if (!isLast) {
+      if (ln.padA) seq.push({ pad: ln.padA });   /* хвостъ строки — толькоpadA: пробѣлы слѣдующаго слова не дублируются */
+    } else {
+      for (q = 0; q < pend.length; q++) seq.push(pend[q]);
+      seq.push({ pad: rnd(8, 38) });                            /* конецъ ленты — свободный остатокъ */
+    }
+    /* швы: мѣсто вырѣза — граница кусковъ */
+    var segs = [], curSeg = [];
+    for (q = 0; q < seq.length; q++) {
+      if (seq[q].cutBefore && curSeg.length) { segs.push(curSeg); curSeg = []; }
+      curSeg.push(seq[q]);
+    }
+    if (curSeg.length) segs.push(curSeg);
+    if (!segs.length) continue;
+
+    var bleedL = rnd(7, 13), bleedR = rnd(7, 13);
+    var overlap = isLast ? 0 : rnd(3, 5);                   /* нахлёстъ — только шовъ, не буквы */
+    var stripH = tapeH ? Math.max(tapeH, lineH + 3) : (lineH + rnd(3, 6));  /* полоса = лента въ окнѣ */
+    var topPad = Math.max(1, (stripH - lineH) / 2);         /* буквы по центру, какъ въ окнѣ */
+
+    var strip = document.createElement('div');
+    strip.className = 'tg-strip';
+    strip.style.filter = 'none';                            /* тень — по рваному силуэту каждого куска */
+    strip.style.height = stripH + 'px';
+    if (i > 0) strip.style.marginTop = (-overlap).toFixed(1) + 'px';
+    strip.style.zIndex = String(2 + i);
+    var ang = rnd(0.45, 0.6) * (Math.random() < 0.5 ? -1 : 1);
+    strip.style.transform = 'rotate(' + ang.toFixed(2) + 'deg)';
+    strip.style.transformOrigin = '50% 50%';
+
+    var x = bleedL, segIdx;
+    for (segIdx = 0; segIdx < segs.length; segIdx++) {
+      var sg = segs[segIdx], sgW = 0, k2;
+      for (k2 = 0; k2 < sg.length; k2++) sgW += sg[k2].pad ? sg[k2].pad : sg[k2].w;
+      if (segIdx > 0) x -= rnd(1, 2.5);                     /* куски клеятся встыкъ, съ лёгкимъ заходомъ */
+      var sbL = segIdx ? rnd(5, 10) : 0, sbR = rnd(5, 10);
+      var seg = document.createElement('div');
+      seg.className = 'tg-seg';
+      seg.style.cssText = 'position:absolute;top:0;white-space:pre;';
+      seg.style.fontFamily = cs.fontFamily; seg.style.fontSize = cs.fontSize;
+      seg.style.letterSpacing = cs.letterSpacing; seg.style.color = cs.color;
+      seg.style.left = (x - sbL).toFixed(1) + 'px';
+      seg.style.width = (sgW + sbL + sbR).toFixed(1) + 'px';
+      seg.style.height = stripH + 'px';
+      seg.style.padding = topPad.toFixed(1) + 'px ' + sbR.toFixed(1) + 'px 0 ' + sbL.toFixed(1) + 'px';
+      if (segIdx > 0) {
+        var dy = rnd(-1.6, 1.6), dr = rnd(-0.3, 0.3);       /* кусокъ лёгъ чуть криво, какъ живой */
+        seg.style.transform = 'translateY(' + dy.toFixed(2) + 'px) rotate(' + dr.toFixed(2) + 'deg)';
+      }
+      seg.style.filter = 'drop-shadow(-1.5px 1px 2.5px rgba(20,12,2,0.3))';  /* тень влево: срѣзъ не темнитъ правую половину ленты */
+      /* клей: кромки срѣза чуть темнеютъ — бумага пропитана, подтёкъ тянется отъ шва */
+      var glueL = (segIdx > 0) || (i > 0);                    /* левый край — шовъ, кромѣ начала ленты */
+      var glueR = (segIdx < segs.length - 1) || (!isLast);    /* правый край — шовъ, кромѣ конца ленты */
+      if (glueL) {
+        var glu = document.createElement('div');
+        glu.style.cssText = 'position:absolute;top:0;left:0;bottom:0;width:8px;pointer-events:none;' +
+          'background:linear-gradient(to right, rgba(58,42,18,0.16), rgba(58,42,18,0))';
+        seg.appendChild(glu);
+      }
+      if (glueR) {
+        var gur = document.createElement('div');
+        gur.style.cssText = 'position:absolute;top:0;right:0;bottom:0;width:8px;pointer-events:none;' +
+          'background:linear-gradient(to left, rgba(58,42,18,0.17), rgba(58,42,18,0))';
+        seg.appendChild(gur);
+      }
+      if (bg) {
+        seg.style.backgroundImage = bg;
+        seg.style.backgroundRepeat = 'repeat';
+        seg.style.backgroundSize = 'auto 100%';             /* тотъ же масштабъ, что у ленты въ окнѣ */
+        var segLeft = x - sbL;
+        var ph = ((phase0 + cum + segLeft) % tileW + tileW) % tileW;
+        seg.style.backgroundPositionX = (-ph).toFixed(1) + 'px';
+      }
+      for (k2 = 0; k2 < sg.length; k2++) {
+        if (sg[k2].pad) { seg.appendChild(mkPad(sg[k2].pad)); continue; }
+        seg.appendChild(sg[k2].el);
+      }
+      var cl = tgJaggedClip(sgW + sbL + sbR, stripH, sbL, sbR);
+      seg.style.clipPath = cl;
+      seg.style.webkitClipPath = cl;
+      strip.appendChild(seg);
+      x += sgW + sbR;
+    }
+    var stripW = x + bleedR;
+    strip.style.width = stripW.toFixed(1) + 'px';
+    var mLeft = rnd(4, Math.max(4, Math.min(22, bodyW - stripW - 16)));
+    if (stripW + mLeft > bodyW - 16) mLeft = Math.max(4, bodyW - 16 - stripW);   /* правая рамка не таранится */
+    strip.style.marginLeft = mLeft.toFixed(1) + 'px';
+    if (stripW + mLeft > bodyW - 4) { strip.style.maxWidth = (bodyW - 16).toFixed(1) + 'px'; strip.style.overflow = 'hidden'; }   /* страховка: въ крайнихъ случаяхъ бумага подрѣзается, буквы цѣлы */
+    cum += (x - bleedL) + bleedL + bleedR;
+    body.appendChild(strip);
+  }
+  if (meas.parentNode) meas.parentNode.removeChild(meas);
+}
+function tgBirth(depot) {
   if (!telegraphOn || teleRev) return;
+  if (!depot || !depot.querySelector || !depot.querySelector('.tpc')) return;   // прокладки безъ буквъ карточекъ не рождают
+  if (depot.classList && depot.classList.contains('tape-carry')) return;   // переносимый запросъ — не депеша
   var c = tgCol();
   if (!c) return;
   var w = tgMake(tgNum++);
   c.insertBefore(w, c.firstChild);
+  if (depot && typeof tgFeed === 'function') tgFeed(depot, w);   // этапъ 3: депеша уходитъ на разрезку
   var plate = w.querySelector('.tgp');
   plate.style.transform = 'translateY(calc(-100% - 14px))';   /* старт целиком за клавиатурой */
   plate.style.opacity = '0';                                   /* до первого кадра невидима */
@@ -2774,6 +3069,17 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">сборка № 54</div>
+<div class="build-info">Сшивъ № 62</div>
+<style id="tg-strips">
+/* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
+.tg-strip {
+  position: relative;
+  will-change: transform;
+}
+.tg-seg  { box-sizing: border-box; }
+.tg-paper { position: relative; background-repeat: repeat; }
+.tg-line { display: inline-block; white-space: nowrap; }
+.tg-pad  { display: inline-block; vertical-align: bottom; }
+</style>
 </body>
 </html>

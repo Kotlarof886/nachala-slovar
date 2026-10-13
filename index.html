@@ -220,7 +220,7 @@ body.telegraph-on #s-tape { display: none; }
   transition: box-shadow 1.7s ease, border-color 1.7s ease, background 1.7s ease,
               --flame 0.9s ease 0.7s;
   border-color: var(--gold-bright);
-  background: rgba(40, 33, 68, 0.85);
+  background: #262042;
   box-shadow:
     0 0 6px rgba(212, 176, 106, 0.55),
     0 0 22px rgba(212, 176, 106, 0.25);
@@ -451,7 +451,7 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
   margin: 0.8rem 0 0.5rem;
   padding: 16px 16px 22px;
   overflow: hidden;   /* ножки обрезаются по рамкѣ, не выходятъ наружу */
-  background: rgba(26, 21, 53, 0.8);
+  background: #1a1535;   /* непрозрачная — рождающіеся плашки сквозь нея не видны */
   border: 3.0px solid var(--card-border);
   border-radius: 0.375rem;
   box-shadow: 0 0 0 rgba(212, 176, 106, 0);
@@ -464,7 +464,7 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
 }
 .alphabet-bar:hover {
   border-color: var(--gold-bright);
-  background: rgba(40, 33, 68, 0.85);
+  background: #262042;
   box-shadow:
     0 0 6px rgba(212, 176, 106, 0.55),
     0 0 22px rgba(212, 176, 106, 0.25);
@@ -619,7 +619,7 @@ letter:hover { transform: translateY(-2px); border-color: var(--gold); color: va
 }
 body.telegraph-on #tele-tape { display: block; }
 body.telegraph-on #search-box { visibility: hidden; }
-body.telegraph-on #count-note { visibility: hidden; }
+body.telegraph-on #count-note { display: none; }
 #tape-track {
   position: absolute;
   top: 0; left: 0;
@@ -860,42 +860,43 @@ body.telegraph-on .build-info {
 #tg-plates {
   width: 100%;
   overflow: hidden;   /* плашка выѣзжаетъ изъ-подъ клавиатуры */
-  padding-top: 8px;   /* запасъ на подъёмъ — верхняя рамка не срезается */
 }
 html, body { overflow-anchor: none; }   /* рожденіе и открытіе не сдвигаютъ прокрутку вверхъ */
 html { scrollbar-gutter: stable; }      /* полоса прокрутки есть всегда — страница не дёргается */
+body.telegraph-on .alphabet-bar { position: relative; z-index: 6; }  /* панель клавиатуры поверхъ столбца */
+body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* срезъ = нижняя рамка клавиатуры; зазоръ 12px — какъ меж плашками */
 .tgp-w {
-  overflow: hidden;
   height: 0;
+  margin-bottom: 12px;   /* зазоръ меж плашками — постоянный, не анимируется */
   transition: height .55s cubic-bezier(.3,.5,.3,1);
 }
 .tgp {
   display: flex;
   align-items: center;
   height: 52px;
-  margin-bottom: 12px;
   padding: 0 18px;
   position: relative;
-  background: #1a1535;                  /* ровный фонъ, безъ градіента */
+  z-index: 2;
+  background: #1a1535;
   border: 3px solid var(--card-border);
   border-radius: 4px;
   cursor: pointer;
-  transition: transform .55s cubic-bezier(.3,.5,.3,1), opacity .55s ease, box-shadow .3s ease, margin-bottom .55s cubic-bezier(.3,.5,.3,1), border-bottom-left-radius .55s cubic-bezier(.3,.5,.3,1), border-bottom-right-radius .55s cubic-bezier(.3,.5,.3,1);
+  transition: transform .55s cubic-bezier(.3,.5,.3,1), opacity .55s ease, border-bottom-left-radius .2s ease, border-bottom-right-radius .2s ease;
   will-change: transform;
 }
 .tgp-w {
-  transition: height .55s cubic-bezier(.3,.5,.3,1), transform .3s ease, box-shadow .3s ease;
+  transition: height .55s cubic-bezier(.3,.5,.3,1), transform .3s ease, box-shadow .55s ease;
 }
 .tgp-w.entered:hover {
-  transform: translateY(-2px);          /* подъёмъ всей конструкціи — безъ тени */
+  transform: translateY(-2px);          /* подъёмъ всей конструкціи — рамка не срезается */
 }
 .tgp-num {
   position: absolute;
-  left: 18px;
+  left: 11px;
   top: 50%;
   transform: translateY(-50%);
   font-family: 'Gardenia Decor', serif;
-  font-size: 1.05rem;
+  font-size: 1.38rem;
   color: var(--card-border);
   letter-spacing: .5px;
 }
@@ -907,42 +908,43 @@ html { scrollbar-gutter: stable; }      /* полоса прокрутки ес�
   gap: 10px;
   font-size: 1.05rem;
   letter-spacing: 2.5px;
-  color: var(--card-border);
+  color: rgb(182, 154, 98);            /* тотъ же сплошной цветъ, что и гербъ */
   white-space: nowrap;
 }
 .tgp-gerb { height: 30px; width: auto; }
 /* тело карточки: растётъ внизъ, тени-порталы въерх и низъ */
 .tgpc {
-  height: 0;
-  overflow: hidden;
-  transition: height .55s cubic-bezier(.3,.5,.3,1);
-}
-.tgpc-body {
   position: relative;
-  min-height: 150px;
-  margin-bottom: 12px;
-  background: var(--card);             /* тотъ же цвѣтъ, что у словарныхъ карточекъ */
+  z-index: 1;            /* карточка подъ рамкой плашки */
+  height: 0;
+  margin-top: -3px;      /* верхъ карточки заправленъ подъ нижнюю рамку плашки — стыкъ безъ щелей */
+  overflow: hidden;
   border: 3px solid var(--card-border);
   border-top: 0;                       /* верхняя рамка карточки — рамка плашки */
   border-radius: 0 0 4px 4px;
-  transform: translateY(-70px);        /* спрятана за нижней рамкой плашки */
-  opacity: 0;
-  transition: transform .55s cubic-bezier(.3,.5,.3,1), opacity .4s ease;
+  transition: height .55s cubic-bezier(.3,.5,.3,1);
 }
-.tg-open .tgpc-body {
-  transform: translateY(0);            /* выдвигается изъ нижней рамки плашки */
-  opacity: 1;
+.tgpc-body {
+  position: absolute;                  /* рулонные шторы: ткань пришита къ верху окна — содержимое открывается сверху */
+  left: 0;
+  right: 0;
+  top: 0;
+  min-height: 150px;
+  background: var(--card, #1a1520);
+}
+/* слегка заметная тень у раздвинутой карточки: сверху и снизу */
+.tgp-w.tg-open {
+  box-shadow: 0 -9px 22px rgba(0,0,0,.25), 0 9px 22px rgba(0,0,0,.25);
 }
 .tgp-w.tg-open .tgp {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
-  margin-bottom: 0;                    /* сращеніе: безъ зазора между плашкой и карточкой */
 }
-/* узорная подложка — какъ у словарныхъ карточекъ */
+/* узорная подложка карточки — какъ у словарныхъ карточекъ */
 .tgpc-body::before {
   content: '';
   position: absolute;
-  inset: 14px;
+  inset: 10px;
   z-index: 0;
   pointer-events: none;
   background-image: url('images/diamond_tile2.png');
@@ -951,6 +953,7 @@ html { scrollbar-gutter: stable; }      /* полоса прокрутки ес�
   -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 82%);
   mask-image: radial-gradient(ellipse at center, #000 30%, transparent 82%);
 }
+.tgpc-body > * { position: relative; z-index: 1; }
 /* ===== конецъ этапа 2 ===== */
 </style>
 </head>
@@ -2646,12 +2649,14 @@ function tgBirth() {
   var w = tgMake(tgNum++);
   c.insertBefore(w, c.firstChild);
   var plate = w.querySelector('.tgp');
-  var h = plate.offsetHeight + 12;   // высота плашки + зазоръ
+  var h = plate.offsetHeight;        // высота плашки (зазоръ живётъ въ отступахъ, не въ высотѣ)
   plate.style.transform = 'translateY(-110%)';
+  plate.style.opacity = '0';
   requestAnimationFrame(function() {
     requestAnimationFrame(function() {
       w.style.height = h + 'px';
       plate.style.transform = '';
+      plate.style.opacity = '';
     });
   });
   setTimeout(function() {
@@ -2690,7 +2695,8 @@ function tgOpenCard(w) {
     requestAnimationFrame(function() {
       w.classList.add('tg-open');
       w.style.height = 'auto';
-      card.style.height = (card.scrollHeight + 12) + 'px';
+      var tbody = card.querySelector('.tgpc-body');
+      card.style.height = (tbody ? tbody.offsetHeight : card.scrollHeight) + 'px';
       setTimeout(function() { w.classList.remove('tg-busy'); }, 580);
     });
   });
@@ -2714,6 +2720,6 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">сборка № 41</div>
+<div class="build-info">сборка № 44</div>
 </body>
 </html>

@@ -855,6 +855,103 @@ body.telegraph-on .build-info {
   bottom: 6px;
   margin-top: 0;
 }
+
+/* ===== Плашки и карточки телеграфа: этапъ 2 — видъ и рожденіе ===== */
+#tg-plates {
+  width: 100%;
+  overflow: hidden;   /* плашка выѣзжаетъ изъ-подъ клавиатуры */
+  padding-top: 8px;   /* запасъ на подъёмъ — верхняя рамка не срезается */
+}
+html, body { overflow-anchor: none; }   /* рожденіе и открытіе не сдвигаютъ прокрутку вверхъ */
+html { scrollbar-gutter: stable; }      /* полоса прокрутки есть всегда — страница не дёргается */
+.tgp-w {
+  overflow: hidden;
+  height: 0;
+  transition: height .55s cubic-bezier(.3,.5,.3,1);
+}
+.tgp {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  margin-bottom: 12px;
+  padding: 0 18px;
+  position: relative;
+  background: #1a1535;                  /* ровный фонъ, безъ градіента */
+  border: 3px solid var(--card-border);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform .55s cubic-bezier(.3,.5,.3,1), opacity .55s ease, box-shadow .3s ease, margin-bottom .55s cubic-bezier(.3,.5,.3,1), border-bottom-left-radius .55s cubic-bezier(.3,.5,.3,1), border-bottom-right-radius .55s cubic-bezier(.3,.5,.3,1);
+  will-change: transform;
+}
+.tgp-w {
+  transition: height .55s cubic-bezier(.3,.5,.3,1), transform .3s ease, box-shadow .3s ease;
+}
+.tgp-w.entered:hover {
+  transform: translateY(-2px);          /* подъёмъ всей конструкціи — безъ тени */
+}
+.tgp-num {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: 'Gardenia Decor', serif;
+  font-size: 1.05rem;
+  color: var(--card-border);
+  letter-spacing: .5px;
+}
+.tgp-title {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 1.05rem;
+  letter-spacing: 2.5px;
+  color: var(--card-border);
+  white-space: nowrap;
+}
+.tgp-gerb { height: 30px; width: auto; }
+/* тело карточки: растётъ внизъ, тени-порталы въерх и низъ */
+.tgpc {
+  height: 0;
+  overflow: hidden;
+  transition: height .55s cubic-bezier(.3,.5,.3,1);
+}
+.tgpc-body {
+  position: relative;
+  min-height: 150px;
+  margin-bottom: 12px;
+  background: var(--card);             /* тотъ же цвѣтъ, что у словарныхъ карточекъ */
+  border: 3px solid var(--card-border);
+  border-top: 0;                       /* верхняя рамка карточки — рамка плашки */
+  border-radius: 0 0 4px 4px;
+  transform: translateY(-70px);        /* спрятана за нижней рамкой плашки */
+  opacity: 0;
+  transition: transform .55s cubic-bezier(.3,.5,.3,1), opacity .4s ease;
+}
+.tg-open .tgpc-body {
+  transform: translateY(0);            /* выдвигается изъ нижней рамки плашки */
+  opacity: 1;
+}
+.tgp-w.tg-open .tgp {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  margin-bottom: 0;                    /* сращеніе: безъ зазора между плашкой и карточкой */
+}
+/* узорная подложка — какъ у словарныхъ карточекъ */
+.tgpc-body::before {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  z-index: 0;
+  pointer-events: none;
+  background-image: url('images/diamond_tile2.png');
+  background-repeat: repeat;
+  background-size: 20px 20px;
+  -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 82%);
+  mask-image: radial-gradient(ellipse at center, #000 30%, transparent 82%);
+}
+/* ===== конецъ этапа 2 ===== */
 </style>
 </head>
 <body>
@@ -878,6 +975,7 @@ body.telegraph-on .build-info {
   </div>
   <div class="alphabet-bar" id="alphabet-bar"></div>
   <div class="count-note" id="count-note"></div>
+  <div id="tg-plates" aria-hidden="true"></div>
 </header>
 <main>
   <div id="results"></div>
@@ -1398,6 +1496,7 @@ function teleMaintain() {
     if (rightEdge < -80) {
       var second = kids[1];
       var shift = second ? (second.offsetLeft - first.offsetLeft) : first.offsetWidth;
+      if (window.tgBirth && !first.classList.contains('tape-greet')) tgBirth();   // приветствіе плашки не рождаётъ
       inner.removeChild(first);
       teleX += shift;
     } else break;
@@ -1741,6 +1840,7 @@ function teleEndReverse() {
   teleRev = false; revLast = null; revPh = null;
   teleBoost = false;
   teleSpeedMul = 1;
+  if (window.tgClear) tgClear();
   if (teleRAF) { cancelAnimationFrame(teleRAF); teleRAF = null; }
   var track = document.getElementById('tape-track');
   var inner = document.getElementById('tape-inner');
@@ -1768,14 +1868,14 @@ function teleEndReverse() {
    напрямую open-meteo и wttr.in; побѣждаетъ первый успѣшный. Печать ленты погоду НЕ ждётъ:
    если температура ещё не готова — приветствие идётъ безъ нея, а запросъ дозаполняетъ кэшъ фономъ. */
 var wxVal = null, wxTs = 0, wxBusy = false, wxLastTry = 0, wxInjectDone = true;
-/* Кэшъ годенъ 15 минутъ: устарѣвшій градусъ лентѣ не показывается вовсе —
+/* Кэшъ годенъ 10 минутъ: устарѣвшій градусъ лентѣ не показывается вовсе —
    лента едетъ за свежимъ. Печать погоду не ждётъ: температура дописывается
    въ набирающееся приветствіе на лету (wxInject), а если приветствіе уже
    унеслось — ложится въ кэшъ до следующаго пуска. */
-var WX_TTL = 15 * 60 * 1000;
+var WX_TTL = 10 * 60 * 1000;
 function wxLoadCache() {
   try {
-    var raw = localStorage.getItem('barnaul-wx');
+    var raw = localStorage.getItem('barnaul-wx2');
     if (raw) {
       var o = JSON.parse(raw);
       if (o && typeof o.t === 'number' && typeof o.ts === 'number' && Date.now() - o.ts < WX_TTL) {
@@ -1785,14 +1885,14 @@ function wxLoadCache() {
   } catch (e) {}
 }
 function wxSaveCache() {
-  try { localStorage.setItem('barnaul-wx', JSON.stringify({ t: wxVal, ts: wxTs })); } catch (e) {}
+  try { localStorage.setItem('barnaul-wx2', JSON.stringify({ t: wxVal, ts: wxTs })); } catch (e) {}
 }
 function wxDone(ok) {
   wxBusy = false;
   if (ok) {
     wxSaveCache();
     wxInject();   /* градусъ пришёлъ — дописываемъ въ приветствіе, если оно ещё печатается */
-    setTimeout(wxFetch, 15 * 60 * 1000);   /* обновленіе каждые 15 минутъ */
+    setTimeout(wxFetch, 10 * 60 * 1000);   /* обновленіе каждые 10 минутъ */
   } else {
     setTimeout(wxFetch, 10000);   /* повторка черезъ 10 сек. */
   }
@@ -1924,6 +2024,8 @@ function toggleTelegraph() {
     // карта «буква → клавиша» для ударовъ телеграфиста
     teleBuildKeyMap();
     strikeArr = []; strikeIdx = 0;
+    tgNum = 1 + Math.floor(Math.random() * 100); tgClear();
+    var tgc = tgCol(); if (tgc) tgc.style.minHeight = '640px';   /* мѣсто подъ 10 плашекъ — прокрутка сразу */
     requestAnimationFrame(function() {
       var track = document.getElementById('tape-track');
       var inner = document.getElementById('tape-inner');
@@ -2500,12 +2602,118 @@ render();
   }, 3000);
 })();
 
+
+// ===== Плашки и карточки телеграфа: этапъ 2 (видъ, рожденіе, открытіе) =====
+var tgNum = 1 + Math.floor(Math.random() * 100);   // счётчикъ сессіи: стартъ случайно 1-100
+var tgOpenList = [];   // открытые карточки по порядку открытія
+var tgGerb = 'data:image/png;base64,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';
+var tgColCache = null;
+function tgCol() {
+  if (!tgColCache || !tgColCache.isConnected) tgColCache = document.getElementById('tg-plates');
+  return tgColCache;
+}
+function tgClear() {
+  var c = tgCol();
+  if (c) {
+    c.style.minHeight = '';   // резервъ мѣста снятъ
+    var ws = c.querySelectorAll('.tgp-w');
+    for (var q = 0; q < ws.length; q++) if (ws[q]._tgTimer) { clearTimeout(ws[q]._tgTimer); ws[q]._tgTimer = null; }
+    c.innerHTML = '';
+  }
+  tgOpenList.length = 0;
+}
+function tgMake(num) {
+  var w = document.createElement('div');
+  w.className = 'tgp-w';
+  w.innerHTML =
+    '<div class="tgp">' +
+      '<span class="tgp-num">№' + num + '</span>' +
+      '<span class="tgp-title">ТЕЛЕГРАФЪ<img class="tgp-gerb" src="' + tgGerb + '" alt="">БАРНАУЛЪ</span>' +
+    '</div>' +
+    '<div class="tgpc"><div class="tgpc-body"></div></div>';
+  var plate = w.querySelector('.tgp');
+  plate.addEventListener('click', function(ev) {
+    if (w.classList.contains('tg-busy')) return;
+    if (w.classList.contains('tg-open')) { tgCloseCard(w); return; }
+    tgOpenCard(w);
+  });
+  return w;
+}
+function tgBirth() {
+  if (!telegraphOn || teleRev) return;
+  var c = tgCol();
+  if (!c) return;
+  var w = tgMake(tgNum++);
+  c.insertBefore(w, c.firstChild);
+  var plate = w.querySelector('.tgp');
+  var h = plate.offsetHeight + 12;   // высота плашки + зазоръ
+  plate.style.transform = 'translateY(-110%)';
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      w.style.height = h + 'px';
+      plate.style.transform = '';
+    });
+  });
+  setTimeout(function() {
+    w.classList.add('entered');
+    w.style.height = 'auto';   // обёртка живёт своим размеромъ — карточка не обрезается
+  }, 600);
+  // вытѣсненіе: больше 10 — старѣйшая (не открытая) уѣзжаетъ внизъ съ наклономъ
+  var ws = c.querySelectorAll('.tgp-w');
+  if (ws.length > 10) {
+    for (var i = ws.length - 1; i >= 0; i--) {
+      if (!ws[i].classList.contains('tg-open')) { tgRetire(ws[i]); break; }
+    }
+  }
+}
+function tgRetire(w) {
+  w.classList.remove('entered');
+  var wh = w.getBoundingClientRect().height;
+  w.style.height = wh + 'px';
+  void w.offsetHeight;   // фиксируемъ, чтобы transition сработалъ отъ auto
+  var plate = w.querySelector('.tgp');
+  plate.style.transform = 'translateY(30%) rotate(2.5deg)';
+  plate.style.opacity = '0';
+  w.style.height = '0px';
+  setTimeout(function() { if (w.parentNode) w.parentNode.removeChild(w); }, 620);
+}
+function tgOpenCard(w) {
+  w.classList.add('tg-busy');
+  var plate = w.querySelector('.tgp');
+  var card = w.querySelector('.tgpc');
+  if (w._tgTimer) clearTimeout(w._tgTimer);
+  var oi = tgOpenList.indexOf(w);
+  if (oi >= 0) tgOpenList.splice(oi, 1);
+  tgOpenList.push(w);
+  while (tgOpenList.length > 3) tgCloseCard(tgOpenList[0]);   // четвёртая закрываетъ первую открытую
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      w.classList.add('tg-open');
+      w.style.height = 'auto';
+      card.style.height = (card.scrollHeight + 12) + 'px';
+      setTimeout(function() { w.classList.remove('tg-busy'); }, 580);
+    });
+  });
+  w._tgTimer = setTimeout(function() { tgCloseCard(w); }, 5 * 60 * 1000);   // открытая карточка живётъ 5 минутъ
+}
+function tgCloseCard(w) {
+  w.classList.add('tg-busy');
+  var plate = w.querySelector('.tgp');
+  var card = w.querySelector('.tgpc');
+  if (w._tgTimer) { clearTimeout(w._tgTimer); w._tgTimer = null; }
+  var oi = tgOpenList.indexOf(w);
+  if (oi >= 0) tgOpenList.splice(oi, 1);
+  w.classList.remove('tg-open');
+  card.style.height = '0px';
+  setTimeout(function() { w.classList.remove('tg-busy'); }, 580);
+}
+
 </script>
   <!-- Секретный ключ для поисковых роботов -->
 <p style="color: transparent; font-size: 1px; height: 1px; margin: 0; overflow: hidden;">
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">сборка № 35</div>
+<div class="build-info">сборка № 41</div>
 </body>
 </html>

@@ -1,6 +1,6 @@
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №85, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №90, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -19,7 +19,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №85: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №90: Сводный алфавитный лексиконъ</title>
 <style>
 
 @font-face {
@@ -657,6 +657,19 @@ body.telegraph-on #count-note { display: none; }
   padding-right: 64px;
 }
 .tape-msg .tape-city { letter-spacing: 0.1em; }
+/* неподвижная строка печатника: лента стоитъ, буквы въстаютъ въ точкѣ печати */
+#tape-user {
+  position: absolute;
+  right: 76px;
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-family: 'Truetypewriter PolyglOTT', 'Gardenia Decor', serif;
+  font-size: 32px;
+  letter-spacing: 0.04em;
+  color: #241a0e;
+}
+@media (max-width: 560px) { #tape-user { font-size: 22px; } }
 /* ударъ литеръ: каждая буква — свой оттискъ, впечатаанный въ бумагу */
 .tpc {
   display: inline-block;
@@ -1028,7 +1041,7 @@ body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* ср�
 .tgpc-body > * { position: relative; z-index: 1; }
 /* ===== конецъ этапа 2 ===== */
 
-/* ─── Рамки Сшива №85: без растяжения и без плиток ─── */
+/* ─── Рамки Сшива №90: без растяжения и без плиток ─── */
 .rama{position:relative;height:132px;overflow:hidden;margin:0;padding:0;}
 .rama .fill{position:absolute;left:0;right:0;height:26px;background:#2a2345;}
 .rama-verh .fill{top:0;}
@@ -1184,7 +1197,7 @@ function buildAlphabet() {
       spk.className = 'letter key-spec';
       spk.dataset.role = 'spec';
       spk.title = 'Спец-знаки (ϕ): держать нажатой';
-      spk.onmousedown = spk.ontouchstart = function(e) { e.preventDefault(); specHeld = true; spk.classList.add('held'); telePressKey(spk, true); };
+      spk.onmousedown = spk.ontouchstart = function(e) { e.preventDefault(); specHeld = true; spk.classList.add('held'); telePressKey(spk, true); if (telegraphOn) teleFetaHit(Date.now()); };   /* шесть нажатій ϕ подрядъ — пасхалка */
       spk.onmouseup = spk.onmouseleave = spk.ontouchend = spk.ontouchcancel = function() { specHeld = false; spk.classList.remove('held'); };
       specKeyEl = spk;
       div.appendChild(spk);
@@ -1369,7 +1382,7 @@ function eraseSearchOne() {
 }
 // ---------- Телеграфная лента ----------
 var telegraphOn = false;
-var teleRAF = null, teleX = 0, teleQueue = [], teleLast = 0;
+var teleRAF = null, teleX = 0, teleQueue = [], teleLast = 0, teleDone = false, teleSignDone = false, fetaStreak = 0, teleStopped = false, teleDealt = false;
 var strikeKeyMap = null, strikeArr = [], strikeIdx = 0;
 var shiftKeyEl = null, specKeyEl = null, specHeld = false;   // шифтъ и спец-клавиша
 var sndOn = true, teleAudio = null;                          // звонокъ: звукъ включёнъ по умолчанію
@@ -1531,8 +1544,17 @@ function teleShuffle(a) {
 function teleNext() {
   var pool = window.NEWS_DATA || [];
   if (!pool.length) return null;
-  if (!teleQueue.length) teleQueue = teleShuffle(pool.map(function(_, i) { return i; }));
-  return pool[teleQueue.shift()];
+  if (!teleQueue.length && !teleDone && !teleDealt) {   /* одна колода на циклъ: тасуется одинъ разъ */
+    for (var q = 0; q < pool.length; q++) teleQueue.push(q);
+    for (var i = teleQueue.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = teleQueue[i]; teleQueue[i] = teleQueue[j]; teleQueue[j] = t;
+    }
+    teleDealt = true;
+  }
+  if (teleQueue.length) return pool[teleQueue.shift()];
+  if (!teleSignDone) { teleDone = true; teleSignDone = true; return { sign: true }; }   /* колода кончилась — один разъ подпись */
+  return null;   /* дальше депешъ нѣтъ — повторовъ бѣз нужды */
 }
 /* Каждая буква — отдельный «оттискъ»: свой микросдвигъ внизъ, лёгкій наклонъ и неровная
    густота чернилъ. Сдвиги фиксируются при построеніи, поэтому буквы не дрожатъ сами по
@@ -1578,6 +1600,23 @@ function teleAppend() {
   for (var k = 0; k < 3; k++) {
     var m = teleNext();
     if (!m) break;
+    if (m.sign) {
+      var MO = ['ЯНВАРЯ','ФЕВРАЛЯ','МАРТА','АПРЕЛЯ','МАЯ','ИЮНЯ','ИЮЛЯ','АВГУСТА','СЕНТЯБРЯ','ОКТЯБРЯ','НОЯБРЯ','ДЕКАБРЯ'];
+      var d = new Date();
+      var sign = 'БАРНАУЛЪ  ' + d.getDate() + ' ' + MO[d.getMonth()] + '  ПРИЕМЪ ДЕПЕШЪ ОКОНЧЕНЪ. ВСѢ ДЕПЕШИ ВЗЯТЫ ПОДЪ ЗАПИСЬ. ПС ЗАХАРЪ К-ВЪ.';
+      var s2 = document.createElement('span');
+      s2.className = 'tape-msg tape-sign';
+      s2.innerHTML = teleCharsHTML(sign);
+      inner.appendChild(s2);
+      var sp2 = s2.querySelectorAll('.tpc');
+      for (var t2 = 0; t2 < sp2.length; t2++) {
+        var rr2 = teleRec((sp2[t2].textContent || '').charAt(0), sp2[t2], true);
+        rr2.msg = s2;
+        sp2[t2]._trec = rr2;
+        strikeArr.push(rr2);
+      }
+      continue;
+    }
     var s = document.createElement('span');
     s.className = 'tape-msg';
     var html = '';
@@ -1612,13 +1651,14 @@ function teleMaintain() {
     if (rightEdge < -80) {
       var second = kids[1];
       var shift = second ? (second.offsetLeft - first.offsetLeft) : first.offsetWidth;
+      if (first.classList.contains('tape-sign')) teleStopped = true;   /* подпись ушла за левый крайъ — лента замираетъ */
       if (window.tgBirth && !first.classList.contains('tape-greet') && !first.classList.contains('tape-carry')) tgBirth(first);   // приветствіе плашки не рождаётъ
-      inner.removeChild(first);
+      if (first.parentNode === inner) inner.removeChild(first);   /* подпись могла уже переселиться въ карточку */
       teleX += shift;
     } else break;
   }
   var guard = 0;
-  if (!teleRev) while (teleX + inner.offsetWidth < avail * 1.7 && guard++ < 60) teleAppend();
+  if (!teleRev && !teleStopped) while (teleX + inner.offsetWidth < avail * 1.7 && guard++ < 60) teleAppend();
 }
 /* Удары телеграфиста: буква въезжаетъ изъ-за угла рамки — её клавиша проседаетъ
    на мигъ и отпускается. Пробѣлы бьютъ по клавишѣ «<». Буквы, которыхъ на
@@ -1661,7 +1701,35 @@ var curseLevel = 1, curseDecks = { 1: [], 2: [], 3: [] }, curseUntil = 0, curseB
     // curseDecks — тасуемыя колоды фразъ по уровнямъ
 var userStrikeTimes = [];
 var teleCurseActive = false, teleSpeedMul = 1;   // отповедь идётъ — буквы заблокированы; скорость ×1,5
+function teleInjectStop(html) {
+  /* лента стоитъ: буквы печатаются въ неподвижную строку у точки печати — строка растётъ влево */
+  var box = document.getElementById('tape-user');
+  if (!box) {
+    var tapeBox = document.getElementById('tele-tape');
+    if (!tapeBox) return null;
+    box = document.createElement('div'); box.id = 'tape-user'; tapeBox.appendChild(box);
+  }
+  var tmp = document.createElement('span');
+  tmp.innerHTML = html;
+  var inserted = [];
+  while (tmp.firstChild) {
+    var n = tmp.firstChild;
+    tmp.removeChild(n);
+    box.appendChild(n);
+    inserted.push(n);
+  }
+  if (box.children.length > 80) { var oldc = box.firstChild; if (oldc) oldc.remove(); }   /* хвостъ давнымъ-давно за краемъ */
+  var recs = [];
+  for (var i = 0; i < inserted.length; i++) {
+    var ch = (inserted[i].textContent || '').charAt(0);
+    inserted[i].setAttribute('data-tginj', '1');
+    recs.push(teleRec(ch, inserted[i], false));   // вставка не изъ депеши
+  }
+  if (recs.length) strikeArr.splice.apply(strikeArr, [strikeIdx, 0].concat(recs));
+  return { spans: inserted, recs: recs };
+}
 function teleInject(html) {
+  if (teleStopped) return teleInjectStop(html);   /* лента стоитъ — печать въ неподвижную строку */
   var anchor = null, parent;
   var o = strikeArr[strikeIdx];
   if (o && o.span && o.span.isConnected) { anchor = o.span; parent = anchor.parentNode; }
@@ -1685,9 +1753,37 @@ function teleInject(html) {
   if (recs.length) strikeArr.splice.apply(strikeArr, [strikeIdx, 0].concat(recs));
   return { spans: inserted, recs: recs };
 }
+/* фѣта (ϕ): шесть нажатій подрядъ — отповѣдь и финалъ колоды */
+function teleFetaHit(now) {
+  if (teleDone) return;
+  fetaStreak++;
+  if (fetaStreak < 6) return;
+  fetaStreak = 0; userStrikeTimes = [];
+  teleDone = true; teleQueue = [];   /* послѣдняя телеграмма — дальше подпись */
+  /* срезъ депешъ, стоящихъ впрокъ: остаётся только текущая (уже начатая) */
+  var innerF = document.getElementById('tape-inner');
+  if (innerF) {
+    var msgsF = innerF.querySelectorAll('.tape-msg');
+    for (var kF = 0; kF < msgsF.length; kF++) {
+      var mF = msgsF[kF];
+      if (mF._struck) continue;   /* текущая — допечатывается до конца */
+      if (mF.classList.contains('tape-sign') || mF.classList.contains('tape-greet') || mF.classList.contains('tape-carry')) continue;
+      if (mF.parentNode) mF.parentNode.removeChild(mF);   /* недопечатанная впрок — срезается съ ленты */
+    }
+  }
+  var keepF = [], struckF = 0;
+  for (var k2F = 0; k2F < strikeArr.length; k2F++) {
+    var oF = strikeArr[k2F];
+    if (oF.span && oF.span.isConnected) keepF.push(oF);
+    if (k2F < strikeIdx && oF.span && oF.span.isConnected) struckF++;
+  }
+  strikeArr = keepF; strikeIdx = struckF;
+  if (!curseBusy && now > curseUntil) teleCurseOut(now, 'Тебѣ здѣсь быть не надлежитъ!');
+}
 function teleUserType(ch) {
   if (!ch || !strikeKeyMap) return;
   if (ch === ' ') {   // планка печатаетъ пробѣлъ
+    fetaStreak = 0;
     var spEl = strikeKeyMap[' '];
     if (spEl) telePressKey(spEl);
     if (teleCurseActive) return;   // во время отповеди пробѣлъ не встаётъ
@@ -1696,7 +1792,7 @@ function teleUserType(ch) {
     var nowS = Date.now();   // пробѣлъ считается какъ нажатіе: телеграфистъ реагируетъ и на него
     if (userStrikeTimes.length && nowS - userStrikeTimes[userStrikeTimes.length - 1] > 6000) userStrikeTimes = [];
     userStrikeTimes.push(nowS);
-    if (userStrikeTimes.length >= 2 && !curseBusy && nowS > curseUntil) {
+    if (userStrikeTimes.length >= 2 && !curseBusy && nowS > curseUntil && !teleDone) {
       userStrikeTimes = [];
       teleCurseOut(nowS);
     }
@@ -1713,9 +1809,11 @@ function teleUserType(ch) {
   var r = teleInject(teleCharsHTML(out));
   if (r && r.recs.length) strikeIdx += r.recs.length;   // свою клавишу пользователь уже нажалъ самъ
   var now = Date.now();
+  if (out === 'ф') { teleFetaHit(now); return; }   /* фѣта съ физической клавиатуры */
+  fetaStreak = 0;
   if (userStrikeTimes.length && now - userStrikeTimes[userStrikeTimes.length - 1] > 6000) userStrikeTimes = [];
   userStrikeTimes.push(now);
-  if (userStrikeTimes.length >= 2 && !curseBusy && now > curseUntil) {
+  if (userStrikeTimes.length >= 2 && !curseBusy && now > curseUntil && !teleDone) {
     userStrikeTimes = [];
     teleCurseOut(now);
   }
@@ -1748,7 +1846,7 @@ setInterval(function () {
   }
 }, 1000);
 
-function teleCurseOut(now) {
+function teleCurseOut(now, fetaText) {
   curseBusy = true;
   teleCurseActive = true;
    if (now - curseLastTime > 30000) curseStreak = 0;              // перерывъ больше 30 сек — «подрядъ» сгорѣлъ
@@ -1810,7 +1908,7 @@ teleGlowSet(curseLevel);
   }
   var rs = teleInject(teleCharsHTML('\u00A0'));
   var rc = teleInject(teleCharsHTML('/'));               // замыкающий знак
-  var r1 = teleInject(teleCharsHTML(pool[idx] || ''));   // ругательство
+  var r1 = teleInject(teleCharsHTML(fetaText || pool[idx] || ''));   // ругательство
   if (!r1) r1 = { spans: [], recs: [] };                 // страховка отъ нулевой вставки
   var ro = teleInject(teleCharsHTML('/'));               // открывающий знак — первыйъ въ лентѣ
   tgCutSpans([rs, rc, r1, ro], 'curse');                 // вся отповѣдь — вырезается цѣликомъ
@@ -1840,6 +1938,7 @@ function teleStrike() {
       if (o.aux) telePressKey(o.aux, false);   // шифтъ или ϕ нажимаются вмѣстѣ съ буквой
       if (o.mark === 'curse-open') teleSpeedMul = 1.5;               // ругательство — наборъ въ полтора раза быстрее
       if (o.mark === 'curse-close') { teleSpeedMul = 1; teleCurseActive = false; }   // депеша пошла дальше — снова можно печатать
+      if (o.msg) o.msg._struck = true;   /* буква отстучана — депеша запоминается какъ текущая */
       strikeIdx++;
       if (teleBoost && !o.span.closest('.tape-greet') && (o.span.textContent || '').trim()) {
         teleBoost = false;                          // первая видимая буква депеши — обычная скорость
@@ -1869,7 +1968,7 @@ function teleFrame(ts) {
       teleEndReverse();   // стыкъ: скорость нулевая, надпись точно на мѣстѣ покоя
       return;
     }
-  } else {
+  } else if (!teleStopped) {
     teleX -= TELE_SPEED * teleSpeedMul * dt / 1000;
   }
   teleMaintain();
@@ -2246,6 +2345,9 @@ function toggleTelegraph() {
     // карта «буква → клавиша» для ударовъ телеграфиста
     teleBuildKeyMap();
     strikeArr = []; strikeIdx = 0;
+    teleQueue = []; teleDone = false; teleSignDone = false; fetaStreak = 0;   /* новая колода — перемѣшивается заново */
+    teleStopped = false; teleDealt = false;
+    var tuEl = document.getElementById('tape-user'); if (tuEl) tuEl.innerHTML = '';
     tgNum = 1 + Math.floor(Math.random() * 100); tgClear();
     requestAnimationFrame(function() {
       var track = document.getElementById('tape-track');
@@ -2253,7 +2355,8 @@ function toggleTelegraph() {
       if (!track || !inner) return;
       if (!telegraphOn || teleRev) return;   // обратный переходъ успелъ начаться — сшивку отмѣняемъ
       inner.innerHTML = '';
-      teleQueue = []; teleLast = 0;
+      teleQueue = []; teleLast = 0; teleStopped = false; teleDealt = false;
+      var tuEl2 = document.getElementById('tape-user'); if (tuEl2) tuEl2.innerHTML = '';
       /* Бесшовный переходъ: надписи поиска встаютъ на лентѣ тамъ же, гдѣ стояли.
          Фаза бумажной фактуры выравнивается фоновой позицiей — шовъ невиденъ. */
       var hnd = tgHand; tgHand = null;
@@ -3527,6 +3630,12 @@ function tgBirth(depot) {
   if (!telegraphOn || teleRev) return;
   if (!depot || !depot.querySelector || !depot.querySelector('.tpc')) return;   // прокладки безъ буквъ карточекъ не рождают
   if (depot.classList && depot.classList.contains('tape-carry')) return;   // переносимый запросъ — не депеша
+  if (depot.classList && depot.classList.contains('tape-sign')) {           /* подпись — въ последнюю карточку */
+    var csign = tgCol();
+    var top = csign ? csign.querySelector('.tgp-w') : null;
+    if (top && typeof tgFeed === 'function') { tgFeed(depot, top); return; }
+    /* столбъ пустъ — подпись сама станетъ карточкой, идёмъ общимъ путёмъ */
+  }
   var c = tgCol();
   if (!c) return;
   var w = tgMake(tgNum++);
@@ -3609,7 +3718,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 85</div>
+<div class="build-info">Сшивъ № 90</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {

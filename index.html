@@ -1,6 +1,6 @@
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №82, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №85, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -19,7 +19,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №82: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №85: Сводный алфавитный лексиконъ</title>
 <style>
 
 @font-face {
@@ -1028,13 +1028,14 @@ body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* ср�
 .tgpc-body > * { position: relative; z-index: 1; }
 /* ===== конецъ этапа 2 ===== */
 
-/* ─── Рамки Сшива №82: без растяжения и без плиток ─── */
+/* ─── Рамки Сшива №85: без растяжения и без плиток ─── */
 .rama{position:relative;height:132px;overflow:hidden;margin:0;padding:0;}
-.rama .fill{position:absolute;left:0;right:0;height:26px;background:#2a2446;}
+.rama .fill{position:absolute;left:0;right:0;height:26px;background:#2a2345;}
 .rama-verh .fill{top:0;}
 .rama-niz .fill{bottom:0;}
 .rama .cap{position:absolute;top:0;left:50%;transform:translateX(-50%);
-  width:2560px;height:132px;background-repeat:no-repeat;background-position:center top;}
+  width:2560px;height:132px;background-repeat:no-repeat;background-position:center top;
+  background-size:2560px 132px;}
 .rama-verh .cap{background-image:url('images/rama-verh.png');}
 .rama-niz .cap{background-image:url('images/rama-niz.png');}
 </style>
@@ -3495,8 +3496,12 @@ function tgBuildStrips(body, depot, bodyW) {
         var ph = ((phase0 + cum + segLeft) % tileW + tileW) % tileW;
         seg.style.backgroundPositionX = (-ph).toFixed(1) + 'px';
       }
+      var wetL = -1, wetR = -1, k3;                       /* влага у склейки: только крайняя буква */
+      for (k3 = 0; k3 < sg.length; k3++) if (!sg[k3].pad) { wetL = k3; break; }
+      for (k3 = sg.length - 1; k3 >= 0; k3--) if (!sg[k3].pad) { wetR = k3; break; }
       for (k2 = 0; k2 < sg.length; k2++) {
         if (sg[k2].pad) { seg.appendChild(mkPad(sg[k2].pad)); continue; }
+        if ((k2 === wetL && glueL) || (k2 === wetR && glueR)) sg[k2].el.classList.add('wet-end');
         seg.appendChild(sg[k2].el);
       }
       if (!document.body.classList.contains('light')) {   /* лёгкая версія: кромка ровная, clip-path не строится */
@@ -3604,7 +3609,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 82</div>
+<div class="build-info">Сшивъ № 85</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -3615,6 +3620,10 @@ function tgCloseCard(w) {
 .tg-paper { position: relative; background-repeat: repeat; }
 .tg-line { display: inline-block; white-space: nowrap; }
 .tg-pad  { display: inline-block; vertical-align: bottom; }
+
+/* влага у склейки: крайняя буква чуть расплывается и темнеет — больше ничего */
+.tg-seg .tpc.wet-end { filter: blur(0.4px) brightness(0.86); }
+body.light .tg-seg .tpc.wet-end { filter: none !important; }
 
 /* ===== Гиря: лёгкая версія — бумага и печать цѣлы, дорогая отрисовка снята ===== */
 body.light .tab.active { animation: none; box-shadow: none; }                /* лампы вкладокъ — безъ безконечного накала */

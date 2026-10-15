@@ -1,6 +1,6 @@
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №96, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №98, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -19,7 +19,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №96: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №98: Сводный алфавитный лексиконъ</title>
 <style>
 
 @font-face {
@@ -391,6 +391,7 @@ html.tg-sliding { overflow: hidden !important; }   /* на время сколь
 .card-frame {
   animation: card-in 0.5s ease backwards;
 }
+.card-frame.st-quiet { animation: none; }   /* Сшивъ №98: тихая пересборка — при наборе карточки не мигаютъ */
 @media (prefers-reduced-motion: reduce) {
   .card-frame:hover .fr-corner,
   .card-frame:hover .fr-line { animation: none; }
@@ -1217,7 +1218,7 @@ function buildAlphabet() {
   const sp = document.createElement('span');
   sp.className = 'letter key-space';
   sp.title = 'Пробѣлъ';
-  sp.onclick = function() { if (telegraphOn) teleUserType(' '); };   // пробѣлъ печатаетъ пробѣлъ
+  sp.onclick = function() { setLetter(' '); };   // Сшивъ №98: пробѣлъ — единый путь (запросъ или эфиръ)
   srow.appendChild(sp);
   const bell = document.createElement('span');
   bell.className = 'letter key-bell held';   // звукъ по умолчанію включёнъ
@@ -1328,34 +1329,53 @@ function closePdf() {
   render();
 }
 
-function setLetter(ch) {
-  if (telegraphOn) { teleUserType(ch); return; }   // въ эфирѣ буква въстаётъ въ ленту
-  currentLetter = ch;
+/* Сшивъ №98: единая клавиатура — экранная буква допечатываетъ запросъ (какъ физическая),
+   физическая даётъ оттискъ экранной клавишѣ. Одинъ путь набора — kbType. */
+function kbType(ch) {
+  var keyEl = (strikeKeyMap && strikeKeyMap[ch]) || document.querySelector('#alphabet-bar .letter[data-letter="' + ch + '"]');
+  if (!keyEl && ch === ' ') keyEl = document.querySelector('#alphabet-bar .key-space');
+  if (keyEl) telePressKey(keyEl); else sndClick(true);   // клавиш безъ «Ъ/Ы/Ь/Ё/ѣ» — оттиска нѣтъ, звукъ есть
   document.querySelectorAll('#alphabet-bar .letter').forEach(el => {
     var L = el.dataset.letter || null;
-    el.classList.toggle('active', L ? L === ch : (ch === null && el.classList.contains('key-vs')));
+    el.classList.toggle('active', L ? L === ch : false);
   });
-  if (ch) {
-    secretBuf = (secretBuf + ch).slice(-SECRET.length);
-    if (secretBuf === SECRET) { showPdf(); return; }
-    // машинка у строки поиска: пока фокуса нѣтъ — активируемъ ленту, надпись уйдётъ влѣво
-    if (document.activeElement !== searchBox) {
-      if ('ontouchstart' in window) sTapeFocus(); else searchBox.focus();
-    }
-  } else {
-    secretBuf = '';   // «Всѣ» сбрасывает набор
-    if (searchBox.value) { searchBox.value = ''; sPrevLen = 0; }   // и строку поиска чиститъ тоже
+  secretBuf = (secretBuf + ch).slice(-SECRET.length);
+  if (secretBuf === SECRET) { showPdf(); return; }
+  if (document.activeElement !== searchBox) {
+    if ('ontouchstart' in window) sTapeFocus(); else searchBox.focus();
   }
+  searchBox.value = (searchBox.value || '') + ch;
   render();
-  if (ch) sTapePush(ch); else sTapeClearAll();   // буква — и на лентѣ поиска: единый станокъ
+  sTapePush(ch, true);   // тихо: щелчокъ уже далъ оттискъ клавиши — двойного звука нѣтъ
+}
+function setLetter(ch) {
+  if (telegraphOn) { teleUserType(ch); return; }   // въ эфирѣ буква въстаётъ въ ленту
+  if (ch) { kbType(ch); return; }   /* Сшивъ №98: буква допечатываетъ запросъ */
+  /* «Всѣ»: сброс запроса и буквенного фильтра */
+  currentLetter = null;
+  document.querySelectorAll('#alphabet-bar .letter').forEach(el => {
+    var L = el.dataset.letter || null;
+    el.classList.toggle('active', L ? false : el.classList.contains('key-vs'));
+  });
+  secretBuf = '';
+  if (searchBox.value) { searchBox.value = ''; sPrevLen = 0; }
+  render();
+  sTapeClearAll();
 }/* ---------- Стираніе въ поискѣ: клавиша шифта ---------- */
 function eraseSearchOne() {
   var v = searchBox.value || '';
   if (v) {
     searchBox.value = v.slice(0, -1);
     sPrevLen = searchBox.value.length;
+    /* Сшивъ №98: подсветка клавиши — по последней оставшейся буквѣ запроса */
+    var lastCh = (searchBox.value.slice(-1) || '').toUpperCase();
+    document.querySelectorAll('#alphabet-bar .letter').forEach(el => {
+      var L = el.dataset.letter || null;
+      el.classList.toggle('active', L ? L === lastCh : (lastCh ? false : el.classList.contains('key-vs')));
+    });
     render();
     sTapeSync();   // лента поиска перестраивается по строке
+    return;
     return;
   }
   /* лента поиска: если на ней есть литеры — стираемъ ровно одну (единый станокъ) */
@@ -1727,7 +1747,7 @@ var teleCurseActive = false, teleSpeedMul = 1;   // отповедь идётъ 
 function teleInject(html) {
   var anchor = null, parent;
   var o = strikeArr[strikeIdx];
-  /* Сшивъ №96: пока отчётъ едетъ — якорь отчёта не берётся: буквы печатаются въ строку печати */
+  /* Сшивъ №98: пока отчётъ едетъ — якорь отчёта не берётся: буквы печатаются въ строку печати */
   if (o && o.span && o.span.isConnected && !(o.msg && o.msg.classList.contains('tape-sign'))) { anchor = o.span; parent = anchor.parentNode; }
   else {
     /* якоря нѣтъ: строка печати живётъ — какъ въ словарѣ;
@@ -1768,7 +1788,7 @@ function teleInject(html) {
     var lastCh = inserted[inserted.length - 1];
     if (tbR && lastCh) {
       var wantR = tbR.clientWidth - 6;   /* точка печати (GAP = 6, какъ въ словарѣ) */
-      if (!teleStopped) {   /* Сшивъ №96: отчётъ едетъ — тихая прокладка безъ клавиши и безъ звука */
+      if (!teleStopped) {   /* Сшивъ №98: отчётъ едетъ — тихая прокладка безъ клавиши и безъ звука */
         var deltaR = wantR - (teleX + lastCh.offsetLeft + lastCh.offsetWidth);
         if (deltaR > 0.5) {
           var spacerEl = document.createElement('span');
@@ -2518,9 +2538,15 @@ function matchDefn(e, qt) {
 }
 
 // ---------- Рендер ----------
+/* Сшивъ №98: анімація въѣзда — только при смѣнѣ запроса; при допечатыванії и стираніи
+   карточки обновляются тихо, безъ миганія. Разысканія переживаютъ пересборку (кэшъ). */
+var _lastRaw = null, _renderAnim = true, _slotCache = new Map();
 function render() {
   const raw = searchBox.value.trim();
   const out = resultsEl;
+  _renderAnim = (_lastRaw === null) || !raw || !_lastRaw ||
+    !(raw.indexOf(_lastRaw) === 0 || _lastRaw.indexOf(raw) === 0);
+  _lastRaw = raw;
   out.innerHTML = '';
   if (currentTab === 'online') {
     if (!raw) { out.innerHTML = '<p class="empty">Введите слово для поиска в старинных словарях.</p>'; countNote.textContent = ''; return; }
@@ -2530,10 +2556,10 @@ function render() {
   }
   const qt = normKey(raw).split(' ').filter(Boolean);
   let pool = DICT;
-  if (currentLetter === '\u0463') pool = pool.filter(e => String(e.w).indexOf('\u0463') >= 0);
-  else if (currentLetter) pool = pool.filter(e => e.l === currentLetter);
-
+  /* Сшивъ №98: буквенный фильтръ — только при пустом запросѣ; наборъ идётъ въ запросъ */
   if (!qt.length) {
+    if (currentLetter === '\u0463') pool = pool.filter(e => String(e.w).indexOf('\u0463') >= 0);
+    else if (currentLetter) pool = pool.filter(e => e.l === currentLetter);
     countNote.textContent = 'Статей: ' + pool.length;
     out.innerHTML = pool.slice(0, 80).map((e, i) => cardHtml(e, '', i)).join('');
     if (pool.length > 80) out.insertAdjacentHTML('beforeend', '<p class="count-note">Показаны первые 80 статей из ' + pool.length + '. Уточните поиск или выберите букву.</p>');
@@ -2594,7 +2620,7 @@ function defParts(e, q) {
 }
 
 function cardHtml(e, q, idx) {
-  return '<div class="card-frame">' +
+  return '<div class="card-frame' + (_renderAnim ? '' : ' st-quiet') + '">' +
     '<div class="fr-corner tl"></div><div class="fr-corner tr"></div>' +
     '<div class="fr-corner br"></div><div class="fr-corner bl"></div>' +
     '<span class="fr-line ht1"></span><span class="fr-line ht2"></span><span class="fr-line ht3"></span><span class="fr-line ht4"></span>' +
@@ -2605,22 +2631,48 @@ function cardHtml(e, q, idx) {
     '<div class="entry-word">' + highlight(e.w, q) + '</div>' +
     '<div class="entry-def">' + defParts(e, q) + '</div>' +
     '<button class="wiktionary-btn" data-w="' + escapeHtml(e.w) + '">Уточнить у адъютантовъ</button>' +
-    '<div class="online-results" id="onl-' + idx + '"></div>' +
+    '<div class="online-results" data-w="' + escapeHtml(e.w) + '" id="onl-' + idx + '">' + slotInner(e.w) + '</div>' +
     '</div></div></div>';
 }
 
+/* Сшивъ №98: слотъ разысканій строится изъ кэша — переживаетъ пересборку списка */
+function slotInner(w) {
+  var rec = _slotCache.get(w);
+  if (!rec) return '';
+  var wm = toModern(w);
+  var html = rec.links || '';
+  if (rec.busy) html += '<div class="src-block"><h4>Краткая справка</h4><p class="loading">Ищу…</p></div>';
+  else if (rec.wiki === 'miss') html += '<div class="src-block"><h4>Краткая справка</h4><p class="empty">Въ словарѣ Брокгауза и Ефрона такой статьи нѣтъ. Разысканія выше по-прежнему живы.</p></div>';
+  else if (rec.wiki === 'err') html += '<div class="src-block"><h4>Краткая справка</h4><p class="empty">Эфиръ глухъ — въ этотъ мигъ отвѣта не дождались. Повторите попытку; разысканія выше всегда живы.</p></div>';
+  else if (rec.wiki) {
+    var r = rec.wiki, whtml = '';
+    if (r.th) whtml += '<img src="' + r.th + '" style="float:right;max-width:120px;margin:0 0 8px 12px;border-radius:6px;">';
+    whtml += '<p>' + escapeHtml(r.ex) + '</p>';
+    if (r.url) whtml += '<p><a href="' + r.url + '" target="_blank" rel="noopener">Читать в Википедии</a></p>';
+    html += '<div class="src-block"><h4>Краткая справка</h4>' + whtml + '</div>';
+  }
+  return html;
+}
+function liveSlotByWord(w) {
+  var slots = document.querySelectorAll('.online-results[data-w]');
+  for (var q = 0; q < slots.length; q++) if (slots[q].getAttribute('data-w') === w) return slots[q];
+  return null;
+}
 function bindButtons(out, list) {
   out.querySelectorAll('.wiktionary-btn').forEach((b, i) => {
     const w = b.dataset.w || (list[i] && list[i].w) || '';
     const wm = toModern(w);
+    /* Сшивъ №98: кнопка не отнимаетъ фокусъ у строки — отложенное стираніе не сжигаетъ списокъ */
+    b.addEventListener('mousedown', function (ev) { ev.preventDefault(); });
     b.addEventListener('click', async () => {
       const slot = b.closest('.entry').querySelector('.online-results');
       if (!slot) return;
-      if (slot.innerHTML.trim()) { slot.innerHTML = ''; return; }
+      if (slot.innerHTML.trim()) { slot.innerHTML = ''; _slotCache.delete(w); return; }   /* закрыліе чистить кэшъ */
       slot.innerHTML = '<div class="src-block"><h4>Разысканія господъ адъютантовъ</h4><ul>'
         + '<li><a href="https://yandex.ru/search/?text=' + encodeURIComponent(wm) + '" target="_blank" rel="noopener">Корнетъ Яндексовскій — «' + escapeHtml(wm) + '»</a></li>'
         + '<li><a href="https://www.google.com/search?q=' + encodeURIComponent(wm) + '" target="_blank" rel="noopener">Корнетъ Гуголидзе — «' + escapeHtml(wm) + '»</a></li>'
         + '</ul></div>';
+      _slotCache.set(w, { links: slot.innerHTML, wiki: null, busy: true });   /* разысканія переживаютъ пересборку */
       const wikiBlock = document.createElement('div');
       wikiBlock.className = 'src-block';
       wikiBlock.innerHTML = '<h4>Краткая справка</h4><p class="loading">Ищу…</p>';
@@ -2641,17 +2693,17 @@ function bindButtons(out, list) {
           }
           cache.set(wm, rec);
         }
-        if (rec === 'miss') {
-          wikiBlock.innerHTML = '<p class="empty">Въ словарѣ Брокгауза и Ефрона такой статьи нѣтъ. Разысканія выше по-прежнему живы.</p>';
-        } else {
-          let whtml = '';
-          if (rec.th) whtml += '<img src="' + rec.th + '" style="float:right;max-width:120px;margin:0 0 8px 12px;border-radius:6px;">';
-          whtml += '<p>' + escapeHtml(rec.ex) + '</p>';
-          if (rec.url) whtml += '<p><a href="' + rec.url + '" target="_blank" rel="noopener">Читать в Википедии</a></p>';
-          wikiBlock.innerHTML = whtml;
-        }
+        const entry = _slotCache.get(w);
+        if (!entry) return;   /* слотъ закрыли, пока шла справка — не воскресаемъ */
+        entry.wiki = rec; entry.busy = false;
+        const live = liveSlotByWord(w);
+        if (live) live.innerHTML = slotInner(w);   /* справка встаётъ въ живую карточку */
       } catch (e) {
-        wikiBlock.innerHTML = '<p class="empty">Эфиръ глухъ — въ этотъ мигъ отвѣта не дождались. Повторите попытку; разысканія выше всегда живы.</p>';
+        const entry = _slotCache.get(w);
+        if (!entry) return;
+        entry.wiki = 'err'; entry.busy = false;
+        const live = liveSlotByWord(w);
+        if (live) live.innerHTML = slotInner(w);
       }
     });
   });
@@ -3113,13 +3165,13 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
       else if (mode === 'idle') setTarget(xIdle());
     } else { mode = 'focused'; tape.classList.add('s-on'); setTarget(xType()); }
   };
-  window.sTapePush = function (ch) {
+  window.sTapePush = function (ch, quiet) {   /* Сшивъ №98: тихій режимъ — щелчокъ даётъ оттискъ клавиши */
     if (!ch || mode === 'hidden') return;
     layout();
     if (mode === 'clear') endClear(true);
     msg.appendChild(mkSp(ch));
     mode = 'focused'; tape.classList.add('s-on');
-    sound(); window.sTyping(); setTarget(xType());
+    if (!quiet) sound(); window.sTyping(); setTarget(xType());
   };
   window.sTapePop = function () {
     if (!msg.childNodes.length || mode === 'hidden') return;
@@ -3291,6 +3343,38 @@ searchBox.addEventListener('focus', sTapeFocus);
 searchBox.addEventListener('blur', sTapeBlur);
 wxStart();
 sTapeReset();
+
+/* ---------- Сшивъ №98: единая физическая клавиатура ----------
+   Каждая буква (кириллица или латиница QWERTY→ЙЦУКЕН) даётъ оттискъ экранной
+   клавишѣ, допечатываетъ запросъ и едетъ на лентѣ поиска — одинъ путь съ экранной.
+   Backspace стираетъ по буквѣ (какъ экранный шифтъ). Ctrl/Alt/Meta и чужіе поля
+   ввода не трогаются — вставка (Ctrl+V) живётъ нативно. */
+var KB_RU = { q:'Й',w:'Ц',e:'У',r:'К',t:'Е',y:'Н',u:'Г',i:'Ш',o:'Щ',p:'З','[':'Х',']':'Ъ',a:'Ф',s:'Ы',d:'В',f:'А',g:'П',h:'Р',j:'О',k:'Л',l:'Д',';':'Ж',"'":'Э',z:'Я',x:'Ч',c:'С',v:'М',b:'И',n:'Т',m:'Ь',',':'Б','.':'Ю','`':'Ё' };
+document.addEventListener('keydown', function (e) {
+  if (e.ctrlKey || e.altKey || e.metaKey) return;   // сочетанія — не наши
+  var ae = document.activeElement;
+  if (ae && (ae.tagName === 'BUTTON' || ae.tagName === 'A')) return;   /* Сшивъ №98: Tab-навигація живётъ — пробѣлъ жмётъ кнопку */
+  if (ae && ae !== searchBox && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
+  if (e.key === 'Backspace') {
+    if (telegraphOn) return;   // въ эфирѣ стираніе идётъ своимъ чередомъ
+    e.preventDefault();
+    var bkEl = document.querySelector('#alphabet-bar .key-shift');
+    if (bkEl) telePressKey(bkEl, true); else sndClick(true);
+    eraseSearchOne();
+    return;
+  }
+  var ch = null;
+  if (e.key === ' ') ch = ' ';
+  else if (e.key && e.key.length === 1) {
+    var low = e.key.toLowerCase();
+    if (KB_RU[low] !== undefined) ch = KB_RU[low];   // латиница → ЙЦУКЕН
+    else if (/[а-яёѣ]/i.test(low)) ch = low.toUpperCase();
+  }
+  if (!ch) return;
+  e.preventDefault();   // строка не печатаетъ сама — единый путь въ kbType, дублей нѣтъ
+  if (telegraphOn) { teleUserType(ch); return; }
+  kbType(ch);
+});
 buildAlphabet();
 render();
 /* Ссылки разысканій не теряют клик: нажатіе на нихъ не уводитъ фокусъ отъ строки,
@@ -3751,7 +3835,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 96</div>
+<div class="build-info">Сшивъ № 98</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {

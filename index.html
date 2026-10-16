@@ -1,6 +1,6 @@
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №98, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №99, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -19,7 +19,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №98: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №99: Сводный алфавитный лексиконъ</title>
 <style>
 
 @font-face {
@@ -1164,7 +1164,7 @@ function buildAlphabet() {
       sh.title = '';
       sh.onclick = function() {
         telePressKey(sh);   // оттискъ и щелчокъ — въ обоихъ режимахъ
-        if (!telegraphOn && !teleRev) eraseSearchOne();   // въ поискѣ — стирание последней литеры
+        if (!telegraphOn && !teleRev) { eraseSearchOne(); window.kbDismissNative(); }   /* №98: въ поискѣ — стирание литеры; №99: шифтъ сворачиваетъ нативную */
       };
       shiftKeyEl = sh;
       div.appendChild(sh);
@@ -1331,7 +1331,7 @@ function closePdf() {
 
 /* Сшивъ №98: единая клавиатура — экранная буква допечатываетъ запросъ (какъ физическая),
    физическая даётъ оттискъ экранной клавишѣ. Одинъ путь набора — kbType. */
-function kbType(ch) {
+function kbType(ch, fromScreen) {   /* Сшивъ №99: fromScreen — вызовъ съ экранной клавиатуры (сворачиваетъ нативную) */
   var keyEl = (strikeKeyMap && strikeKeyMap[ch]) || document.querySelector('#alphabet-bar .letter[data-letter="' + ch + '"]');
   if (!keyEl && ch === ' ') keyEl = document.querySelector('#alphabet-bar .key-space');
   if (keyEl) telePressKey(keyEl); else sndClick(true);   // клавиш безъ «Ъ/Ы/Ь/Ё/ѣ» — оттиска нѣтъ, звукъ есть
@@ -1344,13 +1344,16 @@ function kbType(ch) {
   if (document.activeElement !== searchBox) {
     if ('ontouchstart' in window) sTapeFocus(); else searchBox.focus();
   }
+  window._kbSelf = true;
   searchBox.value = (searchBox.value || '') + ch;
+  window._kbSyncPrev(); window._kbSelf = false;
   render();
+  if (fromScreen) window.kbDismissNative();   /* Сшивъ №99: экранная буква сворачиваетъ нативную клавиатуру */
   sTapePush(ch, true);   // тихо: щелчокъ уже далъ оттискъ клавиши — двойного звука нѣтъ
 }
 function setLetter(ch) {
   if (telegraphOn) { teleUserType(ch); return; }   // въ эфирѣ буква въстаётъ въ ленту
-  if (ch) { kbType(ch); return; }   /* Сшивъ №98: буква допечатываетъ запросъ */
+  if (ch) { kbType(ch, true); return; }   /* Сшивъ №98: буква допечатываетъ запросъ; №99 — съ экранной сворачиваемъ нативную */
   /* «Всѣ»: сброс запроса и буквенного фильтра */
   currentLetter = null;
   document.querySelectorAll('#alphabet-bar .letter').forEach(el => {
@@ -1358,15 +1361,18 @@ function setLetter(ch) {
     el.classList.toggle('active', L ? false : el.classList.contains('key-vs'));
   });
   secretBuf = '';
-  if (searchBox.value) { searchBox.value = ''; sPrevLen = 0; }
+  if (searchBox.value) { window._kbSelf = true; searchBox.value = ''; sPrevLen = 0; window._kbSyncPrev(); window._kbSelf = false; }
   render();
   sTapeClearAll();
+  window.kbDismissNative();   /* Сшивъ №99: «Всѣ» сворачиваетъ нативную клавиатуру */
 }/* ---------- Стираніе въ поискѣ: клавиша шифта ---------- */
 function eraseSearchOne() {
   var v = searchBox.value || '';
   if (v) {
+    window._kbSelf = true;
     searchBox.value = v.slice(0, -1);
     sPrevLen = searchBox.value.length;
+    window._kbSyncPrev(); window._kbSelf = false;
     /* Сшивъ №98: подсветка клавиши — по последней оставшейся буквѣ запроса */
     var lastCh = (searchBox.value.slice(-1) || '').toUpperCase();
     document.querySelectorAll('#alphabet-bar .letter').forEach(el => {
@@ -2226,6 +2232,7 @@ function teleEndReverse() {
   if (tgColEl) { tgColEl.style.transform = ''; tgColEl.removeAttribute('data-tgdy'); }
 document.body.classList.remove('telegraph-on');
   searchBox.value = ''; sPrevLen = 0;
+  window._kbSyncPrev();   /* Сшивъ №99: строку писали мимо input */
   if (window.sTapeRestore) window.sTapeRestore(phase, drift);
   tgColSlideOut(function() {     /* плашки уплываютъ внизъ; статейки — по ихъ концѣ */
     resultsEl.style.display = '';
@@ -2386,6 +2393,7 @@ function toggleTelegraph() {
   if (telegraphOn) {
     if (window.sTapeHideInstant) window.sTapeHideInstant();   // поисковая лента отдаётъ надписи и мгновенно уходитъ
     searchBox.value = ''; sPrevLen = 0;
+    window._kbSyncPrev();   /* Сшивъ №99: строку писали мимо input */
     // гасимъ всё, что горѣло до эфира
     document.querySelectorAll('#alphabet-bar .letter').forEach(function(el) {
       el.classList.remove('active', 'lit');
@@ -3190,6 +3198,8 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
     setTarget(msg.childNodes.length ? xType() : xFocus());
   };
   window.sTapeBlur = function () {
+    /* Сшивъ №99: сознательное сворачиваніе нативной клавиатуры — стираніе молчитъ */
+    if (window._kbDeliberate) { window._kbDeliberate = 0; return; }
     if (mode === 'hidden') return;
     if (sT.blurTimer) { clearTimeout(sT.blurTimer); sT.blurTimer = null; }
     if (!msg.childNodes.length) { mode = 'idle'; setTarget(xIdle()); }
@@ -3216,7 +3226,9 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
     var tW = msg.offsetWidth, phW = ph.offsetWidth, w = W();
     var tmp = [];
     flushDying();
+    window._kbSelf = true;
     searchBox.value = ''; sPrevLen = 0;
+    window._kbSyncPrev(); window._kbSelf = false;
     render();
     if (dir > 0) {   /* короткій текстъ: лента едетъ вправо, надпись въезжаетъ слѣва */
       var z = Math.round(w / 2 - phW / 2 - tW + 40);
@@ -3310,7 +3322,7 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
   window.sTapeIdleRect = function () { return xIdle() + ph.offsetLeft; };
   window.sTapeReset = function () { mode = 'idle'; setTarget(xIdle()); };
   window.sTapeClearAll = function () {
-    if (searchBox.value) searchBox.value = '';
+    if (searchBox.value) { window._kbSelf = true; searchBox.value = ''; window._kbSyncPrev(); window._kbSelf = false; }
     if (mode === 'hidden') { msg.innerHTML = ''; return; }
     if (msg.childNodes.length) { startClear((msg.offsetWidth >= W() / 2) ? -1 : 1); return; }
     msg.innerHTML = '';
@@ -3343,6 +3355,47 @@ searchBox.addEventListener('focus', sTapeFocus);
 searchBox.addEventListener('blur', sTapeBlur);
 wxStart();
 sTapeReset();
+
+/* ---------- Сшивъ №99: мобильные клавиатуры ----------
+   Экранная клавиша сворачиваетъ нативную клавиатуру телефона: строка уходитъ
+   изъ фокуса сознательно, отложенное стираніе при этомъ молчитъ — запросъ и
+   лента не сгораютъ. Вернуть нативную — ткнуть въ окно поиска.
+   Оттиски съ нативной клавиатуры: слушатель input свѣряетъ строку съ прошлымъ
+   значеніемъ — добавленная буква оттискиваетъ свою экранную клавишу (въ т.ч.
+   «Unidentified» Android/iOS), стёртая — шифтомъ. */
+window._kbCoarse = (function () {
+  try { if (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) return true; } catch (e) {}
+  return ('ontouchstart' in window);
+})();
+window._kbDeliberate = 0;
+window._kbSelf = false;
+window._kbPrevVal = searchBox.value || '';
+window._kbSyncPrev = function () { window._kbPrevVal = searchBox.value || ''; };   /* синхронизація послѣ программной записи */
+window._kbStrikeChar = function (ch, force) {
+  var u = (ch || '').toUpperCase();
+  var keyEl = (strikeKeyMap && strikeKeyMap[u]) || document.querySelector('#alphabet-bar .letter[data-letter="' + u + '"]');
+  if (!keyEl && ch === ' ') keyEl = document.querySelector('#alphabet-bar .key-space');
+  if (keyEl) telePressKey(keyEl, !!force); else sndClick(true);
+};
+window.kbDismissNative = function () {
+  if (!window._kbCoarse) return;               /* на компьютерѣ фокусъ не трогаемъ */
+  if (document.activeElement === searchBox) {
+    window._kbDeliberate = 1;                  /* бронь: отложенное стираніе молчитъ */
+    searchBox.blur();                          /* нативная клавиатура сворачивается */
+  }
+};
+searchBox.addEventListener('input', function () {
+  if (window._kbSelf) return;                  /* нашъ путь — оттискъ уже далъ kbType */
+  var nv = searchBox.value || '', pv = window._kbPrevVal || '';
+  if (nv.length > pv.length && nv.lastIndexOf(pv, 0) === 0) {
+    var add = nv.slice(pv.length);
+    for (var i = 0; i < add.length; i++) window._kbStrikeChar(add[i]);
+  } else if (nv.length < pv.length) {
+    var bkEl = document.querySelector('#alphabet-bar .key-shift');
+    if (bkEl) telePressKey(bkEl, true); else sndClick(true);
+  }
+  window._kbSyncPrev();
+});
 
 /* ---------- Сшивъ №98: единая физическая клавиатура ----------
    Каждая буква (кириллица или латиница QWERTY→ЙЦУКЕН) даётъ оттискъ экранной
@@ -3835,7 +3888,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 98</div>
+<div class="build-info">Сшивъ № 99</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {

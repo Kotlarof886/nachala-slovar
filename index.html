@@ -1,6 +1,6 @@
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №99, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №102, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -19,7 +19,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №99: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №102: Сводный алфавитный лексиконъ</title>
 <style>
 
 @font-face {
@@ -2242,9 +2242,10 @@ document.body.classList.remove('telegraph-on');
   });
 }
 /* ---------- Метеосводка для приветствия: «Барнаулъ, дата, температура» ----------
-   open-meteo изъ россійскихъ сѣтей часто молчитъ (блокировка), wttr.in работаетъ «черезъ разъ».
-   Поэтому запросъ идётъ ПАРАЛЛЕЛЬНО по нѣсколькимъ путямъ — corsproxy.io, allorigins, r.jina.ai,
-   напрямую open-meteo и wttr.in; побѣждаетъ первый успѣшный. Печать ленты погоду НЕ ждётъ:
+   Сшивъ №102: всѣ маршруты бегутъ гонкой — open-meteo, MET Norway и запасные
+   черезъ проксіи (corsproxy.io, allorigins, codetabs); побѣждаетъ первый валидный отвѣтъ.
+   Прокси кэшируютъ ответы, потому въ ихъ адреса вшивается помѣтка _cb, бьющая кэшъ:
+   вчеращній дневной градусъ больше не доедетъ первымъ. Печать ленты погоду НЕ ждётъ:
    если температура ещё не готова — приветствие идётъ безъ нея, а запросъ дозаполняетъ кэшъ фономъ. */
 var wxVal = null, wxTs = 0, wxBusy = false, wxLastTry = 0, wxInjectDone = true;
 /* Кэшъ годенъ 10 минутъ: устарѣвшій градусъ лентѣ не показывается вовсе —
@@ -2276,13 +2277,13 @@ function wxDone(ok) {
     setTimeout(wxFetch, 10000);   /* повторка черезъ 10 сек. */
   }
 }
-function wxTry(url, parse, T) {
+function wxTry(url, parse, T, name) {
   return new Promise(function (res) {
     var fin = false;
     var ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
     var to = setTimeout(function () {
       if (ctl) { try { ctl.abort(); } catch (e) {} }
-      if (!fin) { fin = true; res(null); }
+      if (!fin) { fin = true; res({ v: null, name: name }); }
     }, T);
     fetch(url, ctl ? { signal: ctl.signal } : undefined)
       .then(function (r) { return r.ok ? r.text() : null; })
@@ -2290,9 +2291,9 @@ function wxTry(url, parse, T) {
         clearTimeout(to);
         if (fin) return; fin = true;
         var v = t ? parse(String(t)) : null;
-        res(v);
+        res({ v: v, name: name });
       })
-      .catch(function () { clearTimeout(to); if (fin) return; fin = true; res(null); });
+      .catch(function () { clearTimeout(to); if (fin) return; fin = true; res({ v: null, name: name }); });
   });
 }
 function wxParseOM(t) {
@@ -2303,31 +2304,55 @@ function wxParseWttr(t) {
   var m = /([+\u2212-]?\d+)\s*\u00B0?C/i.exec(String(t).replace(/\u2212/g, '-'));
   return m ? Math.round(parseInt(m[1], 10)) : null;
 }
+function wxParseMet(t) {
+  try {
+    var o = JSON.parse(t);
+    var ts = o && o.properties && o.properties.timeseries;
+    if (ts && ts.length && ts[0].data && ts[0].data.instant && ts[0].data.instant.details) {
+      var tv = ts[0].data.instant.details.air_temperature;
+      return (typeof tv === 'number') ? tv : null;
+    }
+  } catch (e) {}
+  return null;
+}
 function wxFetch() {
   if (wxBusy) return;
   wxBusy = true;
   var OM = 'https://api.open-meteo.com/v1/forecast?latitude=53.35&longitude=83.78&current=temperature_2m';
-  var enc = encodeURIComponent(OM);
-  /* прямой open-meteo — первъй и самый точный; остальное — запасные пути */
-  var tries = [
-    wxTry(OM, wxParseOM, 4500),
-    wxTry('https://corsproxy.io/?url=' + enc, wxParseOM, 5000),
-    wxTry('https://api.allorigins.win/raw?url=' + enc, wxParseOM, 5000),
-    wxTry('https://api.codetabs.com/v1/proxy?quest=' + enc, wxParseOM, 5000),
-    wxTry('https://r.jina.ai/' + OM, wxParseOM, 6000),
-    wxTry('https://wttr.in/Barnaul?format=%t', wxParseWttr, 4500)
-  ];
+  /* Сшивъ №101: всѣ маршруты стартуютъ разомъ (гонка) — побѣждаетъ первый валидный ответъ,
+     остальныя обрываются. Прямые пути: open-meteo, MET Norway (api.met.no — безъ ключа,
+     открытый CORS, изъ россійскихъ сѣтей отвѣчаетъ охотно) и wttr.in. Запасные — тѣ же
+     open-meteo черезъ проксіи; въ проксируемый адресъ вшита помѣтка _cb, бьющая ихъ кэшъ. */
+  var OMcb = OM + '&_cb=' + Date.now();
+  var enc = encodeURIComponent(OMcb);
   var settled = false;
-  tries.forEach(function (p) {
-    p.then(function (v) {
-      if (v !== null && v !== undefined && !settled) {
-        settled = true;
-        wxVal = Math.round(v); wxTs = Date.now();
-        console.log('[погода] маршрутъ ответилъ: ' + wxVal + ' C');
-        wxDone(true);
-      }
-    });
-  });
+  function finish(p) {
+    var v = p && p.v;
+    if (settled || v === null || v === undefined) return;
+    settled = true;
+    wxVal = Math.round(v); wxTs = Date.now();
+    console.log('[погода] маршрутъ ответилъ: ' + ((p && p.name) || '?') + ' \u2192 ' + wxVal + ' C');
+    wxDone(true);
+  }
+  var tries = [
+    /* прямые пути — безъ посредниковъ */
+    wxTry(OM, wxParseOM, 7000, 'open-meteo'),
+    wxTry('https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=53.35&lon=83.78', wxParseMet, 7000, 'MET-Norway'),
+    /* запасные — open-meteo черезъ проксіи */
+    wxTry('https://corsproxy.io/?url=' + enc, wxParseOM, 7000, 'OM-corsproxy'),
+    wxTry('https://api.allorigins.win/raw?url=' + enc, wxParseOM, 7000, 'OM-allorigins'),
+    wxTry('https://api.codetabs.com/v1/proxy?quest=' + enc, wxParseOM, 7000, 'OM-codetabs')
+  ];
+  /* Сшивъ №102: wttr.in выводится изъ гонки — его источнику (WorldWeatherOnline)
+     въ Барнаулѣ нынче видитъ дневной градусъ вместо фактическаго (+6 при нулѣ за окномъ).
+     Онъ стартуетъ лишь черезъ 3 секунды и только если точные маршруты молчатъ. */
+  tries.push(new Promise(function (res2) {
+    setTimeout(function () {
+      if (settled) return res2({ v: null, name: 'wttr-otmena' });
+      wxTry('https://wttr.in/Barnaul?format=%t', wxParseWttr, 7000, 'wttr.in').then(res2);
+    }, 3000);
+  }));
+  tries.forEach(function (p) { p.then(finish); });
   Promise.all(tries).then(function () {
     if (!settled) { console.log('[погода] всѣ маршруты молчатъ — повторка черезъ 10 сек.'); wxDone(false); }
   });
@@ -3888,7 +3913,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 99</div>
+<div class="build-info">Сшивъ № 102</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {

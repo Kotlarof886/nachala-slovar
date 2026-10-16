@@ -1,6 +1,6 @@
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №114, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №106, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -19,7 +19,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №114: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №107: Сводный алфавитный лексиконъ</title>
 <style>
 
 @font-face {
@@ -562,10 +562,10 @@ letter:hover { transform: translateY(-2px); border-color: var(--gold); color: va
 }
 /* Пробѣлъ — планка на двухъ ножкахъ, шириной съ нижній рядъ буквъ */
 .letter.key-space {
-  width: calc(9 * 42px + 8 * 8px - 42px);   /* №110: отъ стрѣлки до феты */
-  height: 28px;             /* №112: 65% отъ прежней высоты */
-  border-radius: 14px;
-  margin-top: 2px;
+  width: calc(10 * 42px + 9 * 8px - 50px);
+  height: 26px;
+  border-radius: 13px;
+  margin-top: 12px;
 }
 /* двѣ ножки планки (вверхъ, какъ у буквъ) — длиннѣе ножекъ буквъ */
 .letter.key-space::before,
@@ -581,8 +581,8 @@ letter:hover { transform: translateY(-2px); border-color: var(--gold); color: va
   border-radius: 2px 2px 0 0;
   pointer-events: none;
 }
-.letter.key-space::before { left: 18.75%; }   /* №110: ножка меж «Ц» и «Э» */
-.letter.key-space::after  { left: 81.25%; transform: none; }   /* №110: меж «Д» и «Х» */
+.letter.key-space::before { left: 27.4%; }   /* ножка меж «Ц» и «Ч» */
+.letter.key-space::after  { left: 72.6%; transform: none; }   /* меж «Э» и «Ю» — какъ было */
 
 @media (max-width: 560px) {
   .alphabet-bar { padding: 10px 6px 18px; gap: 8px; }
@@ -595,21 +595,14 @@ letter:hover { transform: translateY(-2px); border-color: var(--gold); color: va
   .letter.key-all {
     white-space: nowrap;
     width: calc(clamp(24px, 6.5vw, 30px) * 2 + 4px);
-    height: clamp(24px, 6.5vw, 30px);   /* №112: въ высоту буквъ */
+    height: 22px;
     font-size: 0.58rem;
     padding: 0;
   }
   .letter.key-all.key-vs { margin-right: 0; }
   .letter.key-space {
-    width: calc(9 * 30px + 8 * 4px - 30px);
-    height: 18px;   /* №112: 65% отъ прежней */
-  }
-  /* №110: гиря и колоколъ на мобильномъ — въ размеръ буквъ (кладка рядовъ) */
-  .letter.key-weight,
-  .letter.key-bell {
-    width: clamp(24px, 6.5vw, 30px);
-    height: clamp(24px, 6.5vw, 30px);
-    border-radius: 9px;
+    width: calc(9 * 30px + 8 * 4px - 24px);
+    height: 18px;
   }
 }
 
@@ -745,12 +738,9 @@ body.telegraph-on .letter:not(.key-space):hover:active {
     inset 0 1px 3px rgba(0,0,0,0.35);
 }
 /* «Телеграфъ» — прямоугольная, какъ «Всѣ»; въ покоѣ тёмная */
-.letter.key-tg { letter-spacing: 0.06em; overflow: visible; }
-.letter.key-tg svg { width: 100%; height: 100%; display: block; }
-.key-vs svg { width: 100%; height: 100%; display: block; }   /* №112: дуга «Всѣ» */
-.letter.key-all { height: 42px; }   /* №112: въ высоту буквъ — какъ на макетѣ */
+.letter.key-tg { letter-spacing: 0.06em; }
 /* звонокъ: знакъ перекрашивается вмѣстѣ съ клавишей (currentColor) */
-.letter.key-bell { margin-top: 0; }   /* №112: въ общий рядъ */
+.letter.key-bell { margin-top: -4px; }   /* низъ звонка — на одномъ уровнѣ съ планкой пробѣла */
 @media (max-width: 560px) {
   .alphabet-bar { gap: 12px; }   /* вместо 8px — больше воздуха между рядами */
   .letter.key-bell { margin-top: 0; }
@@ -761,36 +751,17 @@ body.telegraph-on .letter:not(.key-space):hover:active {
 .letter.key-bell svg { width: 58%; height: 58%; display: block; }
 /* гиря: въ покоѣ тёмная съ золотымъ знакомъ, зажатая — золотая съ тёмнымъ (какъ звонокъ);
    по высотѣ — какъ звонокъ; ножка встаётъ меж «шифта» и «Ф» (центръ клавиши въ зазорѣ) */
-.letter.key-weight { margin-top: 0; }   /* №112: въ общий рядъ */
-/* №109: гиря и колоколъ — скруглённые квадраты, какъ на макетѣ (не круги) */
-.letter.key-weight,
-.letter.key-bell {
-  width: 42px; height: 42px; border-radius: 12px;
-}
-/* №113: ножки гири и колокола проходятъ подъ «Всѣ» и «Телеграфъ»: боковые клавиши
-   выше слоемъ (у гири и колокола слой свой — transform у .held запираетъ ножку внутри) */
-.letter.key-all,
-.letter.key-tg { z-index: 1; }
-/* №114: ножки гири и колокола — ровно въ зазоръ межъ рядами: кончаются у нижней
-   кромки «Всѣ» и «Телеграфъ» и на кнопкахъ не проступаютъ (проходятъ подъ ними скрыто) */
-.letter.key-weight::after,
-.letter.key-bell::after {
-  top: -10px; height: 10px;
-}
-@media (max-width: 560px) {
-  .letter.key-weight::after,
-  .letter.key-bell::after { top: -12px; height: 12px; }   /* мобильный зазоръ 12px */
-}
+.letter.key-weight { margin-top: -4px; }
 .letter.key-weight .wgt-ico { width: 33%; height: 50%; display: block; background-color: currentColor; -webkit-mask: url(data:image/png;base64,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) center/contain no-repeat; mask: url(data:image/png;base64,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) center/contain no-repeat; }
 .letter.key-shift svg { width: 52%; height: 52%; display: block; }
-/* №110: шифтъ — стрѣлка живётъ по режиму: въ поискѣ — вправо (стираніе), въ эфирѣ — вверхъ (шифтъ);
-   вращается только иконка, сама кнопка неподвижна */
+/* шифтъ: въ поискѣ стрѣлка смотритъ вправо (стираніе), въ эфирѣ — вверхъ (шифтъ);
+   вращается только иконка, сама круглая кнопка неподвижна */
 .letter.key-shift svg {
-  transform: rotate(0deg);
+  transform: rotate(90deg);
   transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1);
   will-change: transform;
 }
-body.telegraph-on .letter.key-shift svg { transform: rotate(-90deg); }   /* №109: вверхъ */
+body.telegraph-on .letter.key-shift svg { transform: rotate(0deg); }
 .letter.key-spec svg { width: 56%; height: 56%; display: block; }
 @media (max-width: 560px) {
   #tele-tape { padding: 0.4rem 0.7rem; }
@@ -1188,10 +1159,9 @@ function buildAlphabet() {
   wrap.className = 'kb-wrap';
   wrap.id = 'kb-wrap';
   const rows = [
-    { keys: 'ЙІУКЕНГШ',   shift: 'r1' },
-    { keys: 'ФЫВЪАПРОЩ',  shift: 'r2' },
-    { keys: 'ЯЧѢСМИТЬЛЗ', shift: 'r3' },
-    { keys: 'ЦЭБЮЖДХ',    shift: 'r4' }
+    { keys: 'АБВГДЕЖЗ',    shift: 'r1' },
+    { keys: 'ИКЛМНОПРСТУ', shift: 'r2' },
+    { keys: 'ФХЦЧШЩЭЮЯѢ',  shift: 'r3' }
   ];
   rows.forEach(function(row, ri) {
     const div = document.createElement('div');
@@ -1199,28 +1169,16 @@ function buildAlphabet() {
     if (ri === 0) {
       const all = document.createElement('span');
       all.className = 'letter key-all key-vs';
-      /* №112: надпись чуть дугой — какъ «Телеграфъ» */
-      all.innerHTML = '<svg viewBox="0 0 100 34" aria-hidden="true"><defs><path id="vs-arc" d="M8,26 Q50,14 92,26" fill="none"/></defs><text fill="currentColor" font-size="15" font-weight="bold" letter-spacing="1"><textPath href="#vs-arc" startOffset="50%" text-anchor="middle">Всѣ</textPath></text></svg>';
+      const allLbl = document.createElement('span');
+      allLbl.className = 'key-label';
+      allLbl.textContent = 'Всѣ';
+      all.appendChild(allLbl);
       all.onclick = function() { setLetter(null); };
       div.appendChild(all);
     }
-    if (ri === 1) {   // №108: гиря — слѣва, колоколъ — справа (переехали изъ нижняго ряда)
-      const wgt2 = document.createElement('span');
-      wgt2.className = 'letter key-weight' + (function(){try{return localStorage.getItem('nachala-light')==='1'?'':' held';}catch(e){return ' held';}})();
-      wgt2.dataset.role = 'weight';
-      wgt2.title = 'Гиря: лёгкая версія';
-      wgt2.innerHTML = '<span class="wgt-ico" aria-hidden="true"></span>';
-      wgt2.onclick = function() {
-        wgt2.classList.toggle('held');
-        var light = !wgt2.classList.contains('held');
-        document.body.classList.toggle('light', light);
-        try { localStorage.setItem('nachala-light', light ? '1' : '0'); } catch(e) {}
-      };
-      div.appendChild(wgt2);
-    }
-    if (ri === 3) {   // №108: стёрщица — слѣва въ 4-мъ ряду
+    if (ri === 2) {   // шифтъ — слѣва, какъ на чертежѣ
       const sh = document.createElement('span');
-      sh.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12 H20"/><path d="M13 5.5 L20.5 12 L13 18.5"/></svg>';
+      sh.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5 V5"/><path d="M5.5 11.5 L12 4.5 L18.5 11.5"/></svg>';
       sh.className = 'letter key-shift';
       sh.dataset.role = 'shift';
       sh.title = '';
@@ -1239,29 +1197,19 @@ function buildAlphabet() {
       sp.onclick = function() { setLetter(ch); };
       div.appendChild(sp);
     }
-    if (ri === 1) {   /* №110: колоколъ — послѣ «Щ», какъ на макетѣ */
-      const bell2 = document.createElement('span');
-      bell2.className = 'letter key-bell held';
-      bell2.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>';
-      bell2.title = 'Звукъ: включить / выключить';
-      bell2.onclick = function() {
-        sndOn = !sndOn;
-        bell2.classList.toggle('held', sndOn);
-        if (sndOn) sndBell(true);
-      };
-      div.appendChild(bell2);
-    }
     if (ri === 0) {   // включатель эфира — гдѣ была «<»
       const tg = document.createElement('span');
       tg.className = 'letter key-all key-tg';
-      /* №109: надпись дугой — какъ на макетѣ */
-      tg.innerHTML = '<svg viewBox="0 0 100 34" aria-hidden="true"><defs><path id="tg-arc" d="M6,28 Q50,7 94,28" fill="none"/></defs><text fill="currentColor" font-size="14.5" font-weight="bold" letter-spacing="1"><textPath href="#tg-arc" startOffset="50%" text-anchor="middle">Телеграфъ</textPath></text></svg>';
+      const tgLbl = document.createElement('span');
+      tgLbl.className = 'key-label';
+      tgLbl.textContent = 'Телеграфъ';
+      tg.appendChild(tgLbl);
       tg.title = 'Пустить / остановить телеграфъ';
       tg.onmousedown = function(e) { e.preventDefault(); };   // фокусъ остаётся у строки — плейсхолдеръ не дёргается
       tg.onclick = function() { toggleTelegraph(); };
       div.appendChild(tg);
     }
-    if (ri === 3) {   // №108: спец-клавиша ϕ — справа въ 4-мъ ряду
+    if (ri === 2) {   // спец-клавиша ϕ — справа
       const spk = document.createElement('span');
       spk.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true"><path d="M15.5 4 C13 4 12 5.6 12 8 L12 16 C12 18.4 10.8 19.8 8.5 20"/><circle cx="12" cy="12" r="4.4"/></svg>';
       spk.className = 'letter key-spec';
@@ -1276,25 +1224,46 @@ function buildAlphabet() {
   });
   const srow = document.createElement('div');
   srow.className = 'kb-row space-row';
+  const wgt = document.createElement('span');
+  wgt.className = 'letter key-weight' + (function(){try{return localStorage.getItem('nachala-light')==='1'?'':' held';}catch(e){return ' held';}})();   // гиря: зажата = обычная версія (по умолчанію), отжата = лёгкая
+  wgt.dataset.role = 'weight';
+  wgt.title = 'Гиря: лёгкая версія';
+  wgt.innerHTML = '<span class="wgt-ico" aria-hidden="true"></span>';wgt.onclick = function() {
+    wgt.classList.toggle('held');
+    var light = !wgt.classList.contains('held');   /* отжата — лёгкая */
+    document.body.classList.toggle('light', light);
+    try { localStorage.setItem('nachala-light', light ? '1' : '0'); } catch(e) {}
+  };   /* гиря: обычная/лёгкая версія, выборъ запоминается */
+  srow.appendChild(wgt);
   const sp = document.createElement('span');
   sp.className = 'letter key-space';
   sp.title = 'Пробѣлъ';
   sp.onclick = function() { setLetter(' '); };   // Сшивъ №98: пробѣлъ — единый путь (запросъ или эфиръ)
   srow.appendChild(sp);
+  const bell = document.createElement('span');
+  bell.className = 'letter key-bell held';   // звукъ по умолчанію включёнъ
+  bell.innerHTML = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>';
+  bell.title = 'Звукъ: включить / выключить';
+  bell.onclick = function() {
+    sndOn = !sndOn;
+    bell.classList.toggle('held', sndOn);
+    if (sndOn) sndBell(true);
+  };
+  srow.appendChild(bell);
   wrap.appendChild(srow);
   bar.appendChild(wrap);
-  // №108: пробѣлъ встаётъ по фактической ширинѣ 4-го ряда (минусъ стёрщица и ϕ)
+  // Пробѣлъ + звонокъ встаютъ по фактической ширинѣ 3-го ряда (независимо от экрана)
   requestAnimationFrame(function() {
-    const r4 = wrap.querySelector('.r4');
+    const r3 = wrap.querySelector('.r3');
     const space = wrap.querySelector('.key-space');
-    if (r4 && space) {
+    const bellEl = wrap.querySelector('.key-bell');
+    if (r3 && space) {
       const narrow = window.matchMedia('(max-width: 560px)').matches;
-      var sub = 0;   /* №110: планка отъ центра стрѣлки до центра феты — вычитаемъ лишь половины крайнихъ клавишъ */
-      const shEl = wrap.querySelector('.key-shift');
-      const spkEl = wrap.querySelector('.key-spec');
-      if (shEl) sub += shEl.getBoundingClientRect().width / 2;
-      if (spkEl) sub += spkEl.getBoundingClientRect().width / 2;
-      space.style.width = Math.max(120, r4.getBoundingClientRect().width - sub) + 'px';
+      var sub = narrow ? 34 : 50;
+      const wgtEl = wrap.querySelector('.key-weight');
+      if (wgtEl) sub += wgtEl.getBoundingClientRect().width + 8;
+      if (bellEl) sub += bellEl.getBoundingClientRect().width + 8;
+      space.style.width = Math.max(120, r3.getBoundingClientRect().width - sub) + 'px';
     }
     fitKeyboard();
   });
@@ -3991,7 +3960,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 114</div>
+<div class="build-info">Сшивъ № 107</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {

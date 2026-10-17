@@ -1,6 +1,8 @@
+<!DOCTYPE html>
+<html lang="ru">
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №125, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №129, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -19,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №125: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №129: Сводный алфавитный лексиконъ</title>
 <style>
 
 @font-face {
@@ -1200,7 +1202,7 @@ function buildAlphabet() {
       const all = document.createElement('span');
       all.className = 'letter key-all key-vs';
       /* №112: надпись чуть дугой — какъ «Телеграфъ» */
-      all.innerHTML = '<svg viewBox="0 0 100 34" aria-hidden="true"><defs><path id="vs-arc" d="M8,26 Q50,14 92,26" fill="none"/></defs><text fill="currentColor" font-size="15" font-weight="bold" letter-spacing="1"><textPath href="#vs-arc" startOffset="50%" text-anchor="middle">Всѣ</textPath></text></svg>';
+      all.innerHTML = '<svg viewBox="0 0 100 34" aria-hidden="true"><defs><path id="vs-arc" d="M8,26 Q50,14 92,26" fill="none"/></defs><text fill="currentColor" font-size="20" font-weight="bold" letter-spacing="1"><textPath href="#vs-arc" startOffset="50%" text-anchor="middle">Всѣ</textPath></text></svg>';
       all.onclick = function() { setLetter(null); };
       div.appendChild(all);
     }
@@ -1255,7 +1257,7 @@ function buildAlphabet() {
       const tg = document.createElement('span');
       tg.className = 'letter key-all key-tg';
       /* №109: надпись дугой — какъ на макетѣ */
-      tg.innerHTML = '<svg viewBox="0 0 100 34" aria-hidden="true"><defs><path id="tg-arc" d="M6,28 Q50,7 94,28" fill="none"/></defs><text fill="currentColor" font-size="14.5" font-weight="bold" letter-spacing="1"><textPath href="#tg-arc" startOffset="50%" text-anchor="middle">Телеграфъ</textPath></text></svg>';
+      tg.innerHTML = '<svg viewBox="0 0 100 34" aria-hidden="true"><defs><path id="tg-arc" d="M6,28 Q50,7 94,28" fill="none"/></defs><text fill="currentColor" font-size="16" font-weight="bold" letter-spacing="0.5"><textPath href="#tg-arc" startOffset="50%" text-anchor="middle">Телеграфъ</textPath></text></svg>';
       tg.title = 'Пустить / остановить телеграфъ';
       tg.onmousedown = function(e) { e.preventDefault(); };   // фокусъ остаётся у строки — плейсхолдеръ не дёргается
       tg.onclick = function() { toggleTelegraph(); };
@@ -3991,7 +3993,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 125</div>
+<div class="build-info">Сшивъ № 129</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -4303,5 +4305,34 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
   });
 })();
 </script>
+<style id="k128-fix">
+/* ===== Сшивъ №129: значки и надписи — въ долю клавиши =====
+   Пиксельная пайка №126/№128 снята вовсе: значки сидятъ въ процентахъ отъ площадки,
+   потому растутъ и сѣдаютъ вмѣстѣ съ клавишей при любомъ масштабѣ и ширинѣ окна.
+   Надписи «Всѣ» и «Телеграфъ» — на всю клавишу, какъ и замышлялось въ №112. */
+#alphabet-bar .letter .well svg { width: 52%; height: 52%; display: block; }
+#alphabet-bar .letter.key-bell .well svg { width: 60%; height: 60%; }
+#alphabet-bar .letter.key-spec .well svg { width: 60%; height: 60%; }
+#alphabet-bar .letter.key-shift .well svg { width: 52%; height: 52%; }
+#alphabet-bar .letter.key-weight .well .wgt-ico { width: 32%; height: 50%; }
+#alphabet-bar .letter.key-all .well { padding: 0 1px; }
+#alphabet-bar .letter.key-all .well svg,
+#alphabet-bar .letter.key-tg .well svg { width: 100%; height: 100%; display: block; }
+</style>
+<style id="k129-fix">
+/* ===== Сшивъ №129: гиря и колоколъ — логика остальных клавиш =====
+   Причина разрыва: правило №109 «42px» стоило в файле ПОЗЖЕ мобильного правила №110
+   «въ размеръ буквъ» — при равном вѣсѣ селектора каскад отдавалъ позднее,
+   и на узкомъ окнѣ (и при зумѣ) буквы сжимались до 30px, а гиря съ колоколом оставались 42px.
+   Повторяемъ мобильное правило въ самом концѣ файла — теперь оно выигрываетъ каскадъ:
+   гиря и колоколъ сжимаются ровно какъ буквенные клавиши, ряды выравниваются. */
+@media (max-width: 560px){
+  #alphabet-bar .letter.key-weight,
+  #alphabet-bar .letter.key-bell {
+    width: clamp(24px, 6.5vw, 30px);
+    height: clamp(24px, 6.5vw, 30px);
+  }
+}
+</style>
 </body>
 </html>

@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №131, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №132, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №131: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №132: Сводный алфавитный лексиконъ</title>
 <style>
 
 @font-face {
@@ -3993,7 +3993,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 131</div>
+<div class="build-info">Сшивъ № 132</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -4377,7 +4377,7 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
 }
 </style>
 <style id="k131-fix">
-/* ===== Сшивъ №131: ободок клавиши — всегда поверхъ тяги =====
+/* ===== Сшивъ №132: ободок клавиши — всегда поверхъ тяги =====
    Причина наложенія: рамка рисуется фономъ самой клавиши, а фонъ элемента
    по правиламъ CSS рисуется РАНЬШЕ его детей съ отрицательнымъ z-index —
    потому тяга ложилась поверхъ ободка. Лѣчимъ: ободокъ дублируется слоемъ
@@ -4397,7 +4397,7 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
 #alphabet-bar .letter .rod{ bottom: calc(100% - 10px); }
 #alphabet-bar .letter.key-space .rod{ bottom: 100%; }
 
-/* ===== Сшивъ №131: пробѣлъ растётъ пропорціонально =====
+/* ===== Сшивъ №132: пробѣлъ растётъ пропорціонально =====
    Высота была запаяна (40px), ширина ставилась скриптомъ одинъ разъ —
    при масштабированіи дуга тянулась по вертикали. Теперъ пропорція 10:1
    держится всегда, а ширина пересчитывается при каждомъ измѣненіи окна. */
@@ -4434,5 +4434,24 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ refitSpace(); });
 })();
 </script>
+
+<style id="k132-fix">
+/* ---------- k132-fix: узор клавиатуры какъ у карточекъ, прозрачность отъ центра къ краямъ ---------- */
+/* тот же ромбическій узоръ и та же плитка 20x20, что у .card-frame::before,
+   маска зазеркалена: въ центре узора нетъ, к краямъ он нарастаетъ.
+   z-index:-1 — слой надъ фономъ панели, но подъ клавишами (filter панели создаётъ контекстъ). */
+.alphabet-bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url('images/diamond_tile2.png');
+  background-repeat: repeat;
+  background-size: 20px 20px;
+  -webkit-mask-image: radial-gradient(ellipse at center, transparent 30%, #000 82%);
+  mask-image: radial-gradient(ellipse at center, transparent 30%, #000 82%);
+}
+</style>
 </body>
 </html>

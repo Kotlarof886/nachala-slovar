@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №132, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №134, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №132: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №134: Сводный алфавитный лексиконъ</title>
 <style>
 
 @font-face {
@@ -713,10 +713,11 @@ body.telegraph-on #count-note { display: none; }
 
 #tele-tape::before { left: 0;  background: linear-gradient(90deg, rgba(10, 8, 24, .9), rgba(10, 8, 24, 0)); }
 #tele-tape::after  { right: 0; background: linear-gradient(270deg, rgba(10, 8, 24, .9), rgba(10, 8, 24, 0)); }
-/* въ режимѣ эфира клавиши не подсвѣчиваются — только анімація нажатія */
+/* въ режимѣ эфира клавиши не подсвѣчиваются — только анімація нажатія (№134: масштабъ и затѣненіе) */
 body.telegraph-on .letter:not(.key-space):active,
 body.telegraph-on .letter:not(.key-space):hover:active {
-  transform: translateY(2px);
+  transform: translateY(2px) scale(0.95);
+  filter: brightness(0.9);
   color: var(--gold-bright);
   background:
     radial-gradient(circle at 32% 28%, rgba(255,255,255,0.12), rgba(255,255,255,0) 45%),
@@ -730,7 +731,8 @@ body.telegraph-on .letter:not(.key-space):hover:active {
 /* ударъ телеграфиста: клавиша проседаетъ, загорается только контуръ —
    внутренность клавиши не трогаемъ */
 .letter.tg-strike {
-  transform: translateY(2px);
+  transform: translateY(2px) scale(0.95);
+  filter: brightness(0.9);
   border-color: var(--gold-bright);
   box-shadow:
     0 0 14px rgba(212,176,106,0.45);
@@ -3993,7 +3995,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 132</div>
+<div class="build-info">Сшивъ № 134</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -4034,7 +4036,7 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
   box-shadow: 0 2px 0 rgba(0,0,0,.35), 0 7px 12px rgba(0,0,0,.5);
   transform: rotate(var(--tilt, 0deg));
   top: var(--arc, 0px);
-  transition: transform .09s ease-out, box-shadow .12s ease;
+  transition: transform .09s ease-out, box-shadow .12s ease, filter .09s ease-out;
   will-change: transform;
   cursor: pointer;
 }
@@ -4119,12 +4121,15 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
 #alphabet-bar .letter:hover{
   transform: translateY(-2px) rotate(var(--tilt, 0deg));
 }
-/* ===== нажатіе серіи 3: клавиша тонетъ цѣликомъ (5px), безъ внешнихъ колецъ ===== */
+/* ===== нажатіе серіи 3: клавиша тонетъ цѣликомъ (5px) и чуть уменьшаетсяъ —
+   отдаленіе отъ наблюдателя (№134): scale(0.92) и затѣненіе brightness(0.85) на всю клавишу — буква, окантовка,
+   фонъ, тѣни и тяга масштабируются вмѣстѣ ===== */
 #alphabet-bar .letter:active,
 #alphabet-bar .letter.down,
 #alphabet-bar .letter.lit,
 #alphabet-bar .letter.tg-strike{
-  transform: translateY(5px) rotate(var(--tilt, 0deg)) !important;
+  transform: translateY(5px) rotate(var(--tilt, 0deg)) scale(0.92) !important;
+  filter: brightness(0.85) !important;
   background: conic-gradient(from 210deg,
     #7D6C52, #4E4333, #3C3427, #655741, #9D8665, #443B2C, #7D6C52) !important;
   border: none;
@@ -4176,7 +4181,8 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
 #alphabet-bar .letter.held.down,
 #alphabet-bar .letter.held.lit,
 #alphabet-bar .letter.held.tg-strike{
-  transform: translateY(5px) rotate(var(--tilt, 0deg)) !important;
+  transform: translateY(5px) rotate(var(--tilt, 0deg)) scale(0.92) !important;
+  filter: brightness(0.85) !important;
   background: conic-gradient(from 210deg,
     #7D6C52, #4E4333, #3C3427, #655741, #9D8665, #443B2C, #7D6C52) !important;
   color: #c7b179;
@@ -4224,7 +4230,7 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
 <script id="k125mech">
 (function(){
   var downEl = null;
-  function release(){ if (downEl){ downEl.classList.remove('down'); downEl.style.transform = ''; downEl = null; } }
+  function release(){ if (downEl){ downEl.classList.remove('down'); downEl.style.transform = ''; downEl.style.filter = ''; downEl = null; } }
   function dress(){
     var bar = document.getElementById('alphabet-bar');
     if (!bar) return;
@@ -4280,7 +4286,8 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
       if (k){
         downEl = k; k.classList.add('down');
         /* инлайнъ сильнѣе любого правила — проседаніе серіи 3 гарантировано */
-        k.style.transform = 'translateY(5px) rotate(var(--tilt, 0deg))';
+        k.style.transform = 'translateY(5px) rotate(var(--tilt, 0deg)) scale(0.92)';
+        k.style.filter = 'brightness(0.85)';
       }
     });
     document.addEventListener('pointerup', release);

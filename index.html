@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №157, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №174, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №157: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №174: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -44,6 +44,12 @@ body * {
    черезъ 2 сек. покоя. Кликъ — плавный подъёмъ, пока низъ первой карточки
    не окажется у нижняго края и клавиатура со строкой поиска видна.
    Появленіе — снизу вверхъ, исчезновеніе — скольженіемъ вверхъ. Свѣченіе — какъ «пламя» на уголкахъ. */
+/* Сборка №165: приборы безъ собственныхъ рамокъ (stroke снятъ) — корпусъ держитъ рамка кнопки; приборы отъ внутреннихъ рамокъ: амперметръ къ лѣвой, вольтметръ къ правой; рамки кнопокъ подъ размеръ приборовъ (220×62), среднія рамки не тронуты; въ эфирѣ рамки не подсвѣчиваются.
+Сборка №166: высота кнопокъ въ эфирѣ прежняя — меняется только ширина подъ приборъ (приборъ 220:62 во всю высоту кнопки); шкалы продлены къ нижней кромкѣ (±72°), у амперметра цифры 0–5–10; буквы A/V крупнее, шрифтъ Elizabeth Unicode; шурупы и надписи АМПЕРЪ/ВОЛЬТЪ сняты.
+Сборка №167: размахъ шкалъ и стрѣлокъ ±68°; верхняя и боковыя чёрныя рамки приборовъ сняты, нижняя осталась — стрѣлка прячется подъ нею; буквы A/V ещё крупнѣе (20px, Elizabeth Unicode); тёплое газоразрядное свѣченіе приборовъ — мѣрцаетъ при высокомъ токѣ или низкомъ напряжении.
+Сборка №168: ось стрѣлки на нижней планкѣ цвѣтомъ рамки; циферблатъ клипаетсяъ по скругленію кнопки; свѣченіе усилёно и наливаетсяъ подъ показаніямъ шкалы; фонъ слоистый — эмаль съ бликомъ, патиной и шумомъ, виньетка даётъ глубину.
+
+Сборка №170: фонъ гущѣ (патина 0.26–0.34, шумъ 0.16, виньетка 0.82) и страховка на html; градіенты циферблатовъ на пяти стопахъ — полоса перехода снята; точки осей тёмно-золотые #8a6534; свѣченіе теплѣе и слабѣе (ядро 0.78, база 0.48, размахъ 0.22–0.72); кликъ не мѣняетъ свѣченіе (animation/transition сняты въ эфирѣ); мѣрцаніе → просадка сети lampSag 9.5s.  Сборка №169: фонъ сайта перенесёнъ прямо на body (псевдослои №168 прятались подъ заливкой); циферблаты пергаментные — пятна старѣнія и зерно бумаги; лица подъогнаны подъ рамку (rx=3, SVG во всю кнопку); кольцо оси снято, точка осталась того же размѣра; подсвѣтка по клику снята; свѣченіе тѣплѣе и живѣе.*/
 #pen-top {
   position: fixed;
   top: 50%;
@@ -184,6 +190,48 @@ box-shadow:
   100% { box-shadow: 0 0 8px 0 rgba(212,176,106,0.35), 0 0 20px rgba(212,176,106,0.18); }
 }
 .tab.active { animation: lamp-glow 6s ease-in-out infinite; }
+/* №158: приборы станціи въ кнопкахъ — въ эфирѣ надпись гаснетъ, приборъ проявляется */
+.tab { position: relative; }
+.tab .tab-label { transition: opacity .4s; }
+.tab .tab-meter { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity .4s; pointer-events: none; }
+.tab .tab-meter svg { display: block; width: 100%; height: 100%; }
+.tabs .tab { flex: 1 1 0; min-width: 0; max-width: 210px; padding-left: 0.4rem; padding-right: 0.4rem; }   /* №163: потолокъ 210px снятъ — на широкомъ экранѣ кнопки растягиваются по шапкѣ, надписямъ есть гдѣ расти */
+.tab-label { font-size: 0.9rem; white-space: nowrap; }   /* №162: база поднята — точный кегль ставитъ fitTabLabels по факту */
+/* №162: переносъ на узкихъ экранахъ снятъ — надпись масштабируется подгонкой, nowrap на всѣхъ ширинахъ */
+body.telegraph-on .tab .tab-label { display: none; }   /* №165: надпись изъ потока — высоту кнопки держитъ приборъ */
+body.telegraph-on .tab .tab-meter { opacity: 1; }
+body.telegraph-on .tab.active { background: #e9dfc2; border-color: var(--card-border); }   /* №169: безъ подсвѣтки, тонъ циферблата */   /* №165: рамки въ эфирѣ не свѣтятся */
+/* №165: въ эфирѣ кнопка объять приборъ — рамка подъ его размеръ, безъ подложекъ */
+body.telegraph-on .tabs .tab { flex: 0 0 auto; max-width: none; padding: 0; overflow: hidden; }   /* №168: углы циферблата клипаютсяъ по скругленію рамки */
+body.telegraph-on .tab .tab-meter { position: relative; inset: auto; }
+body.telegraph-on .tab .tab-meter svg { width: 100%; height: 100%; }   /* №169: приборъ во всю кнопку — просвѣтовъ нетъ */
+/* №165: подъ нажатіемъ въ приборахъ рамки не подсвѣчиваются */
+body.telegraph-on .tab:hover { border-color: var(--card-border); }
+body.telegraph-on .tab { transition: none; }   /* №170: ни одна величина не анимируется отъ клика */
+/* №171: вспышка подложки при нажатіи снята — кликъ не мѣняетъ ничего */
+body.telegraph-on .tab.active { animation: none; box-shadow: 0 0 14px rgba(255,206,150,0.38), 0 0 40px rgba(255,206,150,0.20); }   /* №171: тень выровнена съ эфирной базой — кликъ не свѣтитъ */
+body.telegraph-on .tab:focus { outline: none; }   /* №169: контуръ фокуса не свѣтится */
+body.telegraph-on .tab { -webkit-tap-highlight-color: transparent; }   /* №169: тапъ не подсвѣчиваетъ */
+/* №167: газоразрядное свѣченіе приборовъ — тёплый светъ слоновой кости */
+.meter-lamp { opacity: var(--glow, 0.48); transition: opacity .25s linear; }   /* №171: яркость от заряда — полная батарея свѣтитъ ярче */
+.meter-lamp.lamp-flicker { animation: lampSag 9.5s linear infinite; }   /* №170: не пульсъ — просадка сети */
+@keyframes lampSag {
+  /* №171: свѣтъ стоитъ ровно; глубина просадокъ умножается на токъ (--k) — размахъ 0–10 А */
+  0%, 7%   { opacity: var(--glow, .48); }
+  9%       { opacity: calc(var(--glow, .48) * (1 - 0.458 * var(--k, 0))); }
+  11%      { opacity: calc(var(--glow, .48) * (1 - 0.083 * var(--k, 0))); }
+  13%      { opacity: calc(var(--glow, .48) * (1 - 0.542 * var(--k, 0))); }
+  16%, 54% { opacity: var(--glow, .48); }
+  56%      { opacity: calc(var(--glow, .48) * (1 - 0.375 * var(--k, 0))); }
+  59%      { opacity: calc(var(--glow, .48) * (1 - 0.083 * var(--k, 0))); }
+  61%      { opacity: var(--glow, .48); }
+  63%      { opacity: calc(var(--glow, .48) * (1 - 0.292 * var(--k, 0))); }
+  66%, 100%{ opacity: var(--glow, .48); }
+}
+/* №168: внешнее свѣченіе — на рамкѣ кнопки (клипъ не рѣжетъ тень элемента), на порогѣ — ярче */
+body.telegraph-on .tab { box-shadow: 0 0 14px rgba(255,206,150,0.38), 0 0 40px rgba(255,206,150,0.20);   /* №170: приглушено вдвое */ }
+/* №171: lamp-on упразднено — третьего состоянія свѣченія нѣтъ */
+
 
 .alpha.active { color: #1a1535; background: var(--gold); border-color: var(--gold-bright); }
 #search-box {
@@ -1163,8 +1211,158 @@ body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* ср�
   <p class="subtitle-year">1896 годъ</p>
   <nav>
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('local')">Мои слова</button>
-      <button class="tab" onclick="switchTab('online')">Изысканіе въ эфирѣ</button>
+      <button class="tab active" onclick="switchTab('local')"><span class="tab-label">Мои слова</span><span class="tab-meter" aria-hidden="true"><svg class="meter" viewBox="0 0 220 62" width="220" height="62" role="img" aria-label="АМПЕРЪ">
+    <defs>
+      <linearGradient id="brass-amp" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#e9c98a"/>
+        <stop offset="0.5" stop-color="#b98f4e"/>
+        <stop offset="1" stop-color="#8a6534"/>
+      </linearGradient>
+      <linearGradient id="dial-amp" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f8f1da"/>
+        <stop offset="0.25" stop-color="#f2e8cd"/>
+        <stop offset="0.5" stop-color="#ebdcb8"/>
+        <stop offset="0.75" stop-color="#e1d0a5"/>
+        <stop offset="1" stop-color="#d5c092"/>
+      </linearGradient>
+      <radialGradient id="paper-amp" cx="0.5" cy="0.45" r="0.95">
+        <stop offset="0.5" stop-color="rgba(160,130,80,0)"/>
+        <stop offset="0.78" stop-color="rgba(150,115,65,0.16)"/>
+        <stop offset="1" stop-color="rgba(115,85,45,0.30)"/>
+      </radialGradient>
+      <filter id="grain-amp" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="3" seed="7" stitchTiles="stitch"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 0.40  0 0 0 0 0.31  0 0 0 0 0.18  0 0 0 0.55 0"/>
+        <feComposite operator="in" in2="SourceGraphic"/>
+      </filter>
+      <linearGradient id="glass-amp" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="rgba(255,255,255,0.28)"/>
+        <stop offset="0.45" stop-color="rgba(255,255,255,0.04)"/>
+        <stop offset="1" stop-color="rgba(255,255,255,0)"/>
+      </linearGradient>
+      <radialGradient id="lamp-amp" cx="0.5" cy="0.45" r="0.72">
+        <stop offset="0" stop-color="rgba(255,236,198,0.78)"/>
+        <stop offset="0.45" stop-color="rgba(255,214,150,0.45)"/>
+        <stop offset="1" stop-color="rgba(255,176,110,0)"/>
+      </radialGradient>
+    </defs>
+
+    <!-- №167: верхняя и боковыя чёрныя рамки сняты — циферблатъ во всю ширину прибора -->
+    <rect x="0" y="0" width="220" height="58" rx="3" fill="url(#dial-amp)"/>
+    <rect x="0" y="0" width="220" height="58" rx="3" fill="url(#paper-amp)" pointer-events="none"/>
+    <rect x="0" y="0" width="220" height="58" rx="3" fill="#6b5a3a" filter="url(#grain-amp)" opacity="0.30" pointer-events="none"/>
+
+    <!-- шкала: №167 — размахъ ±68°, концы у нижней кромки циферблата -->
+    <g>
+    <line x1="72.9" y1="43" x2="67.3" y2="40.8" stroke="#2a2118" stroke-width="2"/>
+    <line x1="87.6" y1="24.8" x2="84.3" y2="19.9" stroke="#2a2118" stroke-width="2"/>
+    <line x1="110" y1="18" x2="110" y2="12" stroke="#2a2118" stroke-width="2"/>
+    <line x1="132.4" y1="24.8" x2="135.7" y2="19.9" stroke="#2a2118" stroke-width="2"/>
+    <line x1="147.1" y1="43" x2="152.7" y2="40.8" stroke="#2a2118" stroke-width="2"/>
+    <line x1="76.6" y1="30.9" x2="74.3" y2="29.1" stroke="#2a2118" stroke-width="1"/>
+    <line x1="97.4" y1="16.9" x2="96.6" y2="14" stroke="#2a2118" stroke-width="1"/>
+    <line x1="122.6" y1="16.9" x2="123.4" y2="14" stroke="#2a2118" stroke-width="1"/>
+    <line x1="143.4" y1="30.9" x2="145.7" y2="29.1" stroke="#2a2118" stroke-width="1"/>
+    <text x="81.3" y="46.4" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">0</text>
+    <text x="110" y="27" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">5</text>
+    <text x="138.7" y="46.4" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">10</text>
+    </g>
+
+    <!-- стрелка: синёная сталь, ось внизу -->
+    <g id="needle-amp" transform="rotate(0 110 58)">
+      <line x1="110" y1="58" x2="110" y2="14" stroke="#1b1b3a" stroke-width="1.6"/>
+      <path d="M 107.8 19 L 110 9 L 112.2 19 Z" fill="#7a1f1f"/>
+    </g>
+    <!-- №167: нижняя чёрная планка — стрѣлка прячется подъ нею -->
+    <path d="M 0 54 L 220 54 L 220 55 Q 220 62 213 62 L 7 62 Q 0 62 0 55 Z" fill="#241f2e"/>
+    <!-- №169: кольцо оси снято — осталась только точка того же размѣра -->
+    <circle cx="110" cy="58" r="1.3" fill="#8a6534"/>   <!-- №170: тёмно-золотая, какъ рамки -->
+
+    <!-- №166: надпись снята — имя прибора читаетъ aria-label -->
+    <text x="196" y="28" font-size="20" text-anchor="middle" fill="#5c4a2e" font-family="Elizabeth Unicode,Georgia,serif">A</text>
+
+    <!-- блики стекла -->
+    <rect x="0" y="0" width="220" height="58" rx="3" fill="url(#glass-amp)" pointer-events="none"/>
+    <!-- №167: тёплое газоразрядное свѣченіе — мѣрцаетъ на высокомъ токѣ / низкомъ напряжении -->
+    <ellipse id="glow-amp" class="meter-lamp" cx="110" cy="27" rx="108" ry="27" fill="url(#lamp-amp)" pointer-events="none"/>
+  </svg></span></button>
+      <button class="tab" onclick="switchTab('online')"><span class="tab-label">Изысканіе въ эфирѣ</span><span class="tab-meter" aria-hidden="true"><svg class="meter" viewBox="0 0 220 62" width="220" height="62" role="img" aria-label="ВОЛЬТЪ">
+    <defs>
+      <linearGradient id="brass-volt" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#e9c98a"/>
+        <stop offset="0.5" stop-color="#b98f4e"/>
+        <stop offset="1" stop-color="#8a6534"/>
+      </linearGradient>
+      <linearGradient id="dial-volt" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#f8f1da"/>
+        <stop offset="0.25" stop-color="#f2e8cd"/>
+        <stop offset="0.5" stop-color="#ebdcb8"/>
+        <stop offset="0.75" stop-color="#e1d0a5"/>
+        <stop offset="1" stop-color="#d5c092"/>
+      </linearGradient>
+      <radialGradient id="paper-volt" cx="0.5" cy="0.45" r="0.95">
+        <stop offset="0.5" stop-color="rgba(160,130,80,0)"/>
+        <stop offset="0.78" stop-color="rgba(150,115,65,0.16)"/>
+        <stop offset="1" stop-color="rgba(115,85,45,0.30)"/>
+      </radialGradient>
+      <filter id="grain-volt" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="3" seed="11" stitchTiles="stitch"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 0.40  0 0 0 0 0.31  0 0 0 0 0.18  0 0 0 0.55 0"/>
+        <feComposite operator="in" in2="SourceGraphic"/>
+      </filter>
+      <linearGradient id="glass-volt" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="rgba(255,255,255,0.28)"/>
+        <stop offset="0.45" stop-color="rgba(255,255,255,0.04)"/>
+        <stop offset="1" stop-color="rgba(255,255,255,0)"/>
+      </linearGradient>
+      <radialGradient id="lamp-volt" cx="0.5" cy="0.45" r="0.72">
+        <stop offset="0" stop-color="rgba(255,236,198,0.78)"/>
+        <stop offset="0.45" stop-color="rgba(255,214,150,0.45)"/>
+        <stop offset="1" stop-color="rgba(255,176,110,0)"/>
+      </radialGradient>
+    </defs>
+
+    <!-- №167: верхняя и боковыя чёрныя рамки сняты — циферблатъ во всю ширину прибора -->
+    <rect x="0" y="0" width="220" height="58" rx="3" fill="url(#dial-volt)"/>
+    <rect x="0" y="0" width="220" height="58" rx="3" fill="url(#paper-volt)" pointer-events="none"/>
+    <rect x="0" y="0" width="220" height="58" rx="3" fill="#6b5a3a" filter="url(#grain-volt)" opacity="0.30" pointer-events="none"/>
+
+    <!-- шкала: №167 — размахъ ±68°, концы у нижней кромки циферблата -->
+    <g>
+    <line x1="72.9" y1="43" x2="67.3" y2="40.8" stroke="#2a2118" stroke-width="2"/>
+    <line x1="87.6" y1="24.8" x2="84.3" y2="19.9" stroke="#2a2118" stroke-width="2"/>
+    <line x1="110" y1="18" x2="110" y2="12" stroke="#2a2118" stroke-width="2"/>
+    <line x1="132.4" y1="24.8" x2="135.7" y2="19.9" stroke="#2a2118" stroke-width="2"/>
+    <line x1="147.1" y1="43" x2="152.7" y2="40.8" stroke="#2a2118" stroke-width="2"/>
+    <line x1="76.6" y1="30.9" x2="74.3" y2="29.1" stroke="#2a2118" stroke-width="1"/>
+    <line x1="97.4" y1="16.9" x2="96.6" y2="14" stroke="#2a2118" stroke-width="1"/>
+    <line x1="122.6" y1="16.9" x2="123.4" y2="14" stroke="#2a2118" stroke-width="1"/>
+    <line x1="143.4" y1="30.9" x2="145.7" y2="29.1" stroke="#2a2118" stroke-width="1"/>
+    <text x="81.3" y="46.4" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">0</text>
+    <text x="92.7" y="32.3" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">5</text>
+    <text x="110" y="27" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">10</text>
+    <text x="127.3" y="32.3" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">15</text>
+    <text x="138.7" y="46.4" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">20</text>
+    </g>
+
+    <!-- стрелка: синёная сталь, ось внизу -->
+    <g id="needle-volt" transform="rotate(0 110 58)">
+      <line x1="110" y1="58" x2="110" y2="14" stroke="#1b1b3a" stroke-width="1.6"/>
+      <path d="M 107.8 19 L 110 9 L 112.2 19 Z" fill="#7a1f1f"/>
+    </g>
+    <!-- №167: нижняя чёрная планка — стрѣлка прячется подъ нею -->
+    <path d="M 0 54 L 220 54 L 220 55 Q 220 62 213 62 L 7 62 Q 0 62 0 55 Z" fill="#241f2e"/>
+    <!-- №169: кольцо оси снято — осталась только точка того же размѣра -->
+    <circle cx="110" cy="58" r="1.3" fill="#8a6534"/>   <!-- №170: тёмно-золотая, какъ рамки -->
+
+    <!-- №166: надпись снята — имя прибора читаетъ aria-label -->
+    <text x="196" y="28" font-size="20" text-anchor="middle" fill="#5c4a2e" font-family="Elizabeth Unicode,Georgia,serif">V</text>
+
+    <!-- блики стекла -->
+    <rect x="0" y="0" width="220" height="58" rx="3" fill="url(#glass-volt)" pointer-events="none"/>
+    <!-- №167: тёплое газоразрядное свѣченіе — мѣрцаетъ на высокомъ токѣ / низкомъ напряжении -->
+    <ellipse id="glow-volt" class="meter-lamp" cx="110" cy="27" rx="108" ry="27" fill="url(#lamp-volt)" pointer-events="none"/>
+  </svg></span></button>
     </div>
   </nav>
   <div class="tape-slot">
@@ -1385,11 +1583,64 @@ function fitKeyboard() {
   }
   fitKeyAll();   // и подъ свои клавиши подгоняемъ надписи
 }
+
+/* №165: рамки кнопокъ подъ приборы — въ эфирѣ кнопка равна прибору 220×62; амперметръ къ лѣвой рамкѣ, вольтметръ къ правой */
+function fitTabFrames() {
+  var on = document.body.classList.contains('telegraph-on');
+  var tabs = document.querySelectorAll('.tabs .tab');
+  if (!tabs.length) return;
+  if (!on) {
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].style.width = '';
+      var sv = tabs[i].querySelector('.tab-meter svg');
+      if (sv) { sv.style.width = ''; sv.style.height = ''; }
+    }
+    window.__tabH = tabs[0].offsetHeight;   /* №166: высота обычнаго вида — въ эфирѣ она неизменна */
+    fitTabLabels();
+    return;
+  }
+  /* №166: меняется только ширина — высота кнопокъ остаётся прежней */
+  var h = window.__tabH || tabs[0].offsetHeight;
+  var ih = Math.max(10, h - 2);            /* внутрь рамки по 1px */
+  var iw = Math.round(ih * 220 / 62);      /* пропорція прибора 220:62 */
+  for (var i = 0; i < tabs.length; i++) {
+    var t = tabs[i];
+    var sv = t.querySelector('.tab-meter svg');
+    if (sv) { sv.style.width = iw + 'px'; sv.style.height = ih + 'px'; }
+    t.style.width = (iw + 2) + 'px';       /* рамка кнопки объять приборъ */
+  }
+}
+fitTabFrames();
+/* №162: подгонка надписей вкладокъ подъ кнопку — «Изысканіе въ эфирѣ» занимает ея почти всю (6px отъ рамки), «Мои слова» темъ же кеглемъ */
+function fitTabLabels() {
+  if (document.body.classList.contains('telegraph-on')) return;   /* №165: въ эфирѣ надписи скрыты — кегль не трогаемъ */
+  var labels = document.querySelectorAll('.tabs .tab-label');
+  if (!labels.length) return;
+  var lab = null, tab = null;
+  for (var i = 0; i < labels.length; i++) {
+    var t = labels[i];
+    if (!lab || t.textContent.length > lab.textContent.length) { lab = t; tab = t.parentElement; }
+  }
+  if (!lab) return;
+  lab.style.fontSize = '0.9rem';   /* сбросъ къ базѣ передъ измереніемъ */
+  var cs = getComputedStyle(tab);
+  var avail = tab.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 12;   /* 6px съ каждой стороны */
+  var w = lab.scrollWidth;
+  if (w > 0 && avail > 8) {
+    var fs = 0.9 * 16 * avail / w;
+    fs = Math.max(9, Math.min(32, fs));   /* №163: потолокъ кегля 20→32px — на компьютерѣ текстъ крупный */
+    for (var j = 0; j < labels.length; j++) labels[j].style.fontSize = fs.toFixed(3) + 'px';
+  }
+}
+fitTabLabels();
+window.addEventListener('load', function() { fitTabLabels(); fitTabFrames(); });
 window.addEventListener('resize', function() {
   fitKeyboard();
+  fitTabLabels();
+  fitTabFrames();
 });
-if (window.visualViewport) window.visualViewport.addEventListener('resize', function() { fitKeyboard(); });
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(function() { fitKeyboard(); });
+if (window.visualViewport) window.visualViewport.addEventListener('resize', function() { fitKeyboard(); fitTabLabels(); fitTabFrames(); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(function() { fitKeyboard(); fitTabLabels(); fitTabFrames(); });
 // Предзагрузка обложки: файл качается в фоне заранее,
 // поэтому окно с книгой открывается без ожидания
 var pdfCoverPreloaded = false;
@@ -1511,6 +1762,51 @@ function eraseSearchOne() {
 var telegraphOn = false;
 var teleRAF = null, teleX = 0, teleQueue = [], teleLast = 0, teleDone = false, teleSignDone = false, fetaStreak = 0, teleStopped = false, teleDealt = false, teleHoldHTML = null, telePrintLine = null, teleTx = 0;
 var strikeKeyMap = null, strikeArr = [], strikeIdx = 0;
+/* №158: приборы станціи — амперметръ вздрагиваетъ отъ каждаго удара и осѣдаетъ въ тишинѣ,
+   вольтметръ — батарея депеши: новая телеграмма и отповѣдь ставятъ его въ максимумъ,
+   каждая литера расходуетъ; на нулѣ наборъ вдвое мѣдленнѣе, подзарядъ за 3 секундамъ.
+   Стрелки питаются отъ цикла ленты — станція спитъ, приборы замерли. */
+var meterAmp = null, meterVolt = null;
+var teleAmpV = 0, teleVoltV = 1, teleVoltLow = false, teleVoltRefill = 0;
+var teleVoltCharge = false, teleVoltFillMs = 3000, teleChargeMsg = null, teleCurMsg = null;   /* №159: подзарядъ въ паузѣ мѣжду депешами */
+function teleNeedle(id, v) {
+  var el = document.getElementById('needle-' + id);
+  if (el) el.setAttribute('transform', 'rotate(' + (-68 + 136 * Math.max(0, Math.min(1, v))).toFixed(1) + ' 110 58)');
+}
+function teleMetersDraw() {
+  teleNeedle('amp', teleAmpV); teleNeedle('volt', teleVoltV);
+  teleGlowSync(teleAmpV, teleVoltV);   /* №171: яркость от заряда, мерцаніе общее */
+}
+/* №168: свѣченіе наливаетсяъ съ показаніемъ — амперъ ярче съ токомъ, вольтъ ярче къ нулю; мерцаніе (анімація) перекрываетъ inline */
+/* №171: общее свѣченіе приборовъ — яркость от заряда (0.22–0.72), классъ ставится обѣимъ лампамъ сразу */
+function teleGlowSync(amp, volt) {
+  var glow = (0.22 + 0.50 * Math.max(0, Math.min(1, volt))).toFixed(3);
+  var k = Math.max(0, Math.min(1, amp));   /* токъ по шкалѣ 0–10 А */
+  var on = (amp > 0.005 || teleVoltLow || teleVoltRefill > 0);   /* напряжение скачетъ — идётъ токъ или батарея мѣняется */
+  ['glow-amp', 'glow-volt'].forEach(function (idn) {
+    var el = document.getElementById(idn);
+    if (!el) return;
+    el.style.setProperty('--glow', glow);
+    el.style.setProperty('--k', k.toFixed(3));
+    el.style.opacity = glow;
+    if (on) { if (!el.classList.contains('lamp-flicker')) el.classList.add('lamp-flicker'); }
+    else { el.classList.remove('lamp-flicker'); }
+  });
+}
+/* №171: покой — свѣтъ стоитъ ровно */
+function teleGlowRest() {
+  ['glow-amp', 'glow-volt'].forEach(function (idn) {
+    var el = document.getElementById(idn);
+    if (el) el.classList.remove('lamp-flicker');
+  });
+}
+/* №171: лёгкій режимъ — классъ снятъ */
+function teleGlowReset() { teleGlowRest(); }
+function teleMetersSync() {
+  if (!meterAmp) { meterAmp = document.getElementById('needle-amp'); meterVolt = document.getElementById('needle-volt'); }
+  if (document.body.classList.contains('light')) { teleNeedle('amp', 0); teleNeedle('volt', 0); teleGlowReset(); return; }   /* лёгкій режимъ — приборы на покоя */
+  teleMetersDraw();
+}
 var shiftKeyEl = null, specKeyEl = null, specHeld = false;   // шифтъ и спец-клавиша
 var sndOn = true, teleAudio = null;                          // звонокъ: звукъ включёнъ по умолчанію
 var TELE_SPEED = 64;   // px/сек — скорость движения ленты
@@ -1842,6 +2138,7 @@ function teleBuildKeyMap() {
 function telePressKey(keyEl, soft) {
   if (!keyEl) return;
   sndClick(!soft);   // щелчокъ клавиши (звонкомъ отключается)
+  teleAmpV = Math.min(1, teleAmpV + 0.25);   /* №158: ударъ литеры — толчокъ тока въ линіи */
   teleWake();   /* №156: ударъ будитъ циклъ */
   if (keyEl._tgTimer) clearTimeout(keyEl._tgTimer);
   keyEl.classList.remove('tg-strike');
@@ -2107,12 +2404,35 @@ function teleStrike() {
     if (!o.span.isConnected) { strikeIdx++; continue; }
     var r = o.span.getBoundingClientRect();
     if (r.left < edge) {
+      if (teleVoltCharge && o.msg !== undefined && o.msg !== teleChargeMsg) {   /* №159: новая депеша въѣзжаетъ — батарея полная */
+        teleVoltV = 1; teleVoltLow = false; teleVoltCharge = false;
+      }
       telePressKey(o.key);
       if (o.aux) telePressKey(o.aux, false);   // шифтъ или ϕ нажимаются вмѣстѣ съ буквой
-      if (o.mark === 'curse-open') teleSpeedMul = 1.5;               // ругательство — наборъ въ полтора раза быстрее
+      if (o.mark === 'curse-open') { teleSpeedMul = 1.5; }   // ругательство — наборъ въ полтора раза быстрее; №159: отповѣдь батарею не поднимаетъ — расходуетъ наравнѣ съ текстомъ
       if (o.mark === 'curse-close') { teleSpeedMul = 1; teleCurseActive = false; }   // депеша пошла дальше — снова можно печатать
       if (o.msg) o.msg._struck = true;   /* буква отстучана — депеша запоминается какъ текущая */
+      if (!teleVoltLow) {
+        teleVoltV -= 1 / 369;   /* №159: расходъ по самой длинной депѣшѣ (332 удара) — послѣ нея остаётся ровно пара вольтъ */
+        if (teleVoltV <= 0) { teleVoltV = 0; teleVoltLow = true; teleVoltRefill = performance.now(); }   /* батарея села */
+      }
       strikeIdx++;
+      if (o.msg !== undefined) {   /* №159: кончилась ли депеша — смотримъ впередъ по очереди */
+        teleCurMsg = o.msg;
+        var nn = null;
+        for (var si = strikeIdx; si < strikeArr.length; si++) {
+          var so = strikeArr[si];
+          if (so.span && so.span.isConnected) { nn = so; break; }
+        }
+        if (!nn || nn.msg !== teleCurMsg) {   /* впереди только чужія буквы или пусто — депеша отпечаталась */
+          if (nn) {
+            var nr = nn.span.getBoundingClientRect();
+            var spd = TELE_SPEED * teleSpeedMul * (teleVoltLow && !teleRev ? 0.5 : 1);
+            teleVoltFillMs = Math.max(250, Math.min(3000, (nr.left - edge) / spd * 1000));   /* стрелка приедетъ къ полной ровно къ первому удару слѣдующей депеши */
+          } else teleVoltFillMs = 3000;   /* колода кончилась — наливаемся спокойно */
+          teleVoltCharge = true;
+        }
+      }
       if (teleBoost && !o.span.closest('.tape-greet') && (o.span.textContent || '').trim()) {
         teleBoost = false;                          // первая видимая буква депеши — обычная скорость
         if (teleSpeedMul === 2) teleSpeedMul = 1;   // пробѣлы и хвостъ приветствія — ещё на ускореніи
@@ -2142,11 +2462,21 @@ function teleFrame(ts) {
       return;
     }
   } else if (!teleStopped || teleRev) {
-    teleX -= TELE_SPEED * teleSpeedMul * dt / 1000;
+    teleX -= TELE_SPEED * teleSpeedMul * (teleVoltLow && !teleRev ? 0.5 : 1) * dt / 1000;   /* №158: севшая батарея — наборъ вдвое мѣдленнѣе; обратный ходъ батареи не считаєтъ */
   } else if (telePrintLine && telePrintLine.isConnected && Math.abs(teleTx - teleX) > 0.4) {
     var tauP = Math.abs(teleTx - teleX) < 80 ? 130 : 55;   // торможеніе словарного станка (TAU = 55, вблизи 130)
     teleX += (teleTx - teleX) * (1 - Math.exp(-dt / tauP));
   }
+  /* №158: приборы — осѣданіе амперметра и подзарядъ батареи въ кадрахъ цикла ленты */
+  teleAmpV *= Math.exp(-dt / 280);
+  if (teleVoltLow) {
+    teleVoltV = Math.min(1, (performance.now() - teleVoltRefill) / 3000);
+    if (teleVoltV >= 1) { teleVoltV = 1; teleVoltLow = false; }   /* батарея отдышалась — скоростьъ вернулась */
+  } else if (teleVoltCharge && teleVoltV < 1) {
+    teleVoltV = Math.min(1, teleVoltV + dt / teleVoltFillMs);   /* №159: пауза мѣжду депешами — батарея наливается, полная къ началу слѣдующей */
+  }
+  if (!meterAmp) { meterAmp = document.getElementById('needle-amp'); meterVolt = document.getElementById('needle-volt'); }
+  if (!document.body.classList.contains('light') && (teleAmpV > 0.005 || teleVoltLow || teleVoltV < 1)) teleMetersDraw(); else teleGlowRest();
   teleMaintain();
   var track = document.getElementById('tape-track');
   if (track) {
@@ -2156,7 +2486,7 @@ function teleFrame(ts) {
   teleStrike();   /* №157: удары послѣ записи transformъ — удаленіе ушедшей телеграммы сдвигаетъ раскладку мгновенно, а transformъ дописывается лишь здѣсь; удары до записи видѣли ложные пересѣченія рамки (залпъ щелчковъ, хрипъ, молчаніе клавишъ) */
   if (teleRev) teleReverseCheck();
   /* №156: сонъ цикла — лента стоитъ, обратного хода нѣтъ и строка печати догнала точку */
-  if (!teleRev && teleStopped && !(telePrintLine && telePrintLine.isConnected && Math.abs(teleTx - teleX) > 0.4)) {
+  if (!teleRev && teleStopped && teleAmpV <= 0.005 && !teleVoltLow && !(teleVoltCharge && teleVoltV < 1) && !(telePrintLine && telePrintLine.isConnected && Math.abs(teleTx - teleX) > 0.4)) {   /* №158: не спать, пока стрелки движутся; №159: и пока батарея наливается */
     teleRAF = null;
     return;
   }
@@ -2167,6 +2497,7 @@ function teleStartReverse() {
   if (teleRev) return;
   teleRev = true;
   document.body.classList.add('telegraph-on');   // лента телеграфа видна до стыка
+  fitTabFrames();   /* №165: рамки подъ приборы */
   teleQueue = [];
   teleBoost = false;
   teleSpeedMul = 4; teleCurseActive = false; teleGlowSet(0);// обратный ходъ — печать и прокрутка вчетверо быстрее
@@ -2349,6 +2680,7 @@ function teleEndReverse() {
   });
   strikeArr = []; strikeIdx = 0;
   teleStopped = false; teleDone = false; teleSignDone = false; teleDealt = false; fetaStreak = 0;   /* финалъ забытъ — новая колода */
+  teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
   teleHoldHTML = null;   /* держатель забытъ — новая колода */
   telePrintLine = null; teleTx = 0;   /* строка печати и цель подачи забыты — новая колода */
   var tgKey = document.querySelector('#alphabet-bar .key-tg');
@@ -2356,6 +2688,7 @@ function teleEndReverse() {
     var tgColEl = document.getElementById('tg-plates');
   if (tgColEl) { tgColEl.style.transform = ''; tgColEl.removeAttribute('data-tgdy'); }
 document.body.classList.remove('telegraph-on');
+  fitTabFrames();   /* №165: возвратъ къ обычному видуъ — рамки и надписи возвращаются */
   searchBox.value = ''; sPrevLen = 0;
   window._kbSyncPrev();   /* Сшивъ №99: строку писали мимо input */
   if (window.sTapeRestore) window.sTapeRestore(phase, drift);
@@ -2536,6 +2869,7 @@ function toggleTelegraph() {
   /* замеръ надписи — до переключенія класса, пока #s-tape ещё виденъ */
   var tgHand = (telegraphOn && window.sTapeHandoff) ? window.sTapeHandoff() : null;
   if (telegraphOn) document.body.classList.add('telegraph-on');   // при выключеніи классъ снимаетъ teleEndReverse по стыкѣ
+  if (telegraphOn) fitTabFrames();
   if (telegraphOn) tgAlignClip();
   var tgKey = document.querySelector('#alphabet-bar .key-tg');
   if (tgKey && telegraphOn) tgKey.classList.add('held');   // отпускаетъ teleEndReverse по стыкѣ
@@ -2561,6 +2895,7 @@ function toggleTelegraph() {
     strikeArr = []; strikeIdx = 0;
     teleQueue = []; teleDone = false; teleSignDone = false; fetaStreak = 0;   /* новая колода — перемѣшивается заново */
     teleStopped = false; teleDealt = false;
+    teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
     teleHoldHTML = null;   /* держатель забытъ */
     telePrintLine = null; teleTx = 0;   /* строка печати и цель подачи забыты */
     tgNum = 1 + Math.floor(Math.random() * 100); tgClear();
@@ -2571,6 +2906,7 @@ function toggleTelegraph() {
       if (!telegraphOn || teleRev) return;   // обратный переходъ успелъ начаться — сшивку отмѣняемъ
       inner.innerHTML = '';
       teleQueue = []; teleLast = 0; teleStopped = false; teleDealt = false;
+      teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
       teleHoldHTML = null;   /* держатель забытъ */
       telePrintLine = null; teleTx = 0;   /* строка печати и цель подачи забыты */
       /* Бесшовный переходъ: надписи поиска встаютъ на лентѣ тамъ же, гдѣ стояли.
@@ -4065,7 +4401,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 157</div>
+<div class="build-info">Сшивъ № 174</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -4082,7 +4418,7 @@ function tgCloseCard(w) {
 body.light .tg-seg .tpc.wet-end { filter: none !important; }
 
 /* ===== Гиря: лёгкая версія — бумага и печать цѣлы, дорогая отрисовка снята ===== */
-body.light .tab.active { animation: none; box-shadow: none; }                /* лампы вкладокъ — безъ безконечного накала */
+body.light .tab.active { animation: none; box-shadow: 0 0 14px rgba(255,206,150,0.38), 0 0 40px rgba(255,206,150,0.20); }   /* №171: свѣченіе не гаснетъ отъ клика */
 body.light .alphabet-bar,
 body.light .alphabet-bar:hover { animation: none; }                          /* безъ пульса пламени на панєли */
 body.light #search-box { will-change: auto; filter: none; }                  /* слой и фильтръ — долой */
@@ -4543,6 +4879,20 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
   -webkit-mask-image: radial-gradient(ellipse at center, transparent 30%, #000 82%);
   mask-image: radial-gradient(ellipse at center, transparent 30%, #000 82%);
 }
+/* ===== №171: стражъ — тень приборныхъ кнопокъ въ эфирѣ всегда ровно эфирная ===== */
+body.telegraph-on .tab,
+body.telegraph-on .tab:hover,
+body.telegraph-on .tab:active,
+body.telegraph-on .tab:focus,
+body.telegraph-on .tab.active,
+body.light.telegraph-on .tab,
+body.light.telegraph-on .tab:hover,
+body.light.telegraph-on .tab:active,
+body.light.telegraph-on .tab:focus,
+body.light.telegraph-on .tab.active {
+  box-shadow: 0 0 14px rgba(255,206,150,0.38), 0 0 40px rgba(255,206,150,0.20) !important;
+  animation: none !important;
+}
 </style>
 
 <!-- №154: перо возврата къ клавиатурѣ (введено въ №141) — всплываетъ при прокруткѣ снизу вверхъ,
@@ -4555,7 +4905,13 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
      въ №154 цифры и знаки — машинная раскладка шифта, телеграфистъ бьётъ по спец-клавишам,
      въ №155 заголовокъ плашки строго по центру — на узкихъ экранахъ ужинъ, а не сдвигъ,
      въ №156 циклъ ленты засыпаетъ въ покое, удары безъ лишней вёрстки — видъ тотъ же, жаръ мѣньше,
-     въ №157 удары возвращены послѣ записи transformъ — въ моменты перестановки ленты (уйдъ блокъ, погода въ приветствіи) удары до записи видѣли ложные пересѣченія рамки: залпъ щелчковъ, хрипъ, молчащіе клавиши -->
+     въ №157 удары возвращены послѣ записи transformъ — въ моменты перестановки ленты (уйдъ блокъ, погода въ приветствіи) удары до записи видѣли ложные пересѣченія рамки: залпъ щелчковъ, хрипъ, молчащіе клавиши,
+      въ №158 приборы станціи въ кнопкахъ эфира: амперметръ вздрагиваетъ отъ каждаго удара, вольтметръ — батарея депеши; села — наборъ вдвое мѣдленнѣе, подзарядъ за три секундамъ,
+      въ №159 вольтметръ перекалиброванъ по самой длинной депѣшѣ (№115, 332 удара) — послѣ нея остаётся пара вольтъ; отповѣдь батарею не поднимаетъ; въ паузѣ мѣжду депешами батарея наливается и къ началу слѣдующей полна,
+      въ №160 графика: рамки приборовъ выровнены съ рамками кнопокъ — цвѣтъ и толщина линій (non-scaling-stroke держитъ 1px); кнопки эфира одной ширины — «Изысканіе» ужата безъ упора въ рамки, «Мои слова» расширена,
+      въ №161 выравниваніе кнопокъ и подписи стали безусловными — равная ширина въ обоихъ режимахъ, безъ привязки къ классу эфира,
+      въ №162 графика: паддинги кнопокъ ужаты (0.55→0.4rem), базовый кегль 0.82→0.9rem, переносъ на узкихъ экранахъ снятъ; fitTabLabels измеряетъ живую ширину надписи и ставитъ точный кегль — «Изысканіе въ эфирѣ» занимает кнопку почти всю (6px отъ рамки), «Мои слова» темъ же кеглемъ; пересчётъ на resize, поворотѣ и послѣ загрузки шрифтовъ,
+      въ №163 надписи выросли на компьютерѣ: потолокъ ширины кнопокъ (210px) снятъ — кнопки дѣлятъ шапку пополамъ на любой ширинѣ, потолокъ кегля поднятъ 20→32px — «Изысканіе въ эфирѣ» занимает кнопку почти всю, текстъ читается -->
 <div id="pen-top" role="button" aria-label="Вернуться къ клавиатурѣ" title="Вернуться въ шапку"></div>
 <script>
 (function () {

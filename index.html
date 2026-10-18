@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №150, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №152, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №150: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №152: Сводный алфавитный лексиконъ</title>
 <style>
 /* №139: синяя подсвѣтка тапа на клавиатурѣ снята (системный tap highlight браузера) */
 #kb-wrap,
@@ -551,7 +551,7 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
   cursor: pointer; user-select: none;
   background:
     radial-gradient(circle at 32% 28%, rgba(255,255,255,0.12), rgba(255,255,255,0) 45%),
-    rgba(12, 10, 30, 0.6);
+    rgba(52, 46, 88, 0.6);
   border: 1px solid var(--card-border);
   box-shadow:
     inset 0 2px 4px rgba(255,255,255,0.08),
@@ -772,7 +772,7 @@ body.telegraph-on .letter:not(.key-space):hover:active {
   color: var(--gold-bright);
   background:
     radial-gradient(circle at 32% 28%, rgba(255,255,255,0.12), rgba(255,255,255,0) 45%),
-    rgba(12, 10, 30, 0.6);
+    rgba(52, 46, 88, 0.6);
   border-color: var(--card-border);
   box-shadow:
     inset 0 2px 4px rgba(255,255,255,0.08),
@@ -4037,7 +4037,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 150</div>
+<div class="build-info">Сшивъ № 152</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -4092,7 +4092,7 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
   display: flex; align-items: center; justify-content: center;
   font-size: 1.05rem; font-weight: bold;
   color: #c7b179;
-  background: radial-gradient(circle at 50% 38%, #141030 0%, #0b091c 100%);
+  background: radial-gradient(circle at 50% 38%, #201a44 0%, #120f2c 100%);
   box-shadow:
     inset 0 7px 11px rgba(0,0,0,.9),
     inset 0 -1px 2px rgba(199,177,121,.28),
@@ -4431,23 +4431,11 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
     rgba(46,37,23,.34) 36px,
     rgba(46,37,23,0) 52px);
 }
-/* тяги «Всѣ» и «Телеграфъ»: верхній рядъ — короткій ходъ, таятъ въ отступѣ панели */
-#alphabet-bar .letter.key-all .rod,
-#alphabet-bar .letter.key-tg  .rod{
-  height: 20px;
-  background: linear-gradient(0deg,
-    rgba(46,37,23,.95) 0,
-    rgba(46,37,23,.55) 9px,
-    rgba(46,37,23,0) 17px);
-}
+/* №152: урезка тягъ «Всѣ» и «Телеграфъ» снята — общая тяга 110px и градіентъ, какъ у всѣхъ клавишъ */
 #alphabet-bar .letter.key-space .rod{ height: 84px; }
 @media (max-width: 560px){
   #alphabet-bar .letter .rod{ height: 72px; }
-  #alphabet-bar .letter.key-all .rod,
-  #alphabet-bar .letter.key-tg  .rod{
-    height: 14px;
-    background: linear-gradient(0deg, rgba(46,37,23,.95) 0, rgba(46,37,23,0) 12px);
-  }
+    /* №152: урезка тягъ «Всѣ» и «Телеграфъ» снята — общая тяга 72px, какъ у всѣхъ */
   #alphabet-bar .letter.key-space .rod{ height: 54px; }
 }
 </style>
@@ -4529,10 +4517,12 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
 }
 </style>
 
-<!-- №150: перо возврата къ клавиатурѣ (введено въ №141) — всплываетъ при прокруткѣ снизу вверхъ,
+<!-- №152: перо возврата къ клавиатурѣ (введено въ №141) — всплываетъ при прокруткѣ снизу вверхъ,
      таетъ скольженіемъ вверхъ; въ №144 исправлено направленіе, въ №145 устранено морганье,
      въ №146 порогъ и инерція, въ №147 сглаженная инерція, въ №148 ходъ на композиторѣ,
-     въ №150 отставаніе снято: перо живётъ одними переходами композитора, дёргаться нечему -->
+     въ №150 отставаніе снято: перо живётъ одними переходами композитора, дёргаться нечему,
+     въ №151 клавиши свѣтлѣе на полтона,
+     въ №152 свѣтъ ещё на полтона, тяги боковыхъ клавишъ — какъ у всѣхъ -->
 <div id="pen-top" role="button" aria-label="Вернуться къ клавиатурѣ" title="Вернуться въ шапку"></div>
 <script>
 (function () {

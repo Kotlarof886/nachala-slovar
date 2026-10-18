@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №155, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №157, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №155: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №157: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -1078,11 +1078,10 @@ body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* ср�
   color: rgb(182, 154, 98);            /* тотъ же сплошной цветъ, что и гербъ */
   white-space: nowrap;
 }
+/* №153: на узкихъ экранахъ заголовокъ не заходитъ въ зону номера */
 .tgp-gerb { height: 30px; width: auto; }
-/* №155: заголовокъ плашки — снова строго по центру (сдвигъ №153 снятъ);
-   на узкихъ экранахъ не сдвигаемъ, а деликатно ужимаемся — зазоръ съ номеромъ держится */
-@media (max-width: 600px) {
-  .tgp-title { font-size: .92rem; letter-spacing: 1.6px; gap: 7px; }
+@media (max-width: 600px) {   /* №155: заголовокъ строго по центру плашки, на узкихъ — деликатный ужинъ, не сдвигъ */
+  .tgp-title { font-size: 0.92rem; letter-spacing: 1.6px; }
   .tgp-gerb { height: 25px; }
   .tgp-num { font-size: 1.15rem; }
 }
@@ -1515,6 +1514,15 @@ var strikeKeyMap = null, strikeArr = [], strikeIdx = 0;
 var shiftKeyEl = null, specKeyEl = null, specHeld = false;   // шифтъ и спец-клавиша
 var sndOn = true, teleAudio = null;                          // звонокъ: звукъ включёнъ по умолчанію
 var TELE_SPEED = 64;   // px/сек — скорость движения ленты
+var teleXW = '';   /* №156: кешъ последней записанной строки transform (инвалидіруется въ teleWake) */
+/* №156: пробужденіе цикла ленты — спитъ въ покое, встаётъ отъ любаго событія */
+function teleWake() {
+  if (!telegraphOn && !teleRev) return;
+  if (teleRAF) return;
+  teleLast = 0;   /* шагъ не разгоняется — кадръ въ рамкѣ прежняго потолка */
+  teleXW = '';    /* кешъ сброшенъ — перезапись гарантирована */
+  teleRAF = requestAnimationFrame(teleFrame);
+}
 /* обратный переходъ: обрывъ ленты, печатаніе «Изысканіе по словамъ...» и возвратъ въ поискъ */
 var teleRev = false, revLast = null, revPh = null, revStart = 0, teleBoost = false, teleBoostN = 0, revSettle = false, revD = 0, revRest = -1;
 /* Спец-клавиша ϕ: при зажатой ϕ буква даётъ цифру или знакъ — машинная раскладка
@@ -1834,9 +1842,10 @@ function teleBuildKeyMap() {
 function telePressKey(keyEl, soft) {
   if (!keyEl) return;
   sndClick(!soft);   // щелчокъ клавиши (звонкомъ отключается)
+  teleWake();   /* №156: ударъ будитъ циклъ */
   if (keyEl._tgTimer) clearTimeout(keyEl._tgTimer);
   keyEl.classList.remove('tg-strike');
-  void keyEl.offsetWidth;   /* №136: reflow — повторный ударъ по той же клавишѣ отыгрывается */
+  if (keyEl._tgTimer) void keyEl.offsetWidth;   /* №156: reflow — только повторный ударъ по той же клавишѣ; свежій стартуетъ анімацію самъ */
   keyEl.classList.add('tg-strike');
   keyEl._tgTimer = setTimeout(function() {
     keyEl.classList.remove('tg-strike');
@@ -1914,6 +1923,7 @@ function teleInject(html) {
       teleTx = wantR - (lastCh.offsetLeft + lastCh.offsetWidth);   /* цель подачи — по фактическому положенію буквы */
     }
   }
+  teleWake();   /* №156: подача будитъ циклъ */
   return { spans: inserted, recs: recs };
 }
 /* фѣта (ϕ): шесть нажатій подрядъ — отповѣдь и финалъ колоды */
@@ -2139,9 +2149,17 @@ function teleFrame(ts) {
   }
   teleMaintain();
   var track = document.getElementById('tape-track');
-  if (track) track.style.transform = 'translateX(' + teleX.toFixed(2) + 'px)';
-  teleStrike();
+  if (track) {
+    var tw = 'translateX(' + teleX.toFixed(2) + 'px)';
+    if (tw !== teleXW) { track.style.transform = tw; teleXW = tw; }   /* №156: запись только при сдвигѣ */
+  }
+  teleStrike();   /* №157: удары послѣ записи transformъ — удаленіе ушедшей телеграммы сдвигаетъ раскладку мгновенно, а transformъ дописывается лишь здѣсь; удары до записи видѣли ложные пересѣченія рамки (залпъ щелчковъ, хрипъ, молчаніе клавишъ) */
   if (teleRev) teleReverseCheck();
+  /* №156: сонъ цикла — лента стоитъ, обратного хода нѣтъ и строка печати догнала точку */
+  if (!teleRev && teleStopped && !(telePrintLine && telePrintLine.isConnected && Math.abs(teleTx - teleX) > 0.4)) {
+    teleRAF = null;
+    return;
+  }
   teleRAF = requestAnimationFrame(teleFrame);
 }
 /* ---------- Обратный переходъ: обрывъ ленты и бесшовный возвратъ въ поискъ ---------- */
@@ -2616,7 +2634,7 @@ function toggleTelegraph() {
         teleBoost = true;          /* «Телеграфъ пущенъ» печатается вдвое быстрее */
         teleSpeedMul = 2;          /* пока не пошла первая депеша */
         teleMaintain();
-        teleRAF = requestAnimationFrame(teleFrame);
+        if (!teleRAF) teleRAF = requestAnimationFrame(teleFrame);   /* №156 */
       };
       if (wxVal === null) wxKick();   /* погода дойдётъ фономъ — лента не ждётъ нисколько */
       buildGreet();
@@ -4047,7 +4065,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 155</div>
+<div class="build-info">Сшивъ № 157</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -4527,15 +4545,17 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
 }
 </style>
 
-<!-- №155: перо возврата къ клавиатурѣ (введено въ №141) — всплываетъ при прокруткѣ снизу вверхъ,
+<!-- №154: перо возврата къ клавиатурѣ (введено въ №141) — всплываетъ при прокруткѣ снизу вверхъ,
      таетъ скольженіемъ вверхъ; въ №144 исправлено направленіе, въ №145 устранено морганье,
      въ №146 порогъ и инерція, въ №147 сглаженная инерція, въ №148 ходъ на композиторѣ,
      въ №150 отставаніе снято: перо живётъ одними переходами композитора, дёргаться нечему,
      въ №151 клавиши свѣтлѣе на полтона,
      въ №152 свѣтъ ещё на полтона, тяги боковыхъ клавишъ — какъ у всѣхъ,
      въ №153 номеръ телеграммы къ левому краю плашки, синій мигъ тапа снятъ со всѣхъ кнопокъ,
-     въ №154 цифры и знаки — машинная раскладка шифта, телеграфистъ бьётъ по спец-клавишамъ,
-     въ №155 заголовокъ плашки снова строго по центру — на узкихъ экранахъ ужинъ вместо сдвига -->
+     въ №154 цифры и знаки — машинная раскладка шифта, телеграфистъ бьётъ по спец-клавишам,
+     въ №155 заголовокъ плашки строго по центру — на узкихъ экранахъ ужинъ, а не сдвигъ,
+     въ №156 циклъ ленты засыпаетъ въ покое, удары безъ лишней вёрстки — видъ тотъ же, жаръ мѣньше,
+     въ №157 удары возвращены послѣ записи transformъ — въ моменты перестановки ленты (уйдъ блокъ, погода въ приветствіи) удары до записи видѣли ложные пересѣченія рамки: залпъ щелчковъ, хрипъ, молчащіе клавиши -->
 <div id="pen-top" role="button" aria-label="Вернуться къ клавиатурѣ" title="Вернуться въ шапку"></div>
 <script>
 (function () {

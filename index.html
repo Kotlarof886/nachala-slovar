@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №174, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №180, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №174: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №180: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -49,7 +49,11 @@ body * {
 Сборка №167: размахъ шкалъ и стрѣлокъ ±68°; верхняя и боковыя чёрныя рамки приборовъ сняты, нижняя осталась — стрѣлка прячется подъ нею; буквы A/V ещё крупнѣе (20px, Elizabeth Unicode); тёплое газоразрядное свѣченіе приборовъ — мѣрцаетъ при высокомъ токѣ или низкомъ напряжении.
 Сборка №168: ось стрѣлки на нижней планкѣ цвѣтомъ рамки; циферблатъ клипаетсяъ по скругленію кнопки; свѣченіе усилёно и наливаетсяъ подъ показаніямъ шкалы; фонъ слоистый — эмаль съ бликомъ, патиной и шумомъ, виньетка даётъ глубину.
 
-Сборка №170: фонъ гущѣ (патина 0.26–0.34, шумъ 0.16, виньетка 0.82) и страховка на html; градіенты циферблатовъ на пяти стопахъ — полоса перехода снята; точки осей тёмно-золотые #8a6534; свѣченіе теплѣе и слабѣе (ядро 0.78, база 0.48, размахъ 0.22–0.72); кликъ не мѣняетъ свѣченіе (animation/transition сняты въ эфирѣ); мѣрцаніе → просадка сети lampSag 9.5s.  Сборка №169: фонъ сайта перенесёнъ прямо на body (псевдослои №168 прятались подъ заливкой); циферблаты пергаментные — пятна старѣнія и зерно бумаги; лица подъогнаны подъ рамку (rx=3, SVG во всю кнопку); кольцо оси снято, точка осталась того же размѣра; подсвѣтка по клику снята; свѣченіе тѣплѣе и живѣе.*/
+Сборка №170: фонъ гущѣ (патина 0.26–0.34, шумъ 0.16, виньетка 0.82) и страховка на html; градіенты циферблатовъ на пяти стопахъ — полоса перехода снята; точки осей тёмно-золотые #8a6534; свѣченіе теплѣе и слабѣе (ядро 0.78, база 0.48, размахъ 0.22–0.72); кликъ не мѣняетъ свѣченіе (animation/transition сняты въ эфирѣ); мѣрцаніе → просадка сети lampSag 9.5s.  Сборка №169: фонъ сайта перенесёнъ прямо на body (псевдослои №168 прятались подъ заливкой); циферблаты пергаментные — пятна старѣнія и зерно бумаги; лица подъогнаны подъ рамку (rx=3, SVG во всю кнопку); кольцо оси снято, точка осталась того же размѣра; подсвѣтка по клику снята; свѣченіе тѣплѣе и живѣе.
+№177: рельеф приборовъ набранъ заново подъ свѣтлый циферблатъ — тѣни клавишъ (бликъ 8%) на кремовой панели были невидимы; теперь: свѣтлая кромка 0 3px 6px (55%), тѣнь дна 0 -4px 9px (38%), боковины 12%; нажатіе — провалъ глубже (6px/12px, боковины 20%).
+
+№178: подсвѣтка приборовъ по клику снята насовсѣмъ — золотая рамка, заливка и пульсъ лампы гасятся въ базовыхъ правилахъ и стражемъ (рамка и фонъ — !important); активная рамка = спокойная (--card-border); сломанная декларация въ .tab.active убрана; летопись выправлена (вложенные комментарии).
+*/
 #pen-top {
   position: fixed;
   top: 50%;
@@ -169,9 +173,20 @@ nav { margin-top: 1.2rem; }
   color: var(--text);
   border-radius: 0.25rem;
   cursor: pointer;
+  box-shadow:
+    inset 0 2px 4px rgba(255,255,255,0.08),
+    inset 0 -3px 6px rgba(0,0,0,0.5),
+    0 3px 6px rgba(0,0,0,0.45);
   transition: all 0.2s;
 }
 .tab:hover { border-color: var(--gold); }
+.tab:active {
+  box-shadow:
+    inset 0 5px 10px rgba(0,0,0,0.6),
+    inset 0 1px 2px rgba(255,255,255,0.06),
+    0 1px 3px rgba(0,0,0,0.4);
+  transform: none;
+}
 .tab.active {
   background: linear-gradient(135deg, rgba(212,176,106,0.9), rgba(184,149,79,0.9));
   color: #1a1535;
@@ -190,6 +205,7 @@ box-shadow:
   100% { box-shadow: 0 0 8px 0 rgba(212,176,106,0.35), 0 0 20px rgba(212,176,106,0.18); }
 }
 .tab.active { animation: lamp-glow 6s ease-in-out infinite; }
+
 /* №158: приборы станціи въ кнопкахъ — въ эфирѣ надпись гаснетъ, приборъ проявляется */
 .tab { position: relative; }
 .tab .tab-label { transition: opacity .4s; }
@@ -204,12 +220,15 @@ body.telegraph-on .tab.active { background: #e9dfc2; border-color: var(--card-bo
 /* №165: въ эфирѣ кнопка объять приборъ — рамка подъ его размеръ, безъ подложекъ */
 body.telegraph-on .tabs .tab { flex: 0 0 auto; max-width: none; padding: 0; overflow: hidden; }   /* №168: углы циферблата клипаютсяъ по скругленію рамки */
 body.telegraph-on .tab .tab-meter { position: relative; inset: auto; }
+body.telegraph-on .tab .tab-meter::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; box-shadow: inset 0 3px 6px rgba(255,255,255,0.55), inset 0 -4px 9px rgba(0,0,0,0.38), inset 3px 0 6px rgba(0,0,0,0.12), inset -3px 0 6px rgba(0,0,0,0.12); }   /* №176: углубленіе поверхъ прибора — SVG накрывалъ тень кнопки */
+body.telegraph-on .tab:active .tab-meter::after { box-shadow: inset 0 2px 3px rgba(255,255,255,0.45), inset 0 -6px 12px rgba(0,0,0,0.5), inset 4px 0 8px rgba(0,0,0,0.2), inset -4px 0 8px rgba(0,0,0,0.2); }   /* №176: нажатіе — углубленіе глубже, какъ у клавишъ */
+
 body.telegraph-on .tab .tab-meter svg { width: 100%; height: 100%; }   /* №169: приборъ во всю кнопку — просвѣтовъ нетъ */
 /* №165: подъ нажатіемъ въ приборахъ рамки не подсвѣчиваются */
 body.telegraph-on .tab:hover { border-color: var(--card-border); }
 body.telegraph-on .tab { transition: none; }   /* №170: ни одна величина не анимируется отъ клика */
 /* №171: вспышка подложки при нажатіи снята — кликъ не мѣняетъ ничего */
-body.telegraph-on .tab.active { animation: none; box-shadow: 0 0 14px rgba(255,206,150,0.38), 0 0 40px rgba(255,206,150,0.20); }   /* №171: тень выровнена съ эфирной базой — кликъ не свѣтитъ */
+body.telegraph-on .tab.active { animation: none; box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -3px 6px rgba(0,0,0,0.5), 0 3px 6px rgba(0,0,0,0.45); }   /* №171: тень выровнена съ эфирной базой — кликъ не свѣтитъ */
 body.telegraph-on .tab:focus { outline: none; }   /* №169: контуръ фокуса не свѣтится */
 body.telegraph-on .tab { -webkit-tap-highlight-color: transparent; }   /* №169: тапъ не подсвѣчиваетъ */
 /* №167: газоразрядное свѣченіе приборовъ — тёплый светъ слоновой кости */
@@ -229,7 +248,7 @@ body.telegraph-on .tab { -webkit-tap-highlight-color: transparent; }   /* №169
   66%, 100%{ opacity: var(--glow, .48); }
 }
 /* №168: внешнее свѣченіе — на рамкѣ кнопки (клипъ не рѣжетъ тень элемента), на порогѣ — ярче */
-body.telegraph-on .tab { box-shadow: 0 0 14px rgba(255,206,150,0.38), 0 0 40px rgba(255,206,150,0.20);   /* №170: приглушено вдвое */ }
+body.telegraph-on .tab { box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -3px 6px rgba(0,0,0,0.5), 0 3px 6px rgba(0,0,0,0.45);   /* №170: приглушено вдвое */ }
 /* №171: lamp-on упразднено — третьего состоянія свѣченія нѣтъ */
 
 
@@ -1763,12 +1782,12 @@ var telegraphOn = false;
 var teleRAF = null, teleX = 0, teleQueue = [], teleLast = 0, teleDone = false, teleSignDone = false, fetaStreak = 0, teleStopped = false, teleDealt = false, teleHoldHTML = null, telePrintLine = null, teleTx = 0;
 var strikeKeyMap = null, strikeArr = [], strikeIdx = 0;
 /* №158: приборы станціи — амперметръ вздрагиваетъ отъ каждаго удара и осѣдаетъ въ тишинѣ,
-   вольтметръ — батарея депеши: новая телеграмма и отповѣдь ставятъ его въ максимумъ,
+   вольтметръ — батарея депеши: каждая новая телеграмма прибавляетъ къ остатку десять вольтъ,
    каждая литера расходуетъ; на нулѣ наборъ вдвое мѣдленнѣе, подзарядъ за 3 секундамъ.
    Стрелки питаются отъ цикла ленты — станція спитъ, приборы замерли. */
 var meterAmp = null, meterVolt = null;
 var teleAmpV = 0, teleVoltV = 1, teleVoltLow = false, teleVoltRefill = 0;
-var teleVoltCharge = false, teleVoltFillMs = 3000, teleChargeMsg = null, teleCurMsg = null;   /* №159: подзарядъ въ паузѣ мѣжду депешами */
+var teleVoltCharge = false, teleVoltFillMs = 3000, teleChargeMsg = null, teleCurMsg = null;   /* №180: подзарядъ въ паузѣ отмѣненъ — зарядъ живётъ отъ депеши къ депеше */
 function teleNeedle(id, v) {
   var el = document.getElementById('needle-' + id);
   if (el) el.setAttribute('transform', 'rotate(' + (-68 + 136 * Math.max(0, Math.min(1, v))).toFixed(1) + ' 110 58)');
@@ -2404,8 +2423,8 @@ function teleStrike() {
     if (!o.span.isConnected) { strikeIdx++; continue; }
     var r = o.span.getBoundingClientRect();
     if (r.left < edge) {
-      if (teleVoltCharge && o.msg !== undefined && o.msg !== teleChargeMsg) {   /* №159: новая депеша въѣзжаетъ — батарея полная */
-        teleVoltV = 1; teleVoltLow = false; teleVoltCharge = false;
+      if (teleVoltCharge && o.msg !== undefined && o.msg !== teleChargeMsg) {   /* №180: новая депеша прибавляетъ къ остатку десять вольтъ */
+        teleVoltV = Math.min(1, teleVoltV + 0.5); teleVoltLow = false; teleVoltCharge = false;
       }
       telePressKey(o.key);
       if (o.aux) telePressKey(o.aux, false);   // шифтъ или ϕ нажимаются вмѣстѣ съ буквой
@@ -2428,8 +2447,8 @@ function teleStrike() {
           if (nn) {
             var nr = nn.span.getBoundingClientRect();
             var spd = TELE_SPEED * teleSpeedMul * (teleVoltLow && !teleRev ? 0.5 : 1);
-            teleVoltFillMs = Math.max(250, Math.min(3000, (nr.left - edge) / spd * 1000));   /* стрелка приедетъ къ полной ровно къ первому удару слѣдующей депеши */
-          } else teleVoltFillMs = 3000;   /* колода кончилась — наливаемся спокойно */
+            teleVoltFillMs = Math.max(250, Math.min(3000, (nr.left - edge) / spd * 1000));   /* №180: подзарядъ отмѣненъ — величина оставлена для совместимости */
+          } else teleVoltFillMs = 3000;   /* колода кончилась */
           teleVoltCharge = true;
         }
       }
@@ -2472,8 +2491,6 @@ function teleFrame(ts) {
   if (teleVoltLow) {
     teleVoltV = Math.min(1, (performance.now() - teleVoltRefill) / 3000);
     if (teleVoltV >= 1) { teleVoltV = 1; teleVoltLow = false; }   /* батарея отдышалась — скоростьъ вернулась */
-  } else if (teleVoltCharge && teleVoltV < 1) {
-    teleVoltV = Math.min(1, teleVoltV + dt / teleVoltFillMs);   /* №159: пауза мѣжду депешами — батарея наливается, полная къ началу слѣдующей */
   }
   if (!meterAmp) { meterAmp = document.getElementById('needle-amp'); meterVolt = document.getElementById('needle-volt'); }
   if (!document.body.classList.contains('light') && (teleAmpV > 0.005 || teleVoltLow || teleVoltV < 1)) teleMetersDraw(); else teleGlowRest();
@@ -4401,7 +4418,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 174</div>
+<div class="build-info">Сшивъ № 180</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -4418,7 +4435,7 @@ function tgCloseCard(w) {
 body.light .tg-seg .tpc.wet-end { filter: none !important; }
 
 /* ===== Гиря: лёгкая версія — бумага и печать цѣлы, дорогая отрисовка снята ===== */
-body.light .tab.active { animation: none; box-shadow: 0 0 14px rgba(255,206,150,0.38), 0 0 40px rgba(255,206,150,0.20); }   /* №171: свѣченіе не гаснетъ отъ клика */
+body.light .tab.active { animation: none; box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -3px 6px rgba(0,0,0,0.5), 0 3px 6px rgba(0,0,0,0.45); }   /* №171: свѣченіе не гаснетъ отъ клика */
 body.light .alphabet-bar,
 body.light .alphabet-bar:hover { animation: none; }                          /* безъ пульса пламени на панєли */
 body.light #search-box { will-change: auto; filter: none; }                  /* слой и фильтръ — долой */
@@ -4879,7 +4896,20 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
   -webkit-mask-image: radial-gradient(ellipse at center, transparent 30%, #000 82%);
   mask-image: radial-gradient(ellipse at center, transparent 30%, #000 82%);
 }
-/* ===== №171: стражъ — тень приборныхъ кнопокъ въ эфирѣ всегда ровно эфирная ===== */
+/* №176: углубленіе приборовъ перенесено на слой поверхъ прибора —
+   SVG циферблата накрывалъ inset-тень кнопки, теперь тень рисуетъ .tab-meter::after;
+   стражъ починенъ: сломанное «; !important;» стало честнымъ «!important». */
+/* ===== №180: вольтметръ — новая телеграмма не наливаетъ батарею до края, а прибавляетъ къ остатку десять вольтъ; подзарядъ въ паузѣ мѣжду депешами отмѣненъ. ===== */
+/* ===== №179: выделеніе вкладокъ «Мои слова»/«Изысканіе» возвращено (какъ въ №177); приборы въ эфирѣ безъ подсвѣтки — стражъ держитъ ===== */
+/* ===== №175: стражъ — приборы въ эфирѣ всегда вдавлены, какъ клавиши ===== */
+body.telegraph-on .tab:active {
+  box-shadow:
+    inset 0 5px 10px rgba(0,0,0,0.6),
+    inset 0 1px 2px rgba(255,255,255,0.06),
+    0 1px 3px rgba(0,0,0,0.4) !important;
+  transform: none !important;
+}
+
 body.telegraph-on .tab,
 body.telegraph-on .tab:hover,
 body.telegraph-on .tab:active,
@@ -4890,8 +4920,11 @@ body.light.telegraph-on .tab:hover,
 body.light.telegraph-on .tab:active,
 body.light.telegraph-on .tab:focus,
 body.light.telegraph-on .tab.active {
-  box-shadow: 0 0 14px rgba(255,206,150,0.38), 0 0 40px rgba(255,206,150,0.20) !important;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -3px 6px rgba(0,0,0,0.5), 0 3px 6px rgba(0,0,0,0.45) !important;
+  border-color: var(--card-border) !important;
+  background: rgba(26, 21, 53, 0.7) !important;
   animation: none !important;
+  outline: none !important;
 }
 </style>
 

@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №211, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №214, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №211: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №214: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -1205,6 +1205,43 @@ body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* ср�
   background-size:2560px 132px;}
 .rama-verh .cap{background-image:url('images/rama-verh.png');}
 .rama-niz .cap{background-image:url('images/rama-niz.png');}
+
+/* ===== №212 — Занавесъ: фоны съ надписями съезжаютъ за сжимающійся край, открывая приборы ===== */
+.tabs { position: relative; }
+body.curtain-on .tab .tab-meter { opacity: 1; transition: none; }
+body.curtain-on .tab .tab-label { visibility: hidden; }
+.tab-curtain {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid var(--card-border);
+  border-radius: 0.25rem;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 6;
+  transition: left 0.45s ease, width 0.45s ease;
+  box-shadow:
+    inset 0 2px 4px rgba(255,255,255,0.08),
+    inset 0 -2px 4px rgba(0,0,0,0.4),
+    0 2px 4px rgba(0,0,0,0.45);
+}
+.tab-curtain--active { border-color: var(--gold-bright); }
+.tab-curtain-base {   /* №214: плотная подложка — братъ рамки, ниже прибора; прикрываетъ фонъ сайта въ поляхъ */
+  position: absolute;
+  border-radius: 0.25rem;
+  pointer-events: none;
+  z-index: 4;
+  transition: left 0.45s ease, width 0.45s ease;
+}
+.tab-curtain-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.45s ease;   /* №214: заливка болѣе не растворяется — срезается краемъ рамки */
+}
+.tab-curtain-label { font-size: 0.9rem; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -2805,8 +2842,7 @@ function teleEndReverse() {
   if (tgKey) tgKey.classList.remove('held');
     var tgColEl = document.getElementById('tg-plates');
   if (tgColEl) { tgColEl.style.transform = ''; tgColEl.removeAttribute('data-tgdy'); }
-document.body.classList.remove('telegraph-on');
-  fitTabFrames();   /* №165: возвратъ къ обычному видуъ — рамки и надписи возвращаются */
+curtainBeginReverse();   /* №212: занавесъ въ обратную сторону — фоны въѣзжаютъ, рамки разжимаются */
   searchBox.value = ''; sPrevLen = 0;
   window._kbSyncPrev();   /* Сшивъ №99: строку писали мимо input */
   if (window.sTapeRestore) window.sTapeRestore(phase, drift);
@@ -2981,11 +3017,165 @@ function wxLine() {
   if (wxVal !== null) s += ', ' + (wxVal < 0 ? '−' : '+') + Math.abs(wxVal) + '*\u0421';
   return s;
 }
+
+/* ===== №212 — занавесъ: рамки сжимаются до приборовъ, фоны съ надписями уезжаютъ за край ===== */
+var CURTAIN_MS = 450;
+
+function _curtainCreate(startRects, tabs, tabsEl, rev) {
+  var curtains = [];
+  for (var i = 0; i < tabs.length; i++) {
+    var t = tabs[i];
+    var lab = t.querySelector('.tab-label');
+    /* №214: плотная подложка — отдельный слой ниже прибора (z 4) */
+    var base = document.createElement('div');
+    base.className = 'tab-curtain-base';
+    if (t.classList.contains('active')) {
+      base.style.background = 'linear-gradient(135deg, rgb(193,161,101), rgb(168,136,76))';
+    } else {
+      base.style.background = 'rgb(26, 21, 53)';
+    }
+    var fill = document.createElement('div');
+    fill.className = 'tab-curtain-fill';
+    if (i === 0) { fill.style.left = '0px'; } else { fill.style.right = '0px'; }
+    fill.style.width = Math.max(1, startRects[i].w - 2) + 'px';
+    if (t.classList.contains('active')) {
+      /* №213: сплошныя заливки — сквозъ полупрозрачный фонъ просвѣчивалъ приборъ */
+      fill.style.background = 'linear-gradient(135deg, rgb(193,161,101), rgb(168,136,76))';
+      fill.style.color = '#1a1535';
+    } else {
+      fill.style.background = 'rgb(26, 21, 53)';
+      fill.style.color = lab ? getComputedStyle(lab).color : '';
+    }
+    var sp = document.createElement('span');
+    sp.className = 'tab-curtain-label';
+    if (lab) {
+      sp.textContent = lab.textContent;
+      sp.style.fontSize = lab.style.fontSize || getComputedStyle(lab).fontSize;
+    }
+    fill.appendChild(sp);
+    var c = document.createElement('div');
+    c.className = 'tab-curtain' + (t.classList.contains('active') ? ' tab-curtain--active' : '');
+    c.style.left = startRects[i].x + 'px';
+    c.style.top = startRects[i].y + 'px';
+    c.style.width = startRects[i].w + 'px';
+    c.style.height = startRects[i].h + 'px';
+    c.appendChild(fill);
+    base.style.left = startRects[i].x + 'px';
+    base.style.top = startRects[i].y + 'px';
+    base.style.width = startRects[i].w + 'px';
+    base.style.height = startRects[i].h + 'px';
+    tabsEl.appendChild(base);
+    tabsEl.appendChild(c);
+    curtains.push({ c: c, fill: fill, base: base, w: startRects[i].w });
+  }
+  return curtains;
+}
+
+function _curtainRel(tabs, tabsEl) {
+  var bx = tabsEl.getBoundingClientRect();
+  var arr = [];
+  for (var i = 0; i < tabs.length; i++) {
+    var r = tabs[i].getBoundingClientRect();
+    arr.push({ x: r.left - bx.left, y: r.top - bx.top, w: r.width, h: r.height });
+  }
+  return arr;
+}
+
+function curtainBegin() {   /* входъ въ эфиръ */
+  var tabs = document.querySelectorAll('.tabs .tab');
+  var tabsEl = document.querySelector('.tabs');
+  if (!tabsEl || !tabs.length || document.querySelector('.tab-curtain')) return;
+  var start = _curtainRel(tabs, tabsEl);
+  var meters = document.querySelectorAll('.tabs .tab-meter');
+  /* №214: приборъ поднимается надъ подложкой (z 5) — открывается по мѣрѣ ухода заливки */
+  for (var m = 0; m < meters.length; m++) meters[m].style.zIndex = '5';
+  var curtains = _curtainCreate(start, tabs, tabsEl);
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      var end = _curtainRel(tabs, tabsEl);
+      for (var i = 0; i < curtains.length; i++) {
+        curtains[i].c.style.left = end[i].x + 'px';
+        curtains[i].c.style.width = end[i].w + 'px';
+        curtains[i].base.style.left = end[i].x + 'px';   /* №214: подложка синхронна рамкѣ */
+        curtains[i].base.style.width = end[i].w + 'px';
+        curtains[i].fill.style.transform = (i === 0 ? 'translateX(-' : 'translateX(') + curtains[i].w + 'px)';
+      }
+      window.setTimeout(function() {
+        for (var j = 0; j < curtains.length; j++) { curtains[j].c.remove(); curtains[j].base.remove(); }
+        for (var j4 = 0; j4 < meters.length; j4++) meters[j4].style.zIndex = '';
+        document.body.classList.remove('curtain-on');
+      }, CURTAIN_MS + 80);
+    });
+  });
+}
+
+function curtainBeginReverse() {   /* №213: выходъ изъ эфира — зеркально */
+  var tabs = document.querySelectorAll('.tabs .tab');
+  var tabsEl = document.querySelector('.tabs');
+  if (!tabsEl || !tabs.length || document.querySelector('.tab-curtain')) {
+    document.body.classList.remove('telegraph-on');
+    fitTabFrames();
+    return;
+  }
+  var meters = document.querySelectorAll('.tabs .tab-meter');
+  var start = _curtainRel(tabs, tabsEl);   /* эфирная геометрія — до снятия класса */
+  var curtains = _curtainCreate(start, tabs, tabsEl, true);
+  /* №214: приборъ поднимается надъ подложкой (z 5) — виденъ, пока заливка не накрыла его */
+  for (var m0 = 0; m0 < meters.length; m0++) meters[m0].style.zIndex = '5';
+  document.body.classList.add('curtain-on');
+  document.body.classList.remove('telegraph-on');
+  fitTabLabels();
+  /* замеряемъ обычную геометрію — классъ уже снятъ, вкладки въ обычномъ видѣ */
+  var end = _curtainRel(tabs, tabsEl);
+  /* №213: заливка обратного хода — шириною обычной кнопки и рождается за краемъ:
+     сдвинута на всю свою ширину (въ свою сторону) и невидима; рамка разжимается —
+     заливка выплываетъ изъ-за края съ проявленіемъ */
+  var fillW = [];
+  for (var f = 0; f < curtains.length; f++) {
+    fillW[f] = Math.max(1, end[f].w - 2);
+    curtains[f].fill.style.width = fillW[f] + 'px';
+  }
+  for (var r0 = 0; r0 < curtains.length; r0++) {
+    curtains[r0].fill.style.transform = (r0 === 0 ? 'translateX(-' : 'translateX(') + fillW[r0] + 'px)';
+  }
+  /* №213: заморозка черезъ flex — flex-basis сильнѣе inline-ширины (у вкладокъ flex: 1 1 0),
+     вкладки стоятъ въ эфирном видѣ всю анімацію и приборъ остаётся своего размѣра */
+  for (var i = 0; i < tabs.length; i++) {
+    tabs[i].style.transition = 'none';
+    tabs[i].style.flex = '0 0 ' + start[i].w + 'px';
+    tabs[i].style.padding = '0';
+  }
+  void tabsEl.offsetWidth;
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      for (var i2 = 0; i2 < curtains.length; i2++) {
+        curtains[i2].c.style.left = end[i2].x + 'px';
+        curtains[i2].c.style.width = end[i2].w + 'px';
+        curtains[i2].base.style.left = end[i2].x + 'px';   /* №214: подложка синхронна рамкѣ */
+        curtains[i2].base.style.width = end[i2].w + 'px';
+        curtains[i2].fill.style.transform = 'none';
+      }
+      window.setTimeout(function() {
+        for (var j = 0; j < meters.length; j++) { meters[j].style.transition = 'none'; meters[j].style.opacity = '0'; }
+        for (var j2 = 0; j2 < curtains.length; j2++) { curtains[j2].c.remove(); curtains[j2].base.remove(); }
+        /* №213: заморозка снята съ возвращённой анімаціей — возвратъ въ обычный видъ плавный */
+        for (var i3 = 0; i3 < tabs.length; i3++) { tabs[i3].style.flex = ''; tabs[i3].style.padding = ''; tabs[i3].style.transition = ''; }
+        fitTabFrames();   /* честный замеръ обычной геометріи — №211 */
+        document.body.classList.remove('curtain-on');
+        requestAnimationFrame(function() {
+          for (var j3 = 0; j3 < meters.length; j3++) { meters[j3].style.opacity = ''; meters[j3].style.transition = ''; meters[j3].style.zIndex = ''; }
+        });
+      }, CURTAIN_MS + 80);
+    });
+  });
+}
+
 function toggleTelegraph() {
   if (teleRev) return;   // идётъ обратный переходъ — клавиша молчитъ
   telegraphOn = !telegraphOn;
   /* замеръ надписи — до переключенія класса, пока #s-tape ещё виденъ */
   var tgHand = (telegraphOn && window.sTapeHandoff) ? window.sTapeHandoff() : null;
+  if (telegraphOn) curtainBegin();   /* №212: крышки-занавесы на мѣстахъ кнопокъ до перестройки */
   if (telegraphOn) document.body.classList.add('telegraph-on');   // при выключеніи классъ снимаетъ teleEndReverse по стыкѣ
   if (telegraphOn) fitTabFrames();
   if (telegraphOn) tgAlignClip();
@@ -4519,7 +4709,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 211</div>
+<div class="build-info">Сшивъ № 214</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -5000,6 +5190,33 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
 /* №176: углубленіе приборовъ перенесено на слой поверхъ прибора —
    SVG циферблата накрывалъ inset-тень кнопки, теперь тень рисуетъ .tab-meter::after;
    стражъ починенъ: сломанное «; !important;» стало честнымъ «!important». */
+/* ===== №214 — Занавесъ: подложка и честная срезка =====
+   Порокъ обоихъ ходовъ: заливка растворялась (opacity-переходъ), и въ поляхъ
+   сжимающейся рамки проступалъ фонъ сайта — приборъ закрывалъ лишь свою площадь.
+   Лѣкъ двоякій. Заливка болѣе не растворяется: едетъ за край непрозрачной
+   и срезается рамкой (overflow: hidden) — послѣдній кусочекъ фона уходитъ за край
+   ровно тогда, когда рамка стала размѣромъ съ приборъ: края заливки и рамки
+   склеены однимъ тѣмпомъ и одной кривой. Подложка tab-curtain-base — плотный
+   цвѣтъ плашки (z 4): движется синхронно съ рамкой и прикрываетъ фонъ сайта
+   въ поляхъ; приборъ на время анімаціи поднятъ надъ нею (z 5) и открывается
+   по мѣрѣ ухода заливки, а не вспыхиваетъ въ концѣ. Предыдущий сшивъ: №213. */
+/* ===== №213 — Обратный ходъ занавеса починенъ =====
+   Три порока обратного хода. Приборы растягивались: заморозка строчной шириной
+   проигрывала flex-basis (у вкладокъ flex: 1 1 0), вкладки мгновенно разъезжались
+   въ обычный размѣръ, а приборъ — абсолютный слой inset:0 — тянулся за ними;
+   лѣкъ: заморозка черезъ flex: 0 0 Wpx съ отступами въ ноль и высотой эфира.
+   Плашки были прозрачны: заливки несли альфу и сквозъ нихъ просвѣчивалъ приборъ;
+   лѣкъ: сплошныя заливки — rgb(26,21,53) и композитъ золота надъ тёмной подложкой
+   rgb(193,161,101) → rgb(168,136,76). Фоны не выплывали: рождаясь на мѣстѣ,
+   они стояли узкими и безъ проѣзда; лѣкъ: заливка обратного хода рождается за краемъ —
+   сдвинута на всю ширину и невидима, выплываетъ изъ-за разжимающагося края съ
+   проявленіемъ; ширина ея — обычной кнопки. Прямой ходъ не тронутъ.
+   Предыдущий сшивъ: №212. */
+/* ===== №212 — Занавесъ: анімація перехода въ эфиръ и обратно =====
+   Рамки кнопокъ сжимаются до размеровъ приборовъ и «срастаются» съ ними,
+   а фоны съ надписями въ это же время уезжаютъ за сжимающійся край и растворяются:
+   под ними открываются приборы, которые всё это время лежали подъ кнопками.
+   Обратный ходъ зеркаленъ: фоны въѣзжаютъ изъ-за края, рамки разжимаются. Предыдущий сшивъ: №211. */
 /* ===== №211 — Багъ сжатія приборовъ исправленъ =====
    При выходѣ изъ эфира высота кнопокъ замерялась на стартѣ откатной анімаціи отступовъ
    (transition: all 0.2s) — безъ отступовъ; база __tabH занижалась съ каждымъ цикломъ

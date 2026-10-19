@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №180, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №192, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №180: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №192: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -175,8 +175,8 @@ nav { margin-top: 1.2rem; }
   cursor: pointer;
   box-shadow:
     inset 0 2px 4px rgba(255,255,255,0.08),
-    inset 0 -3px 6px rgba(0,0,0,0.5),
-    0 3px 6px rgba(0,0,0,0.45);
+    inset 0 -2px 4px rgba(0,0,0,0.4),
+    0 2px 4px rgba(0,0,0,0.45);
   transition: all 0.2s;
 }
 .tab:hover { border-color: var(--gold); }
@@ -216,19 +216,19 @@ box-shadow:
 /* №162: переносъ на узкихъ экранахъ снятъ — надпись масштабируется подгонкой, nowrap на всѣхъ ширинахъ */
 body.telegraph-on .tab .tab-label { display: none; }   /* №165: надпись изъ потока — высоту кнопки держитъ приборъ */
 body.telegraph-on .tab .tab-meter { opacity: 1; }
-body.telegraph-on .tab.active { background: #e9dfc2; border-color: var(--card-border); }   /* №169: безъ подсвѣтки, тонъ циферблата */   /* №165: рамки въ эфирѣ не свѣтятся */
+body.telegraph-on .tab.active { background: #e0d0a8; border-color: var(--card-border); }   /* №169: безъ подсвѣтки, тонъ циферблата */   /* №165: рамки въ эфирѣ не свѣтятся */
 /* №165: въ эфирѣ кнопка объять приборъ — рамка подъ его размеръ, безъ подложекъ */
 body.telegraph-on .tabs .tab { flex: 0 0 auto; max-width: none; padding: 0; overflow: hidden; }   /* №168: углы циферблата клипаютсяъ по скругленію рамки */
 body.telegraph-on .tab .tab-meter { position: relative; inset: auto; }
-body.telegraph-on .tab .tab-meter::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; box-shadow: inset 0 3px 6px rgba(255,255,255,0.55), inset 0 -4px 9px rgba(0,0,0,0.38), inset 3px 0 6px rgba(0,0,0,0.12), inset -3px 0 6px rgba(0,0,0,0.12); }   /* №176: углубленіе поверхъ прибора — SVG накрывалъ тень кнопки */
-body.telegraph-on .tab:active .tab-meter::after { box-shadow: inset 0 2px 3px rgba(255,255,255,0.45), inset 0 -6px 12px rgba(0,0,0,0.5), inset 4px 0 8px rgba(0,0,0,0.2), inset -4px 0 8px rgba(0,0,0,0.2); }   /* №176: нажатіе — углубленіе глубже, какъ у клавишъ */
+body.telegraph-on .tab .tab-meter::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: inherit; box-shadow: inset 0 2px 4px rgba(45,42,38,0.34), inset 0 -3px 6px rgba(0,0,0,0.34), inset 2px 0 4px rgba(0,0,0,0.15), inset -2px 0 4px rgba(0,0,0,0.15); }   /* №176: углубленіе поверхъ прибора — SVG накрывалъ тень кнопки */
+body.telegraph-on .tab:active .tab-meter::after { box-shadow: inset 0 2px 3px rgba(45,42,38,0.42), inset 0 -4px 8px rgba(0,0,0,0.42), inset 3px 0 6px rgba(0,0,0,0.2), inset -3px 0 6px rgba(0,0,0,0.2); }   /* №176: нажатіе — углубленіе глубже, какъ у клавишъ */
 
 body.telegraph-on .tab .tab-meter svg { width: 100%; height: 100%; }   /* №169: приборъ во всю кнопку — просвѣтовъ нетъ */
 /* №165: подъ нажатіемъ въ приборахъ рамки не подсвѣчиваются */
 body.telegraph-on .tab:hover { border-color: var(--card-border); }
 body.telegraph-on .tab { transition: none; }   /* №170: ни одна величина не анимируется отъ клика */
 /* №171: вспышка подложки при нажатіи снята — кликъ не мѣняетъ ничего */
-body.telegraph-on .tab.active { animation: none; box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -3px 6px rgba(0,0,0,0.5), 0 3px 6px rgba(0,0,0,0.45); }   /* №171: тень выровнена съ эфирной базой — кликъ не свѣтитъ */
+body.telegraph-on .tab.active { animation: none; box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -2px 4px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.45); }   /* №171: тень выровнена съ эфирной базой — кликъ не свѣтитъ */
 body.telegraph-on .tab:focus { outline: none; }   /* №169: контуръ фокуса не свѣтится */
 body.telegraph-on .tab { -webkit-tap-highlight-color: transparent; }   /* №169: тапъ не подсвѣчиваетъ */
 /* №167: газоразрядное свѣченіе приборовъ — тёплый светъ слоновой кости */
@@ -248,7 +248,7 @@ body.telegraph-on .tab { -webkit-tap-highlight-color: transparent; }   /* №169
   66%, 100%{ opacity: var(--glow, .48); }
 }
 /* №168: внешнее свѣченіе — на рамкѣ кнопки (клипъ не рѣжетъ тень элемента), на порогѣ — ярче */
-body.telegraph-on .tab { box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -3px 6px rgba(0,0,0,0.5), 0 3px 6px rgba(0,0,0,0.45);   /* №170: приглушено вдвое */ }
+body.telegraph-on .tab { box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -2px 4px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.45);   /* №170: приглушено вдвое */ }
 /* №171: lamp-on упразднено — третьего состоянія свѣченія нѣтъ */
 
 
@@ -1230,67 +1230,99 @@ body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* ср�
   <p class="subtitle-year">1896 годъ</p>
   <nav>
     <div class="tabs">
-      <button class="tab active" onclick="switchTab('local')"><span class="tab-label">Мои слова</span><span class="tab-meter" aria-hidden="true"><svg class="meter" viewBox="0 0 220 62" width="220" height="62" role="img" aria-label="АМПЕРЪ">
+      <button class="tab active" onclick="switchTab('local')"><span class="tab-label">Мои слова</span><span class="tab-meter" aria-hidden="true"><svg class="meter" viewBox="0 0 220 62" width="220" height="62" role="img" preserveAspectRatio="none" aria-label="АМПЕРЪ">
     <defs>
       <linearGradient id="brass-amp" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="#e9c98a"/>
         <stop offset="0.5" stop-color="#b98f4e"/>
         <stop offset="1" stop-color="#8a6534"/>
       </linearGradient>
-      <linearGradient id="dial-amp" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#f8f1da"/>
-        <stop offset="0.25" stop-color="#f2e8cd"/>
-        <stop offset="0.5" stop-color="#ebdcb8"/>
-        <stop offset="0.75" stop-color="#e1d0a5"/>
-        <stop offset="1" stop-color="#d5c092"/>
-      </linearGradient>
+      <radialGradient id="dial-amp" gradientUnits="userSpaceOnUse" cx="110" cy="24" r="210">
+        <stop offset="0.0" stop-color="#f2ecd6"/>
+        <stop offset="0.059" stop-color="#f0e7cd"/>
+        <stop offset="0.118" stop-color="#eee2c5"/>
+        <stop offset="0.176" stop-color="#eadcbb"/>
+        <stop offset="0.235" stop-color="#e7d6b1"/>
+        <stop offset="0.294" stop-color="#e3cea7"/>
+        <stop offset="0.353" stop-color="#dec69b"/>
+        <stop offset="0.412" stop-color="#dabd90"/>
+        <stop offset="0.471" stop-color="#d5b584"/>
+        <stop offset="0.529" stop-color="#d1ae7a"/>
+        <stop offset="0.588" stop-color="#cca670"/>
+        <stop offset="0.647" stop-color="#c7a066"/>
+        <stop offset="0.706" stop-color="#c3995f"/>
+        <stop offset="0.765" stop-color="#c09459"/>
+        <stop offset="0.824" stop-color="#be9055"/>
+        <stop offset="0.882" stop-color="#bc8d52"/>
+        <stop offset="0.941" stop-color="#ba8c51"/>
+        <stop offset="1.0" stop-color="#b98c50"/>
+      </radialGradient>
       <radialGradient id="paper-amp" cx="0.5" cy="0.45" r="0.95">
-        <stop offset="0.5" stop-color="rgba(160,130,80,0)"/>
-        <stop offset="0.78" stop-color="rgba(150,115,65,0.16)"/>
-        <stop offset="1" stop-color="rgba(115,85,45,0.30)"/>
+        <stop offset="0.5" stop-color="rgba(64,60,56,0.000)"/>
+        <stop offset="0.521" stop-color="rgba(64,60,56,0.004)"/>
+        <stop offset="0.571" stop-color="rgba(63,59,55,0.012)"/>
+        <stop offset="0.621" stop-color="rgba(62,58,54,0.021)"/>
+        <stop offset="0.671" stop-color="rgba(61,57,53,0.031)"/>
+        <stop offset="0.721" stop-color="rgba(59,55,51,0.042)"/>
+        <stop offset="0.771" stop-color="rgba(57,53,49,0.055)"/>
+        <stop offset="0.821" stop-color="rgba(55,51,47,0.067)"/>
+        <stop offset="0.871" stop-color="rgba(52,48,45,0.081)"/>
+        <stop offset="0.921" stop-color="rgba(46,43,40,0.118)"/>
+        <stop offset="1" stop-color="rgba(40,37,34,0.140)"/>
       </radialGradient>
       <filter id="grain-amp" x="0" y="0" width="100%" height="100%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="3" seed="7" stitchTiles="stitch"/>
-        <feColorMatrix type="matrix" values="0 0 0 0 0.40  0 0 0 0 0.31  0 0 0 0 0.18  0 0 0 0.55 0"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="5" seed="7" stitchTiles="stitch"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 0.40  0 0 0 0 0.31  0 0 0 0 0.18  0 0 0 0.62 0"/>
+        <feComposite operator="in" in2="SourceGraphic"/>
+      </filter>
+      <filter id="speck-amp" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="41" stitchTiles="stitch"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.27  0 0 0 0 0.14  0 0 0 0.9 0"/>
+        <feComponentTransfer><feFuncA type="discrete" tableValues="0 0 0 0 0 0 0 0 0 0 0 0.85"/></feComponentTransfer>
         <feComposite operator="in" in2="SourceGraphic"/>
       </filter>
       <linearGradient id="glass-amp" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="rgba(255,255,255,0.28)"/>
-        <stop offset="0.45" stop-color="rgba(255,255,255,0.04)"/>
+        <stop offset="0" stop-color="rgba(255,255,255,0.12)"/>
+        <stop offset="0.45" stop-color="rgba(255,255,255,0.02)"/>
         <stop offset="1" stop-color="rgba(255,255,255,0)"/>
       </linearGradient>
       <radialGradient id="lamp-amp" cx="0.5" cy="0.45" r="0.72">
-        <stop offset="0" stop-color="rgba(255,236,198,0.78)"/>
-        <stop offset="0.45" stop-color="rgba(255,214,150,0.45)"/>
-        <stop offset="1" stop-color="rgba(255,176,110,0)"/>
+        <stop offset="0" stop-color="rgba(255,252,232,0.140)"/>
+        <stop offset="0.2" stop-color="rgba(255,252,230,0.115)"/>
+        <stop offset="0.4" stop-color="rgba(255,251,228,0.085)"/>
+        <stop offset="0.6" stop-color="rgba(255,250,224,0.055)"/>
+        <stop offset="0.8" stop-color="rgba(255,249,220,0.028)"/>
+        <stop offset="1" stop-color="rgba(255,248,216,0.000)"/>
       </radialGradient>
     </defs>
 
     <!-- №167: верхняя и боковыя чёрныя рамки сняты — циферблатъ во всю ширину прибора -->
-    <rect x="0" y="0" width="220" height="58" rx="3" fill="url(#dial-amp)"/>
-    <rect x="0" y="0" width="220" height="58" rx="3" fill="url(#paper-amp)" pointer-events="none"/>
-    <rect x="0" y="0" width="220" height="58" rx="3" fill="#6b5a3a" filter="url(#grain-amp)" opacity="0.30" pointer-events="none"/>
+    <rect x="0" y="0" width="220" height="62" fill="url(#dial-amp)"/>
+    <rect x="0" y="0" width="220" height="62" fill="url(#paper-amp)" pointer-events="none"/>
+    <rect x="0" y="0" width="220" height="62" fill="#6b5a3a" filter="url(#grain-amp)" opacity="0.30" pointer-events="none"/>
+    <rect x="0" y="0" width="220" height="62" fill="#6b5a3a" filter="url(#speck-amp)" opacity="0.35" pointer-events="none"/>
 
     <!-- шкала: №167 — размахъ ±68°, концы у нижней кромки циферблата -->
+    <!-- №190 — подъёмъ на 4px равномернымъ радиусомъ: дуга осталась дугой окружности -->
     <g>
-    <line x1="72.9" y1="43" x2="67.3" y2="40.8" stroke="#2a2118" stroke-width="2"/>
-    <line x1="87.6" y1="24.8" x2="84.3" y2="19.9" stroke="#2a2118" stroke-width="2"/>
-    <line x1="110" y1="18" x2="110" y2="12" stroke="#2a2118" stroke-width="2"/>
-    <line x1="132.4" y1="24.8" x2="135.7" y2="19.9" stroke="#2a2118" stroke-width="2"/>
-    <line x1="147.1" y1="43" x2="152.7" y2="40.8" stroke="#2a2118" stroke-width="2"/>
-    <line x1="76.6" y1="30.9" x2="74.3" y2="29.1" stroke="#2a2118" stroke-width="1"/>
-    <line x1="97.4" y1="16.9" x2="96.6" y2="14" stroke="#2a2118" stroke-width="1"/>
-    <line x1="122.6" y1="16.9" x2="123.4" y2="14" stroke="#2a2118" stroke-width="1"/>
-    <line x1="143.4" y1="30.9" x2="145.7" y2="29.1" stroke="#2a2118" stroke-width="1"/>
-    <text x="81.3" y="46.4" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">0</text>
-    <text x="110" y="27" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">5</text>
-    <text x="138.7" y="46.4" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">10</text>
+    <line x1="69.2" y1="41.5" x2="63.6" y2="39.3" stroke="#2a2118" stroke-width="2"/>
+    <line x1="85.4" y1="21.5" x2="82.0" y2="16.5" stroke="#2a2118" stroke-width="2"/>
+    <line x1="110.0" y1="14.0" x2="110.0" y2="8.0" stroke="#2a2118" stroke-width="2"/>
+    <line x1="134.6" y1="21.5" x2="138.0" y2="16.5" stroke="#2a2118" stroke-width="2"/>
+    <line x1="150.8" y1="41.5" x2="156.4" y2="39.3" stroke="#2a2118" stroke-width="2"/>
+    <line x1="73.5" y1="28.4" x2="71.1" y2="26.5" stroke="#2a2118" stroke-width="1"/>
+    <line x1="96.3" y1="13.1" x2="95.4" y2="10.2" stroke="#2a2118" stroke-width="1"/>
+    <line x1="123.7" y1="13.1" x2="124.6" y2="10.2" stroke="#2a2118" stroke-width="1"/>
+    <line x1="146.5" y1="28.4" x2="148.9" y2="26.5" stroke="#2a2118" stroke-width="1"/>
+    <text x="77.5" y="44.9" font-size="18" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">0</text>
+    <text x="110.0" y="27.6" font-size="18" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">5</text>
+    <text x="142.5" y="44.9" font-size="18" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">10</text>
     </g>
 
     <!-- стрелка: синёная сталь, ось внизу -->
     <g id="needle-amp" transform="rotate(0 110 58)">
-      <line x1="110" y1="58" x2="110" y2="14" stroke="#1b1b3a" stroke-width="1.6"/>
-      <path d="M 107.8 19 L 110 9 L 112.2 19 Z" fill="#7a1f1f"/>
+      <line x1="110" y1="58" x2="110" y2="14" stroke="#1b1b3a" stroke-width="3.2"/>
+      <path d="M 105.6 19 L 110 9 L 114.4 19 Z" fill="#7a1f1f"/>
     </g>
     <!-- №167: нижняя чёрная планка — стрѣлка прячется подъ нею -->
     <path d="M 0 54 L 220 54 L 220 55 Q 220 62 213 62 L 7 62 Q 0 62 0 55 Z" fill="#241f2e"/>
@@ -1301,73 +1333,113 @@ body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* ср�
     <text x="196" y="28" font-size="20" text-anchor="middle" fill="#5c4a2e" font-family="Elizabeth Unicode,Georgia,serif">A</text>
 
     <!-- блики стекла -->
-    <rect x="0" y="0" width="220" height="58" rx="3" fill="url(#glass-amp)" pointer-events="none"/>
+    <rect x="0" y="0" width="220" height="62" fill="url(#glass-amp)" pointer-events="none"/>
     <!-- №167: тёплое газоразрядное свѣченіе — мѣрцаетъ на высокомъ токѣ / низкомъ напряжении -->
     <ellipse id="glow-amp" class="meter-lamp" cx="110" cy="27" rx="108" ry="27" fill="url(#lamp-amp)" pointer-events="none"/>
   </svg></span></button>
-      <button class="tab" onclick="switchTab('online')"><span class="tab-label">Изысканіе въ эфирѣ</span><span class="tab-meter" aria-hidden="true"><svg class="meter" viewBox="0 0 220 62" width="220" height="62" role="img" aria-label="ВОЛЬТЪ">
+      <button class="tab" onclick="switchTab('online')"><span class="tab-label">Изысканіе въ эфирѣ</span><span class="tab-meter" aria-hidden="true"><svg class="meter" viewBox="0 0 220 62" width="220" height="62" role="img" preserveAspectRatio="none" aria-label="ВОЛЬТЪ">
     <defs>
       <linearGradient id="brass-volt" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="#e9c98a"/>
         <stop offset="0.5" stop-color="#b98f4e"/>
         <stop offset="1" stop-color="#8a6534"/>
       </linearGradient>
-      <linearGradient id="dial-volt" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#f8f1da"/>
-        <stop offset="0.25" stop-color="#f2e8cd"/>
-        <stop offset="0.5" stop-color="#ebdcb8"/>
-        <stop offset="0.75" stop-color="#e1d0a5"/>
-        <stop offset="1" stop-color="#d5c092"/>
-      </linearGradient>
+      <radialGradient id="dial-volt" gradientUnits="userSpaceOnUse" cx="110" cy="24" r="210">
+        <stop offset="0.0" stop-color="#f2ecd6"/>
+        <stop offset="0.059" stop-color="#f0e7cd"/>
+        <stop offset="0.118" stop-color="#eee2c5"/>
+        <stop offset="0.176" stop-color="#eadcbb"/>
+        <stop offset="0.235" stop-color="#e7d6b1"/>
+        <stop offset="0.294" stop-color="#e3cea7"/>
+        <stop offset="0.353" stop-color="#dec69b"/>
+        <stop offset="0.412" stop-color="#dabd90"/>
+        <stop offset="0.471" stop-color="#d5b584"/>
+        <stop offset="0.529" stop-color="#d1ae7a"/>
+        <stop offset="0.588" stop-color="#cca670"/>
+        <stop offset="0.647" stop-color="#c7a066"/>
+        <stop offset="0.706" stop-color="#c3995f"/>
+        <stop offset="0.765" stop-color="#c09459"/>
+        <stop offset="0.824" stop-color="#be9055"/>
+        <stop offset="0.882" stop-color="#bc8d52"/>
+        <stop offset="0.941" stop-color="#ba8c51"/>
+        <stop offset="1.0" stop-color="#b98c50"/>
+      </radialGradient>
       <radialGradient id="paper-volt" cx="0.5" cy="0.45" r="0.95">
-        <stop offset="0.5" stop-color="rgba(160,130,80,0)"/>
-        <stop offset="0.78" stop-color="rgba(150,115,65,0.16)"/>
-        <stop offset="1" stop-color="rgba(115,85,45,0.30)"/>
+        <stop offset="0.5" stop-color="rgba(64,60,56,0.000)"/>
+        <stop offset="0.521" stop-color="rgba(64,60,56,0.004)"/>
+        <stop offset="0.571" stop-color="rgba(63,59,55,0.012)"/>
+        <stop offset="0.621" stop-color="rgba(62,58,54,0.021)"/>
+        <stop offset="0.671" stop-color="rgba(61,57,53,0.031)"/>
+        <stop offset="0.721" stop-color="rgba(59,55,51,0.042)"/>
+        <stop offset="0.771" stop-color="rgba(57,53,49,0.055)"/>
+        <stop offset="0.821" stop-color="rgba(55,51,47,0.067)"/>
+        <stop offset="0.871" stop-color="rgba(52,48,45,0.081)"/>
+        <stop offset="0.921" stop-color="rgba(46,43,40,0.118)"/>
+        <stop offset="1" stop-color="rgba(40,37,34,0.140)"/>
       </radialGradient>
       <filter id="grain-volt" x="0" y="0" width="100%" height="100%">
-        <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="3" seed="11" stitchTiles="stitch"/>
-        <feColorMatrix type="matrix" values="0 0 0 0 0.40  0 0 0 0 0.31  0 0 0 0 0.18  0 0 0 0.55 0"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="5" seed="11" stitchTiles="stitch"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 0.40  0 0 0 0 0.31  0 0 0 0 0.18  0 0 0 0.62 0"/>
+        <feComposite operator="in" in2="SourceGraphic"/>
+      </filter>
+      <filter id="speck-volt" x="0" y="0" width="100%" height="100%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="23" stitchTiles="stitch"/>
+        <feColorMatrix type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.27  0 0 0 0 0.14  0 0 0 0.9 0"/>
+        <feComponentTransfer><feFuncA type="discrete" tableValues="0 0 0 0 0 0 0 0 0 0 0 0.85"/></feComponentTransfer>
         <feComposite operator="in" in2="SourceGraphic"/>
       </filter>
       <linearGradient id="glass-volt" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="rgba(255,255,255,0.28)"/>
-        <stop offset="0.45" stop-color="rgba(255,255,255,0.04)"/>
+        <stop offset="0" stop-color="rgba(255,255,255,0.12)"/>
+        <stop offset="0.45" stop-color="rgba(255,255,255,0.02)"/>
         <stop offset="1" stop-color="rgba(255,255,255,0)"/>
       </linearGradient>
       <radialGradient id="lamp-volt" cx="0.5" cy="0.45" r="0.72">
-        <stop offset="0" stop-color="rgba(255,236,198,0.78)"/>
-        <stop offset="0.45" stop-color="rgba(255,214,150,0.45)"/>
-        <stop offset="1" stop-color="rgba(255,176,110,0)"/>
+        <stop offset="0" stop-color="rgba(255,252,232,0.140)"/>
+        <stop offset="0.2" stop-color="rgba(255,252,230,0.115)"/>
+        <stop offset="0.4" stop-color="rgba(255,251,228,0.085)"/>
+        <stop offset="0.6" stop-color="rgba(255,250,224,0.055)"/>
+        <stop offset="0.8" stop-color="rgba(255,249,220,0.028)"/>
+        <stop offset="1" stop-color="rgba(255,248,216,0.000)"/>
       </radialGradient>
     </defs>
 
     <!-- №167: верхняя и боковыя чёрныя рамки сняты — циферблатъ во всю ширину прибора -->
-    <rect x="0" y="0" width="220" height="58" rx="3" fill="url(#dial-volt)"/>
-    <rect x="0" y="0" width="220" height="58" rx="3" fill="url(#paper-volt)" pointer-events="none"/>
-    <rect x="0" y="0" width="220" height="58" rx="3" fill="#6b5a3a" filter="url(#grain-volt)" opacity="0.30" pointer-events="none"/>
+    <rect x="0" y="0" width="220" height="62" fill="url(#dial-volt)"/>
+    <rect x="0" y="0" width="220" height="62" fill="url(#paper-volt)" pointer-events="none"/>
+    <rect x="0" y="0" width="220" height="62" fill="#6b5a3a" filter="url(#grain-volt)" opacity="0.30" pointer-events="none"/>
+    <rect x="0" y="0" width="220" height="62" fill="#6b5a3a" filter="url(#speck-volt)" opacity="0.35" pointer-events="none"/>
 
     <!-- шкала: №167 — размахъ ±68°, концы у нижней кромки циферблата -->
+    <!-- №190 — подъёмъ на 4px равномернымъ радиусомъ; промежуточныя мѣтки съ шагомъ 1.25 -->
     <g>
-    <line x1="72.9" y1="43" x2="67.3" y2="40.8" stroke="#2a2118" stroke-width="2"/>
-    <line x1="87.6" y1="24.8" x2="84.3" y2="19.9" stroke="#2a2118" stroke-width="2"/>
-    <line x1="110" y1="18" x2="110" y2="12" stroke="#2a2118" stroke-width="2"/>
-    <line x1="132.4" y1="24.8" x2="135.7" y2="19.9" stroke="#2a2118" stroke-width="2"/>
-    <line x1="147.1" y1="43" x2="152.7" y2="40.8" stroke="#2a2118" stroke-width="2"/>
-    <line x1="76.6" y1="30.9" x2="74.3" y2="29.1" stroke="#2a2118" stroke-width="1"/>
-    <line x1="97.4" y1="16.9" x2="96.6" y2="14" stroke="#2a2118" stroke-width="1"/>
-    <line x1="122.6" y1="16.9" x2="123.4" y2="14" stroke="#2a2118" stroke-width="1"/>
-    <line x1="143.4" y1="30.9" x2="145.7" y2="29.1" stroke="#2a2118" stroke-width="1"/>
-    <text x="81.3" y="46.4" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">0</text>
-    <text x="92.7" y="32.3" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">5</text>
-    <text x="110" y="27" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">10</text>
-    <text x="127.3" y="32.3" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">15</text>
-    <text x="138.7" y="46.4" font-size="9" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">20</text>
+    <line x1="69.2" y1="41.5" x2="63.6" y2="39.3" stroke="#2a2118" stroke-width="2"/>
+    <line x1="85.4" y1="21.5" x2="82.0" y2="16.5" stroke="#2a2118" stroke-width="2"/>
+    <line x1="110.0" y1="14.0" x2="110.0" y2="8.0" stroke="#2a2118" stroke-width="2"/>
+    <line x1="134.6" y1="21.5" x2="138.0" y2="16.5" stroke="#2a2118" stroke-width="2"/>
+    <line x1="150.8" y1="41.5" x2="156.4" y2="39.3" stroke="#2a2118" stroke-width="2"/>
+    <line x1="69.5" y1="34.1" x2="66.9" y2="32.6" stroke="#2a2118" stroke-width="1"/>
+    <line x1="73.5" y1="28.4" x2="71.1" y2="26.5" stroke="#2a2118" stroke-width="1"/>
+    <line x1="78.2" y1="23.3" x2="76.2" y2="21.1" stroke="#2a2118" stroke-width="1"/>
+    <line x1="89.8" y1="15.6" x2="88.5" y2="12.9" stroke="#2a2118" stroke-width="1"/>
+    <line x1="96.3" y1="13.1" x2="95.4" y2="10.2" stroke="#2a2118" stroke-width="1"/>
+    <line x1="103.1" y1="11.5" x2="102.6" y2="8.5" stroke="#2a2118" stroke-width="1"/>
+    <line x1="116.9" y1="11.5" x2="117.4" y2="8.5" stroke="#2a2118" stroke-width="1"/>
+    <line x1="123.7" y1="13.1" x2="124.6" y2="10.2" stroke="#2a2118" stroke-width="1"/>
+    <line x1="130.2" y1="15.6" x2="131.5" y2="12.9" stroke="#2a2118" stroke-width="1"/>
+    <line x1="141.8" y1="23.3" x2="143.8" y2="21.1" stroke="#2a2118" stroke-width="1"/>
+    <line x1="146.5" y1="28.4" x2="148.9" y2="26.5" stroke="#2a2118" stroke-width="1"/>
+    <line x1="150.5" y1="34.1" x2="153.1" y2="32.6" stroke="#2a2118" stroke-width="1"/>
+    <text x="77.5" y="44.9" font-size="18" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">0</text>
+    <text x="90.4" y="29.0" font-size="18" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">5</text>
+    <text x="110.0" y="27.6" font-size="18" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">10</text>
+    <text x="129.6" y="29.0" font-size="18" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">15</text>
+    <text x="142.5" y="44.9" font-size="18" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">20</text>
     </g>
 
     <!-- стрелка: синёная сталь, ось внизу -->
     <g id="needle-volt" transform="rotate(0 110 58)">
-      <line x1="110" y1="58" x2="110" y2="14" stroke="#1b1b3a" stroke-width="1.6"/>
-      <path d="M 107.8 19 L 110 9 L 112.2 19 Z" fill="#7a1f1f"/>
+      <line x1="110" y1="58" x2="110" y2="14" stroke="#1b1b3a" stroke-width="3.2"/>
+      <path d="M 105.6 19 L 110 9 L 114.4 19 Z" fill="#7a1f1f"/>
     </g>
     <!-- №167: нижняя чёрная планка — стрѣлка прячется подъ нею -->
     <path d="M 0 54 L 220 54 L 220 55 Q 220 62 213 62 L 7 62 Q 0 62 0 55 Z" fill="#241f2e"/>
@@ -1378,7 +1450,7 @@ body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* ср�
     <text x="196" y="28" font-size="20" text-anchor="middle" fill="#5c4a2e" font-family="Elizabeth Unicode,Georgia,serif">V</text>
 
     <!-- блики стекла -->
-    <rect x="0" y="0" width="220" height="58" rx="3" fill="url(#glass-volt)" pointer-events="none"/>
+    <rect x="0" y="0" width="220" height="62" fill="url(#glass-volt)" pointer-events="none"/>
     <!-- №167: тёплое газоразрядное свѣченіе — мѣрцаетъ на высокомъ токѣ / низкомъ напряжении -->
     <ellipse id="glow-volt" class="meter-lamp" cx="110" cy="27" rx="108" ry="27" fill="url(#lamp-volt)" pointer-events="none"/>
   </svg></span></button>
@@ -1621,7 +1693,7 @@ function fitTabFrames() {
   /* №166: меняется только ширина — высота кнопокъ остаётся прежней */
   var h = window.__tabH || tabs[0].offsetHeight;
   var ih = Math.max(10, h - 2);            /* внутрь рамки по 1px */
-  var iw = Math.round(ih * 220 / 62);      /* пропорція прибора 220:62 */
+  var iw = ih * 220 / 62;                  /* пропорція прибора 220:62 — дробная ширина, безъ субпиксельной щели */
   for (var i = 0; i < tabs.length; i++) {
     var t = tabs[i];
     var sv = t.querySelector('.tab-meter svg');
@@ -1790,10 +1862,35 @@ var teleAmpV = 0, teleVoltV = 1, teleVoltLow = false, teleVoltRefill = 0;
 var teleVoltCharge = false, teleVoltFillMs = 3000, teleChargeMsg = null, teleCurMsg = null;   /* №180: подзарядъ въ паузѣ отмѣненъ — зарядъ живётъ отъ депеши къ депеше */
 function teleNeedle(id, v) {
   var el = document.getElementById('needle-' + id);
-  if (el) el.setAttribute('transform', 'rotate(' + (-68 + 136 * Math.max(0, Math.min(1, v))).toFixed(1) + ' 110 58)');
+  if (el) el.setAttribute('transform', 'rotate(' + (-68 + 136 * Math.max(-0.05, Math.min(1.1, v))).toFixed(1) + ' 110 58)');
+}
+/* №191: инерція стрѣлки вольтметра — недодемпфированная пружина (ω=3.2, ζ=0.66):
+   цель меняется скачкомъ — стрѣлка догоняетъ, проѣзжаетъ отметку (~0.6 вольта) и медленно отыгрываетъ назадъ */
+var teleVoltPhys = { p: 1, w: 0 };   /* положеніе и скорость стрѣлки */
+var teleVoltKickV = 0, teleVoltKickSign = 1;   /* накопленные качанія печаті и знакъ слѣдующаго */
+var teleVoltLive = false;   /* пружина ещё не успокоилась — циклъ не спитъ */
+function teleVoltPhysStep(dt) {
+  var target = teleVoltV + teleVoltKickV;
+  if (target > 1) target = 1; else if (target < -0.05) target = -0.05;
+  var wn = 3.2, z = 0.66, od = wn * Math.sqrt(1 - z * z);
+  var e = Math.exp(-z * wn * dt), c = Math.cos(od * dt), si = Math.sin(od * dt);
+  var x = teleVoltPhys.p - target, v = teleVoltPhys.w;
+  teleVoltPhys.p = e * (x * c + (v + z * wn * x) / od * si) + target;
+  teleVoltPhys.w = e * (v * c - (z * wn * v + wn * wn * x) / od * si);
+  teleVoltLive = Math.abs(teleVoltPhys.p - teleVoltV) > 0.002 || Math.abs(teleVoltPhys.w) > 0.03 || Math.abs(teleVoltKickV) > 0.004;
+}
+function teleVoltKick() {
+  if (Math.random() < 0.4) {
+    teleVoltKickSign = -teleVoltKickSign;   /* качанія чередуютъ знакъ: опустилась — вдругъ вверхъ — тутъ же внизъ */
+    teleVoltKickV += teleVoltKickSign * (0.02 + Math.random() * 0.01);   /* 0.4–0.6 вольта (шкала 0–20) */
+    if (teleVoltKickV > 0.035) teleVoltKickV = 0.035; else if (teleVoltKickV < -0.035) teleVoltKickV = -0.035;   /* полка ±0.7 вольта */
+  }
+}
+function teleVoltSnap(v) {
+  teleVoltPhys.p = (v === undefined ? teleVoltV : v); teleVoltPhys.w = 0; teleVoltKickV = 0; teleVoltLive = false;
 }
 function teleMetersDraw() {
-  teleNeedle('amp', teleAmpV); teleNeedle('volt', teleVoltV);
+  teleNeedle('amp', teleAmpV); teleNeedle('volt', teleVoltPhys.p);   /* №191: стрѣлка вольта — по пружинѣ съ инерціей */
   teleGlowSync(teleAmpV, teleVoltV);   /* №171: яркость от заряда, мерцаніе общее */
 }
 /* №168: свѣченіе наливаетсяъ съ показаніемъ — амперъ ярче съ токомъ, вольтъ ярче къ нулю; мерцаніе (анімація) перекрываетъ inline */
@@ -1823,7 +1920,7 @@ function teleGlowRest() {
 function teleGlowReset() { teleGlowRest(); }
 function teleMetersSync() {
   if (!meterAmp) { meterAmp = document.getElementById('needle-amp'); meterVolt = document.getElementById('needle-volt'); }
-  if (document.body.classList.contains('light')) { teleNeedle('amp', 0); teleNeedle('volt', 0); teleGlowReset(); return; }   /* лёгкій режимъ — приборы на покоя */
+  if (document.body.classList.contains('light')) { teleNeedle('amp', 0); teleVoltSnap(0); teleGlowReset(); return; }   /* лёгкій режимъ — приборы на покоя */
   teleMetersDraw();
 }
 var shiftKeyEl = null, specKeyEl = null, specHeld = false;   // шифтъ и спец-клавиша
@@ -2158,6 +2255,7 @@ function telePressKey(keyEl, soft) {
   if (!keyEl) return;
   sndClick(!soft);   // щелчокъ клавиши (звонкомъ отключается)
   teleAmpV = Math.min(1, teleAmpV + 0.25);   /* №158: ударъ литеры — толчокъ тока въ линіи */
+  teleVoltKick();   /* №191: микро-качанія вольтметра при печаті */
   teleWake();   /* №156: ударъ будитъ циклъ */
   if (keyEl._tgTimer) clearTimeout(keyEl._tgTimer);
   keyEl.classList.remove('tg-strike');
@@ -2492,8 +2590,10 @@ function teleFrame(ts) {
     teleVoltV = Math.min(1, (performance.now() - teleVoltRefill) / 3000);
     if (teleVoltV >= 1) { teleVoltV = 1; teleVoltLow = false; }   /* батарея отдышалась — скоростьъ вернулась */
   }
+  if (teleVoltKickV) teleVoltKickV *= Math.exp(-dt / 700);   /* №191: качанія печаті затухаютъ */
+  teleVoltPhysStep(dt / 1000);   /* №191: шагъ пружины стрѣлки */
   if (!meterAmp) { meterAmp = document.getElementById('needle-amp'); meterVolt = document.getElementById('needle-volt'); }
-  if (!document.body.classList.contains('light') && (teleAmpV > 0.005 || teleVoltLow || teleVoltV < 1)) teleMetersDraw(); else teleGlowRest();
+  if (!document.body.classList.contains('light') && (teleAmpV > 0.005 || teleVoltLow || teleVoltV < 1 || teleVoltLive)) teleMetersDraw(); else teleGlowRest();
   teleMaintain();
   var track = document.getElementById('tape-track');
   if (track) {
@@ -2503,7 +2603,7 @@ function teleFrame(ts) {
   teleStrike();   /* №157: удары послѣ записи transformъ — удаленіе ушедшей телеграммы сдвигаетъ раскладку мгновенно, а transformъ дописывается лишь здѣсь; удары до записи видѣли ложные пересѣченія рамки (залпъ щелчковъ, хрипъ, молчаніе клавишъ) */
   if (teleRev) teleReverseCheck();
   /* №156: сонъ цикла — лента стоитъ, обратного хода нѣтъ и строка печати догнала точку */
-  if (!teleRev && teleStopped && teleAmpV <= 0.005 && !teleVoltLow && !(teleVoltCharge && teleVoltV < 1) && !(telePrintLine && telePrintLine.isConnected && Math.abs(teleTx - teleX) > 0.4)) {   /* №158: не спать, пока стрелки движутся; №159: и пока батарея наливается */
+  if (!teleRev && teleStopped && teleAmpV <= 0.005 && !teleVoltLow && !teleVoltLive && !(teleVoltCharge && teleVoltV < 1) && !(telePrintLine && telePrintLine.isConnected && Math.abs(teleTx - teleX) > 0.4)) {   /* №158: не спать, пока стрелки движутся; №159: и пока батарея наливается */
     teleRAF = null;
     return;
   }
@@ -2697,7 +2797,7 @@ function teleEndReverse() {
   });
   strikeArr = []; strikeIdx = 0;
   teleStopped = false; teleDone = false; teleSignDone = false; teleDealt = false; fetaStreak = 0;   /* финалъ забытъ — новая колода */
-  teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
+  teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleVoltSnap(); teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
   teleHoldHTML = null;   /* держатель забытъ — новая колода */
   telePrintLine = null; teleTx = 0;   /* строка печати и цель подачи забыты — новая колода */
   var tgKey = document.querySelector('#alphabet-bar .key-tg');
@@ -2912,7 +3012,7 @@ function toggleTelegraph() {
     strikeArr = []; strikeIdx = 0;
     teleQueue = []; teleDone = false; teleSignDone = false; fetaStreak = 0;   /* новая колода — перемѣшивается заново */
     teleStopped = false; teleDealt = false;
-    teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
+    teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleVoltSnap(); teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
     teleHoldHTML = null;   /* держатель забытъ */
     telePrintLine = null; teleTx = 0;   /* строка печати и цель подачи забыты */
     tgNum = 1 + Math.floor(Math.random() * 100); tgClear();
@@ -2923,7 +3023,7 @@ function toggleTelegraph() {
       if (!telegraphOn || teleRev) return;   // обратный переходъ успелъ начаться — сшивку отмѣняемъ
       inner.innerHTML = '';
       teleQueue = []; teleLast = 0; teleStopped = false; teleDealt = false;
-      teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
+      teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleVoltSnap(); teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
       teleHoldHTML = null;   /* держатель забытъ */
       telePrintLine = null; teleTx = 0;   /* строка печати и цель подачи забыты */
       /* Бесшовный переходъ: надписи поиска встаютъ на лентѣ тамъ же, гдѣ стояли.
@@ -4418,7 +4518,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 180</div>
+<div class="build-info">Сшивъ № 192</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -4435,7 +4535,7 @@ function tgCloseCard(w) {
 body.light .tg-seg .tpc.wet-end { filter: none !important; }
 
 /* ===== Гиря: лёгкая версія — бумага и печать цѣлы, дорогая отрисовка снята ===== */
-body.light .tab.active { animation: none; box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -3px 6px rgba(0,0,0,0.5), 0 3px 6px rgba(0,0,0,0.45); }   /* №171: свѣченіе не гаснетъ отъ клика */
+body.light .tab.active { animation: none; box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -2px 4px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.45); }   /* №171: свѣченіе не гаснетъ отъ клика */
 body.light .alphabet-bar,
 body.light .alphabet-bar:hover { animation: none; }                          /* безъ пульса пламени на панєли */
 body.light #search-box { will-change: auto; filter: none; }                  /* слой и фильтръ — долой */
@@ -4899,6 +4999,18 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
 /* №176: углубленіе приборовъ перенесено на слой поверхъ прибора —
    SVG циферблата накрывалъ inset-тень кнопки, теперь тень рисуетъ .tab-meter::after;
    стражъ починенъ: сломанное «; !important;» стало честнымъ «!important». */
+/* ===== №192: цифры шкалъ 9→18 (только цифры; буквы A/V не тронуты), центральные опущены y=23.0→27.6 (иначе налегли бы на верхнюю метку y=8–14); стрѣлки 1.6→3.2, красные наконечники ±2.2→±4.4. Приборы №186–191 не тронуты. */
+/* ===== №191: живая стрѣлка вольтметра. Была мгновенная постановка (teleNeedle рисовалъ зарядъ прямо) — теперь недодемпфированная пружина (ω=3.2, ζ=0.66, симуляціей: перелётъ 0.63 вольта, пикъ на 1.35 с, успокоеніе на 2.24 с): при скачкѣ новой депеши (+10 вольтъ) стрѣлка проѣзжаетъ отметку и медленно отыгрываетъ; послѣ конца телеграммы — плавная доѣзда, циклъ не спитъ, пока пружина не успокоилась (teleVoltLive). При печаті каждый ударъ съ вероятностью 0.4 даётъ качаніе 0.4–0.6 вольта со знаками попеременно (накопленіе ±0.7 вольта, затуханіе 700 мс; на стрѣлѣ −0.31…+0.35 вольта). Зажимъ шкалы расширенъ 0–1 → −0.05–1.1 (перелётъ не обрѣзается). teleVoltSnap — мгновенная постановка при сбросѣ колоды (мѣста ×3) и въ лёгкомъ режимѣ. Ось, размахъ ±68°, палитра, амперметръ не тронуты. */
+/* ===== №190: исправленіе №189. Ошибка: мѣтки сдвигались вдоль лучей съ прибавкой r+Δ/cosθ — дуга растянулась въ полуовалъ, у вольтметра основныя дѣленія укоротились (наружный радіусъ 50,8 вместо 53,7). Теперь подъёмъ на 4px данъ равномернымъ приращеніемъ радіуса у всѣхъ мѣтокъ (углы не тронуты): основныя 44→50 (длина 6, какъ въ №188), промежуточные 47→50 (длина 3), подписи на радіусе 35 — дуга осталась дугой окружности. Вольтметръ: 12 промежуточныхъ мѣтокъ съ шагомъ 1,25. Попутно закрытъ незакрытый <g> шкалы изъ №189 (сбой строгого парсера). Ось, стрѣлка, размахъ ±68°, палитра не тронуты. */
+/* ===== №189: шкалы приподняты на 4px, компенсация — радіусомъ вдоль луча оси (110,58): r_new = r + Δ/cos θ, мѣтки остались на лучахъ — наводка стрѣлки не сбита. Было: верхняя мѣтка y=12, крайнія y≈43; стало: 8 и 39. Вольтметръ: промежуточные мѣтки учащены съ шага 2,5 до 1,25 — прежнія 4 (2,5/7,5/12,5/17,5) сохранены, добавлены 8 новыхъ (1,25/3,75/6,25/8,75 и зеркально 11,25/13,75/16,25/18,75), тонъ и толщина — какъ у промежуточныхъ. Подписи сдвинуты по тому же правилу. Ось, стрѣлка, размахъ ±68° и палитра не тронуты. */
+/* ===== №188: тень свѣтлѣе и размывъ менѣе; зазоръ между циферблатомъ и рамкой закрытъ. Было: виноьетка щитка начиналась съ 0,30 радіуса (зона размывъ широка) съ краемъ 0,19 — сжато къ краю (0,50), альфа края 0,14; внутренняя тень стекла 6/9/6px съ 0,45 — стала 4/6/4px съ 0,34 (нажатіе 0,42); тѣни рамокъ вкладокъ во всѣхъ правилахъ 0,5/6px → 0,4/4px. Зазоръ: скриптъ fitTabFrames округлялъ ширину прибора (Math.round) — рамка и приборъ расходились на долю пикселя, теперь ширина дробная; циферблатныя слои были 220×58 съ rx=3, а внутренній радіусъ рамки болѣе — въ углахъ просвѣчивалъ фонъ; слои выпрямлены на весь кадръ 220×62 безъ rx, углы обрезаетъ само скругленіе рамки (overflow:hidden); SVG растягивается безъ letterbox (preserveAspectRatio="none"). Клавиши не тронуты, лампы и палитра №186 не тронуты. */
+/* ===== №187: тѣнь у рамки — тёмно-серая. Было: свѣтлую кайму отъ рамки давали два слоя — виньетка «бумаги» (paper-amp/paper-volt) тёплого бѣжево-коричневаго тона rgba(150,115,65→115,85,45) и бѣлый бевел на вкладкѣ-приборѣ (rgba(255,255,255,0.55). Замѣнено: виньетка — тёмно-серая rgba(64,60,56→40,37,34) съ тѣми же смѣщеніями и альфами (хвосты 0.13→0.16; 0.15→0.19), бевел — rgba(45,42,38,0.45), боковыя и нижнія тѣни уплотнены (0.12→0.2; 0.38→0.45; нажатое соотвѣтственно). Градіенты циферблатовъ и лампа №186 не тронуты. Проверки: html5lib чисто; старыхъ тёплыхъ стоповъ виньетки въ живомъ SVG — ноль; бѣлаго бевела — ноль; pen-top=7; fon.jpg=1. */
+/* ===== №186: циферблаты — овалъ убитъ окончательно. Причина по скриншотѣ: лампа-подсветка съ ядромъ 0.74 заливала центръ щитка почти сплошнымъ свѣтомъ — овалъ сталъ контрастнѣе; циферблатный градіентъ жилъ въ координатахъ узкой рамки (r=0.8 отъ полоски 220×58), вѣртикальный радіусъ сжатъ до ~46px — переходъ рисовался эллипсомъ. Лѣкъ: циферблатъ переведёнъ въ userSpaceOnUse (cx=110, cy=24, r=210) — переходъ растянутъ на весьъ щитокъ равномѣрно; лампа погашена (пикъ 0.74→0.14, спадъ гладкій); виньетка «бумаги» вдвое тишѣ (альфа 0.30→0.15); верхній бликъ стекла 0.28→0.12. Палитра №183–184 сохранена. ===== */
+/* ===== №185: циферблаты — разбито последнее кольцо овала. Причина: редкія стопы градіента (10) давали вѣдимый овалъ на переходѣ кремъ→охра; лампа-подсветка имѣла изломъ яркости на 45%. Стало: 18 равномерныхъ стоповъ у циферблата, лампа — плавный спадъ безъ излома (пикъ 0.78→0.74), виньетка — 11 плавныхъ стоповъ съ 0.30, зерно усилено (0.62→0.72, октавы 4→5, альфа 0.55→0.62) для дизеринга перехода. Цвета не тронуты. */
+/* ===== №184: циферблаты — плавный переходъ безъ ступеньки. Причина: щитокъ узкій (58px), вѣртикальный радіусъ сжатъ ~46px, перепадъ на пиксель великъ — глазъ ловитъ кольцо на стыкахъ стоповъ. Лѣкъ: десять равномерныхъ стоповъ (изломы крошечные), виньетка разглажена (5 ступеней съ 0.35), зерно усилено (октавы 3→4, плотность 0.55→0.62) — дизерингъ разбиваетъ границы. Цвѣта сохранены №183. ===== */
+      /* ===== №183: циферблаты — верхъ въ охру. Причина: свѣтлый центръ градіента (cy 0.42) былъ блъже къ верхней кромкѣ (0.53 радіуса), нежели нижней (0.73) — верхъ оставался блѣднымъ. Стопы сжаты къ центру: уже на 0.52 начинается охра (#d9bc86), крайъ — коричнѣво-жёлтый (#b98c50). Центръ (#f2ecd6) не тронутъ. ===== */
+/* ===== №182: циферблаты — край въ болѣе коричнѣво-жёлтый (#c09c5d), градіентъ плавнѣе (шесть стоповъ), виньетка разглажена — дуга болѣе не видна. ===== */
+      /* ===== №181: циферблаты приборовъ перекрашены по старинному образцу — радиальный градиентъ (свѣтлый центръ, тѣмная периферіях), жёлто-бежевая гамма безъ яркости; слои вкрапленій краски у обоихъ приборовъ; подложка эфира подъ средній тонъ циферблата. ===== */
 /* ===== №180: вольтметръ — новая телеграмма не наливаетъ батарею до края, а прибавляетъ къ остатку десять вольтъ; подзарядъ въ паузѣ мѣжду депешами отмѣненъ. ===== */
 /* ===== №179: выделеніе вкладокъ «Мои слова»/«Изысканіе» возвращено (какъ въ №177); приборы въ эфирѣ безъ подсвѣтки — стражъ держитъ ===== */
 /* ===== №175: стражъ — приборы въ эфирѣ всегда вдавлены, какъ клавиши ===== */
@@ -4920,7 +5032,7 @@ body.light.telegraph-on .tab:hover,
 body.light.telegraph-on .tab:active,
 body.light.telegraph-on .tab:focus,
 body.light.telegraph-on .tab.active {
-  box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -3px 6px rgba(0,0,0,0.5), 0 3px 6px rgba(0,0,0,0.45) !important;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -2px 4px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.45) !important;
   border-color: var(--card-border) !important;
   background: rgba(26, 21, 53, 0.7) !important;
   animation: none !important;

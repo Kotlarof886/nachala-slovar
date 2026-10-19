@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №198, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №211, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №198: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №211: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -231,22 +231,9 @@ body.telegraph-on .tab { transition: none; }   /* №170: ни одна вели
 body.telegraph-on .tab.active { animation: none; box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -2px 4px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.45); }   /* №171: тень выровнена съ эфирной базой — кликъ не свѣтитъ */
 body.telegraph-on .tab:focus { outline: none; }   /* №169: контуръ фокуса не свѣтится */
 body.telegraph-on .tab { -webkit-tap-highlight-color: transparent; }   /* №169: тапъ не подсвѣчиваетъ */
-/* №167: газоразрядное свѣченіе приборовъ — тёплый светъ слоновой кости */
-.meter-lamp { opacity: var(--glow, 0.48); transition: opacity .25s linear; }   /* №171: яркость от заряда — полная батарея свѣтитъ ярче */
-.meter-lamp.lamp-flicker { animation: lampSag 9.5s linear infinite; }   /* №170: не пульсъ — просадка сети */
-@keyframes lampSag {
-  /* №171: свѣтъ стоитъ ровно; глубина просадокъ умножается на токъ (--k) — размахъ 0–10 А */
-  0%, 7%   { opacity: var(--glow, .48); }
-  9%       { opacity: calc(var(--glow, .48) * (1 - 0.458 * var(--k, 0))); }
-  11%      { opacity: calc(var(--glow, .48) * (1 - 0.083 * var(--k, 0))); }
-  13%      { opacity: calc(var(--glow, .48) * (1 - 0.542 * var(--k, 0))); }
-  16%, 54% { opacity: var(--glow, .48); }
-  56%      { opacity: calc(var(--glow, .48) * (1 - 0.375 * var(--k, 0))); }
-  59%      { opacity: calc(var(--glow, .48) * (1 - 0.083 * var(--k, 0))); }
-  61%      { opacity: var(--glow, .48); }
-  63%      { opacity: calc(var(--glow, .48) * (1 - 0.292 * var(--k, 0))); }
-  66%, 100%{ opacity: var(--glow, .48); }
-}
+/* №201: подсвѣтка приборовъ — новый слой flare: яркость ведётъ flareTick по двумъ стрѣлкамъ */
+.meter-flare { opacity: 0.55; }   /* стартовая яркость — до перваго тика */
+body.light .meter-flare { display: none; }   /* лёгкій режимъ — свѣченіе не рисуется */
 /* №168: внешнее свѣченіе — на рамкѣ кнопки (клипъ не рѣжетъ тень элемента), на порогѣ — ярче */
 body.telegraph-on .tab { box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -2px 4px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.45);   /* №170: приглушено вдвое */ }
 /* №171: lamp-on упразднено — третьего состоянія свѣченія нѣтъ */
@@ -1286,15 +1273,7 @@ body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* ср�
         <stop offset="0.45" stop-color="rgba(255,255,255,0.02)"/>
         <stop offset="1" stop-color="rgba(255,255,255,0)"/>
       </linearGradient>
-      <radialGradient id="lamp-amp" cx="0.5" cy="0.45" r="0.72">
-        <stop offset="0" stop-color="rgba(255,252,232,0.140)"/>
-        <stop offset="0.2" stop-color="rgba(255,252,230,0.115)"/>
-        <stop offset="0.4" stop-color="rgba(255,251,228,0.085)"/>
-        <stop offset="0.6" stop-color="rgba(255,250,224,0.055)"/>
-        <stop offset="0.8" stop-color="rgba(255,249,220,0.028)"/>
-        <stop offset="1" stop-color="rgba(255,248,216,0.000)"/>
-      </radialGradient>
-    </defs>
+      </defs>
 
     <!-- №167: верхняя и боковыя чёрныя рамки сняты — циферблатъ во всю ширину прибора -->
     <rect x="0" y="0" width="220" height="62" fill="url(#dial-amp)"/>
@@ -1319,6 +1298,8 @@ body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* ср�
     <text x="139.5" y="47.9" font-size="18" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">10</text>
     </g>
 
+    <!-- №206: подсвѣтка — ровная плашка подъ стрѣлками: стрѣлки всегда поверхъ подсвѣтки -->
+    <rect id="flare-amp" class="meter-flare" x="0" y="0" width="220" height="54" pointer-events="none"/>
     <!-- стрелка: синёная сталь, ось внизу -->
     <g id="needle-amp" transform="rotate(0 110 58)">
       <line x1="110" y1="58" x2="110" y2="14" stroke="#1b1b3a" stroke-width="3.2"/>
@@ -1334,8 +1315,6 @@ body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* ср�
 
     <!-- блики стекла -->
     <rect x="0" y="0" width="220" height="62" fill="url(#glass-amp)" pointer-events="none"/>
-    <!-- №167: тёплое газоразрядное свѣченіе — мѣрцаетъ на высокомъ токѣ / низкомъ напряжении -->
-    <ellipse id="glow-amp" class="meter-lamp" cx="110" cy="27" rx="108" ry="27" fill="url(#lamp-amp)" pointer-events="none"/>
   </svg></span></button>
       <button class="tab" onclick="switchTab('online')"><span class="tab-label">Изысканіе въ эфирѣ</span><span class="tab-meter" aria-hidden="true"><svg class="meter" viewBox="0 0 220 62" width="220" height="62" role="img" preserveAspectRatio="none" aria-label="ВОЛЬТЪ">
     <defs>
@@ -1393,15 +1372,7 @@ body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* ср�
         <stop offset="0.45" stop-color="rgba(255,255,255,0.02)"/>
         <stop offset="1" stop-color="rgba(255,255,255,0)"/>
       </linearGradient>
-      <radialGradient id="lamp-volt" cx="0.5" cy="0.45" r="0.72">
-        <stop offset="0" stop-color="rgba(255,252,232,0.140)"/>
-        <stop offset="0.2" stop-color="rgba(255,252,230,0.115)"/>
-        <stop offset="0.4" stop-color="rgba(255,251,228,0.085)"/>
-        <stop offset="0.6" stop-color="rgba(255,250,224,0.055)"/>
-        <stop offset="0.8" stop-color="rgba(255,249,220,0.028)"/>
-        <stop offset="1" stop-color="rgba(255,248,216,0.000)"/>
-      </radialGradient>
-    </defs>
+      </defs>
 
     <!-- №167: верхняя и боковыя чёрныя рамки сняты — циферблатъ во всю ширину прибора -->
     <rect x="0" y="0" width="220" height="62" fill="url(#dial-volt)"/>
@@ -1436,6 +1407,8 @@ body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* ср�
     <text x="142.5" y="44.9" font-size="12" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">20</text>
     </g>
 
+    <!-- №206: подсвѣтка — ровная плашка подъ стрѣлками: стрѣлки всегда поверхъ подсвѣтки -->
+    <rect id="flare-volt" class="meter-flare" x="0" y="0" width="220" height="54" pointer-events="none"/>
     <!-- стрелка: синёная сталь, ось внизу -->
     <g id="needle-volt" transform="rotate(0 110 58)">
       <line x1="110" y1="58" x2="110" y2="14" stroke="#1b1b3a" stroke-width="3.2"/>
@@ -1451,8 +1424,6 @@ body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* ср�
 
     <!-- блики стекла -->
     <rect x="0" y="0" width="220" height="62" fill="url(#glass-volt)" pointer-events="none"/>
-    <!-- №167: тёплое газоразрядное свѣченіе — мѣрцаетъ на высокомъ токѣ / низкомъ напряжении -->
-    <ellipse id="glow-volt" class="meter-lamp" cx="110" cy="27" rx="108" ry="27" fill="url(#lamp-volt)" pointer-events="none"/>
   </svg></span></button>
     </div>
   </nav>
@@ -1681,13 +1652,33 @@ function fitTabFrames() {
   var tabs = document.querySelectorAll('.tabs .tab');
   if (!tabs.length) return;
   if (!on) {
+    /* №211: выходъ изъ эфира — замеръ высоты только по устоявшейся обычной геометріи.
+       Причина давняго бага: отступы кнопки при выходѣ едутъ анімаціей (transition: all 0.2s),
+       и мгновенный замеръ ловилъ высоту на стартѣ анімаціи — безъ отступовъ; база __tabH
+       занижалась съ каждымъ цикломъ входа-выхода, и приборы сажались. */
+    var prevWs = [];
     for (var i = 0; i < tabs.length; i++) {
-      tabs[i].style.width = '';
-      var sv = tabs[i].querySelector('.tab-meter svg');
+      var t = tabs[i];
+      prevWs.push(t.style.width);            /* эфирная отправная ширина (пустая — въ обычномъ видѣ) */
+      t.style.transition = 'none';           /* глушимъ анімацію на время замера */
+      t.style.width = '';
+      var sv = t.querySelector('.tab-meter svg');
       if (sv) { sv.style.width = ''; sv.style.height = ''; }
     }
-    window.__tabH = tabs[0].offsetHeight;   /* №166: высота обычнаго вида — въ эфирѣ она неизменна */
-    fitTabLabels();
+    fitTabLabels();                          /* №211: кегль — до замера, чтобы высота учитывала надписи */
+    window.__tabH = tabs[0].offsetHeight;    /* №166: высота обычнаго вида — теперь честная */
+    /* №211: переигрываемъ плавный возвратъ — на экранѣ выходъ выглядитъ какъ прежде */
+    for (var i = 0; i < tabs.length; i++) {
+      if (!prevWs[i]) continue;              /* въ обычномъ видѣ переигрывать нечего */
+      var t = tabs[i];
+      t.style.transition = 'none';
+      t.style.width = prevWs[i];             /* откатъ къ эфирной отправной точкѣ */
+      t.style.padding = '0';                 /* откатъ эфирныхъ отступовъ */
+      void t.offsetWidth;                    /* фиксируемъ отправную точку */
+      t.style.transition = '';               /* анімацію возвращаемъ — родная transition: all 0.2s */
+      t.style.width = '';                    /* плавный возвратъ ширины */
+      t.style.padding = '';                  /* плавный возвратъ отступовъ */
+    }
     return;
   }
   /* №166: меняется только ширина — высота кнопокъ остаётся прежней */
@@ -1891,36 +1882,45 @@ function teleVoltSnap(v) {
 }
 function teleMetersDraw() {
   teleNeedle('amp', teleAmpV); teleNeedle('volt', teleVoltPhys.p);   /* №191: стрѣлка вольта — по пружинѣ съ инерціей */
-  teleGlowSync(teleAmpV, teleVoltV);   /* №171: яркость от заряда, мерцаніе общее */
+
 }
-/* №168: свѣченіе наливаетсяъ съ показаніемъ — амперъ ярче съ токомъ, вольтъ ярче къ нулю; мерцаніе (анімація) перекрываетъ inline */
-/* №171: общее свѣченіе приборовъ — яркость от заряда (0.22–0.72), классъ ставится обѣимъ лампамъ сразу */
-function teleGlowSync(amp, volt) {
-  var glow = (0.22 + 0.50 * Math.max(0, Math.min(1, volt))).toFixed(3);
-  var k = Math.max(0, Math.min(1, amp));   /* токъ по шкалѣ 0–10 А */
-  var on = (amp > 0.005 || teleVoltLow || teleVoltRefill > 0);   /* напряжение скачетъ — идётъ токъ или батарея мѣняется */
-  ['glow-amp', 'glow-volt'].forEach(function (idn) {
-    var el = document.getElementById(idn);
-    if (!el) return;
-    el.style.setProperty('--glow', glow);
-    el.style.setProperty('--k', k.toFixed(3));
-    el.style.opacity = glow;
-    if (on) { if (!el.classList.contains('lamp-flicker')) el.classList.add('lamp-flicker'); }
-    else { el.classList.remove('lamp-flicker'); }
-  });
+/* №201: подсвѣтка приборовъ — новая логика, прежняя снята целиком. Норма тока 2.5–5 А:
+   ниже — свѣтъ ярче (чѣмъ ниже, тѣмъ ярче), выше — тусклѣе (чѣмъ выше, тѣмъ тусклѣе).
+   Норма напряжения 2.5–17.5 В: ниже — тусклѣе (чѣмъ ниже, тѣмъ тусклѣе), выше — ярче (чѣмъ выше, тѣмъ ярче).
+   Яркость одна на оба прибора и слѣдуетъ за стрѣлками въ каждый тикъ. */
+function flareTick() {
+  var light = document.body.classList.contains('light');
+  var ether = document.body.classList.contains('telegraph-on');   /* №205: подсвѣтка живётъ только въ эфирѣ */
+  var b = 0;
+  if (!light && ether) {
+    var aN = Math.max(0, Math.min(1, typeof teleAmpV === 'number' ? teleAmpV : 0));   /* токъ, шкала 0–10 */
+    var vN = Math.max(0, Math.min(1, typeof teleVoltPhys === 'object' && teleVoltPhys ? teleVoltPhys.p : 0)); /* стрѣлка вольта по пружинѣ №191 */
+    b = 0.30;
+    if (aN < 0.25) b += (0.25 - aN) / 0.25 * 0.35;             /* ниже 2.5 А — ярче */
+    else if (aN > 0.5) b -= (aN - 0.5) / 0.5 * 0.35;           /* выше 5 А — тусклѣе */
+    if (vN < 0.125) b -= (0.125 - vN) / 0.125 * 0.35;          /* ниже 2.5 В — тусклѣе */
+    else if (vN > 0.875) b += (vN - 0.875) / 0.125 * 0.35;     /* выше 17.5 В — ярче */
+    b = Math.max(0.06, Math.min(1, b)) * 0.72;
+  }
+  /* цветъ плашки: ярко — бѣловато-жёлтая, тускло — сѣрая; всегда прозрачная */
+  var r = Math.round(185 + 70 * b), g = Math.round(178 + 42 * b), bl = Math.round(170 + 10 * b);
+  var a = (0.075 + 0.3125 * b).toFixed(3);   /* №207: интенсивность −50% — полоса 0.075–0.30 */
+  var fill = 'rgba(' + r + ',' + g + ',' + bl + ',' + a + ')';
+  /* ореолъ вокругъ корпуса: къ родной тѣни покоя кнопки добавляемъ ауру; въ лёгкомъ режимѣ — только родная тень */
+  var REST = 'inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -2px 4px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.45)';
+  var OA = (0.1375 * b).toFixed(3);   /* №209: ореолъ ещё -50% */ var halo = REST + ', -18px -6px 39px 4.5px rgba(255,182,110,' + OA + ')' + ', 18px -6px 39px 4.5px rgba(255,182,110,' + OA + ')' + ', 0 -21px 45px 6px rgba(255,182,110,' + OA + ')';
+  var ea = document.getElementById('flare-amp'), ev = document.getElementById('flare-volt');
+  if (ea) { ea.setAttribute('fill', fill); ea.style.opacity = ether ? 1 : 0; }
+  if (ev) { ev.setAttribute('fill', fill); ev.style.opacity = ether ? 1 : 0; }
+  /* №206: ореол идёт через переменную --flare-shadow — стражъ №175 читаетъ её и пропускаетъ свѣтъ легально */
+  var rs = document.documentElement.style;
+  if (ether && !light) rs.setProperty('--flare-shadow', halo);
+  else rs.removeProperty('--flare-shadow');
 }
-/* №171: покой — свѣтъ стоитъ ровно */
-function teleGlowRest() {
-  ['glow-amp', 'glow-volt'].forEach(function (idn) {
-    var el = document.getElementById(idn);
-    if (el) el.classList.remove('lamp-flicker');
-  });
-}
-/* №171: лёгкій режимъ — классъ снятъ */
-function teleGlowReset() { teleGlowRest(); }
+setInterval(flareTick, 60);   /* постоянный ходъ — всегда, независимо отъ телеграфа */
 function teleMetersSync() {
   if (!meterAmp) { meterAmp = document.getElementById('needle-amp'); meterVolt = document.getElementById('needle-volt'); }
-  if (document.body.classList.contains('light')) { teleNeedle('amp', 0); teleVoltSnap(0); teleGlowReset(); return; }   /* лёгкій режимъ — приборы на покоя */
+  if (document.body.classList.contains('light')) { teleNeedle('amp', 0); teleVoltSnap(0); return; }   /* лёгкій режимъ — приборы на покоя */
   teleMetersDraw();
 }
 var shiftKeyEl = null, specKeyEl = null, specHeld = false;   // шифтъ и спец-клавиша
@@ -2594,7 +2594,7 @@ function teleFrame(ts) {
   if (teleVoltKickV) teleVoltKickV *= Math.exp(-dt / 700);   /* №191: качанія печаті затухаютъ */
   teleVoltPhysStep(dt / 1000);   /* №191: шагъ пружины стрѣлки */
   if (!meterAmp) { meterAmp = document.getElementById('needle-amp'); meterVolt = document.getElementById('needle-volt'); }
-  if (!document.body.classList.contains('light') && (teleAmpV > 0.005 || teleVoltLow || teleVoltV < 1 || teleVoltLive)) teleMetersDraw(); else teleGlowRest();
+  if (!document.body.classList.contains('light') && (teleAmpV > 0.005 || teleVoltLow || teleVoltV < 1 || teleVoltLive)) teleMetersDraw();
   teleMaintain();
   var track = document.getElementById('tape-track');
   if (track) {
@@ -4519,7 +4519,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 198</div>
+<div class="build-info">Сшивъ № 211</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -5000,6 +5000,31 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
 /* №176: углубленіе приборовъ перенесено на слой поверхъ прибора —
    SVG циферблата накрывалъ inset-тень кнопки, теперь тень рисуетъ .tab-meter::after;
    стражъ починенъ: сломанное «; !important;» стало честнымъ «!important». */
+/* ===== №211 — Багъ сжатія приборовъ исправленъ =====
+   При выходѣ изъ эфира высота кнопокъ замерялась на стартѣ откатной анімаціи отступовъ
+   (transition: all 0.2s) — безъ отступовъ; база __tabH занижалась съ каждымъ цикломъ
+   входа-выхода, и приборы сажались (и на телефонѣ, и на компьютерѣ). Лѣкъ: въ выходной
+   вѣткѣ fitTabFrames анімація глушится на время замера, кегль подгоняется до замера,
+   плавный возвратъ переигрывается явно (откатъ къ эфирной отправной точкѣ — отступы
+   и ширина — и отпусканіе). Видъ выхода не меняется. Подсвѣтка №209 не тронута.
+   Предыдущий сшивъ: №209. */
+/* ===== №209 — Ореолъ тише ещё вдвое =====
+   Свѣченіе вокругъ приборовъ погашено снова вдвое: альфа ореола 0.275 -> 0.1375 (множитель въ формуле).
+   Рассѣиваніе не тронуто: бока 39 px (отступъ 18), верхъ 45 px (отступъ 21), внизу — по-прежнему пусто. */
+/* ===== №208 — Ореолъ тише =====
+   Свѣченіе вокругъ приборовъ погашено вдвое: альфа ореола 0.55 -> 0.275 (множитель въ формуле).
+   Рассѣиваніе не тронуто: бока 39 px (отступъ 18), верхъ 45 px (отступъ 21), внизу — по-прежнему пусто. */
+/* ===== №207 — Свѣтъ тише, ореолъ шире =====
+Интенсивность подсвѣтки циферблатовъ снижена вдвое (полоса альфы 0.075–0.30), рассѣиваніе ореола вокругъ корпусовъ увеличено вполтора (бока 39 px, верхъ 45 px), альфа ореола прежняя, низъ — безъ отсвѣта.
+
+===== №206: ореол пропущен через переменную --flare-shadow (стражъ №175 с !important читаетъ её — свѣтъ работаетъ и при вдавленных клавишахъ, включая нажатіе); полоса яркости плашки поднята до видимой (альфа 0.15–0.60); стрѣлки всегда поверхъ подсвѣтки — плашка перенесена подъ слой стрѣлки въ обоихъ приборахъ ===== */
+/* ===== №205: подсвѣтка прибора включается только въ эфирѣ (стражъ body.telegraph-on во flareTick); вне эфира плашки гаснутъ (opacity 0) и ореолъ снимается вовсе — клавишамъ возвращается родная тень покоя; подсвѣтка кнопокъ №168 не тронута ===== */
+/* ===== №204: плашка подсвѣтки обрезана по чёрному основанію (высота 54 — не задѣваетъ планку подъ стрѣлками); яркость снижена (база 0.42→0.30, итогъ ×0.72); отсвѣтъ вокругъ усиленъ и идётъ во всѣ стороны кроме низа (внизу чёрное основаніе); свѣтъ тѣплый — лампа накаливанія: ярко rgb(255,220,180), тускло rgb(189,180,171), ореолъ rgba(255,182,110) ===== */
+/* ===== №203: подсвѣтка приборовъ передѣлана по видѣнію автора: овальный бликъ снятъ цѣлікомъ (градіенты flare-grad и эллипсы). На приборахъ теперь ровная прозрачная плашка поверхъ всего циферблата включно со стрѣлками: при яркомъ свѣтѣ бѣловато-жёлтая (255,252,228), при затуханіи сѣрая (198,198,202), плавная интерполяція по яркости; альфа 0.10–0.50. Рамка и пространство вокругъ приборовъ слегка освѣщаются ореоломъ (тень на кнопкѣ 8–28px, родная тень покоя сохранена; въ лёгкомъ режимѣ ореолъ снятъ). Логика яркости вся прежняя №201 (норма тока 2.5–5 А, напряженія 2.5–17.5 В, синхронизация со стрѣлками — амперъ по живому току, вольтъ по пружинѣ №191). ===== */
+/* ===== №202: подсвѣтка приборовъ — подъёмъ стоповъ градіентовъ flare въ живую зону (пикъ 0.140→0.900 и 0.115→0.740 и т.д., оба градіента идентичны): прежняя альфа 0.14 задавливала всю логику въ невидимую полосу ~7%; база яркости 0.55→0.42, чтобы потолокъ покоя (~0.78 альфы) не пересвѣчивалъ цифры. Логика №201 бѣзъ измѣненій: норма тока 2.5–5 А, напряженіе 2.5–17.5 В, синхронизация со стрѣлками, flareTick 60 мс. */
+/* ===== №201: подсвѣтка приборовъ переписана по новой логикѣ — прежняя подсвѣтка снята целикомъ (эллипсы glow-amp/glow-volt, градіенты lamp-amp/lamp-volt, классъ meter-lamp, teleGlowTick/teleGlowRest, ветка teleGlowRest въ циклѣ ленты); свѣченіе кнопокъ не тронуто. Новая подсвѣтка flare: единый тёплый слой на обоихъ приборахъ, база яркости 0.55; норма тока 2.5–5 А — ниже нормы ярче (чѣмъ ниже, тѣмъ ярче), выше нормы тусклѣе (чѣмъ выше, тѣмъ тусклѣе); норма напряжения 2.5–17.5 В — ниже нормы тусклѣе, выше нормы ярче (чѣмъ дальше отъ нормы, тѣмъ сильнѣе эффект); яркость слѣдуетъ за стрѣлками въ каждый тикъ (flareTick, 60 мс, постоянный ходъ); въ лёгкомъ режимѣ слой гасится. Физика №196 не тронута. Предыдущий сшивъ: №200. ===== */
+/* ===== №200: свѣченіе приборовъ — ходъ вынесенъ изъ телеграфного цикла въ собственный teleGlowTick (70 мс, всегда): циклъ приборовъ останавливается въ покоя и лампа замерала на послѣднемъ кадрѣ — выглѣдѣло статичнымъ. Въ покоя дышитъ ±7% яркости (періодъ ~1.5 с), при печати просадка dip = k·(0.40–0.78) на мѣдленной волнѣ (0.9/1.7 с), севшая батарея чадитъ и безъ тока. CSS: базовая яркость 0.48 зашита въ правило лампы. Физика №196 не тронута. Предыдущий сшивъ: №199. ===== */
+/* ===== №199: свѣченіе приборовъ — анімація lampSag снята: 9.5-секундный циклъ срывался въ покоя (teleGlowRest снималъ классъ, анімація начиналась заново, а просадки по расписанію не совпадали съ токомъ). Мерцаніе теперь ведётъ JS въ teleGlowSync по мгновенному току: dip = k·(0.25 + 0.55·flick), въ покоя просадка нуль; севшая батарея чадитъ (dip ≥ 0.30·flick). Физика №196 не тронута. Предыдущий сшив: №198. ===== */
 /* ===== №198: концевые цифры амперметра «0» и «10» опущены на 3 px (y 44.9 -> 47.9) — по просьбе. «5» и вольтметр не тронуты. Физика №196 не тронута. Предыдущий сшив: №197. ===== */
 /* ===== №197: цифра «10» амперметра сдвинута на 3 px влево (x 142.5 -> 139.5): её правый край налезал на концевую мѣтку (мѣтка съ x=150.8, край цифры ~151.5). Вольтметр не тронутъ: «20» мелче (12 px), до мѣтки не дотягивается. Физика №196 не тронута. Предыдущий сшив: №196. ===== */
 /* ===== №196: честная физика — расход батареи теперь интегралъ тока амперметра (въ циклѣ ленты, по кадрово, коэф. 1/25830 на мс·ед.); жёсткая порція 1/369 изъ удара убрана; калибровка: одиночный ударъ ≈ 1/369, частая печать расходуетъ быстрее; шкалы ±68° не тронуты. Предыдущий сшив: №193. ===== */
@@ -5021,9 +5046,10 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
 /* ===== №175: стражъ — приборы въ эфирѣ всегда вдавлены, какъ клавиши ===== */
 body.telegraph-on .tab:active {
   box-shadow:
+    var(--flare-shadow,
     inset 0 5px 10px rgba(0,0,0,0.6),
     inset 0 1px 2px rgba(255,255,255,0.06),
-    0 1px 3px rgba(0,0,0,0.4) !important;
+    0 1px 3px rgba(0,0,0,0.4)) !important;
   transform: none !important;
 }
 
@@ -5037,7 +5063,7 @@ body.light.telegraph-on .tab:hover,
 body.light.telegraph-on .tab:active,
 body.light.telegraph-on .tab:focus,
 body.light.telegraph-on .tab.active {
-  box-shadow: inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -2px 4px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.45) !important;
+  box-shadow: var(--flare-shadow, inset 0 2px 4px rgba(255,255,255,0.08), inset 0 -2px 4px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.45)) !important;
   border-color: var(--card-border) !important;
   background: rgba(26, 21, 53, 0.7) !important;
   animation: none !important;

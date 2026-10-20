@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №220, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №226, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №220: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №226: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -1325,17 +1325,16 @@ body.curtain-on .tab .tab-label { visibility: hidden; }
     <line x1="96.3" y1="13.1" x2="95.4" y2="10.2" stroke="#2a2118" stroke-width="1"/>
     <line x1="123.7" y1="13.1" x2="124.6" y2="10.2" stroke="#2a2118" stroke-width="1"/>
     <line x1="146.5" y1="28.4" x2="148.9" y2="26.5" stroke="#2a2118" stroke-width="1"/>
-    <text x="77.5" y="47.9" font-size="18" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">0</text>
-    <text x="110.0" y="27.6" font-size="18" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">5</text>
-    <text x="139.5" y="47.9" font-size="18" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">10</text>
+    <text x="77.5" y="52" font-size="18" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">−10</text>
+    <text x="110.0" y="27.6" font-size="18" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">0</text>
+    <text x="134.5" y="52" font-size="18" text-anchor="middle" fill="#2a2118" font-family="Georgia,serif">+10</text>
     </g>
 
     <!-- №206: подсвѣтка — ровная плашка подъ стрѣлками: стрѣлки всегда поверхъ подсвѣтки -->
     <rect id="flare-amp" class="meter-flare" x="0" y="0" width="220" height="54" pointer-events="none"/>
     <!-- стрелка: синёная сталь, ось внизу -->
     <g id="needle-amp" transform="rotate(0 110 58)">
-      <line x1="110" y1="58" x2="110" y2="14" stroke="#1b1b3a" stroke-width="3.2"/>
-      <path d="M 105.6 19 L 110 9 L 114.4 19 Z" fill="#7a1f1f"/>
+      <path d="M 110 7.5 C 110.5 10.8 112.2 14.4 112.8 16.5 C 112.65 17.9 112.05 18.95 111.4 19.4 L 111.4 58 L 108.6 58 L 108.6 19.4 C 107.95 18.95 107.35 17.9 107.2 16.5 C 107.8 14.4 109.5 10.8 110 7.5 Z" fill="#1b1b3a"/>   <!-- №224: стрѣлка по рисунку заказчика — ромбъ вдвое шире стержня (±2.8), широчайшая точка на 17.9% длины отъ острія, слитіе со стержнемъ на 23%, остріе длинное вогнутое -->
     </g>
     <!-- №167: нижняя чёрная планка — стрѣлка прячется подъ нею -->
     <path d="M 0 54 L 220 54 L 220 55 Q 220 62 213 62 L 7 62 Q 0 62 0 55 Z" fill="#241f2e"/>
@@ -1443,8 +1442,8 @@ body.curtain-on .tab .tab-label { visibility: hidden; }
     <rect id="flare-volt" class="meter-flare" x="0" y="0" width="220" height="54" pointer-events="none"/>
     <!-- стрелка: синёная сталь, ось внизу -->
     <g id="needle-volt" transform="rotate(0 110 58)">
-      <line x1="110" y1="58" x2="110" y2="14" stroke="#1b1b3a" stroke-width="3.2"/>
-      <path d="M 105.6 19 L 110 9 L 114.4 19 Z" fill="#7a1f1f"/>
+      <path d="M 111.4 19.4 L 111.4 58 L 108.6 58 L 108.6 19.4 Z" fill="#1b1b3a"/>
+      <path d="M 110 7.5 C 110.5 10.8 112.2 14.4 112.8 16.5 C 112.65 17.9 112.05 18.95 111.4 19.4 L 108.6 19.4 C 107.95 18.95 107.35 17.9 107.2 16.5 C 107.8 14.4 109.5 10.8 110 7.5 Z" fill="#9e2116"/>
     </g>
     <!-- №167: нижняя чёрная планка — стрѣлка прячется подъ нею -->
     <path d="M 0 54 L 220 54 L 220 55 Q 220 62 213 62 L 7 62 Q 0 62 0 55 Z" fill="#241f2e"/>
@@ -1881,11 +1880,32 @@ var strikeKeyMap = null, strikeArr = [], strikeIdx = 0;
    каждая литера расходуетъ; на нулѣ наборъ вдвое мѣдленнѣе, подзарядъ за 3 секундамъ.
    Стрелки питаются отъ цикла ленты — станція спитъ, приборы замерли. */
 var meterAmp = null, meterVolt = null;
-var teleAmpV = 0, teleVoltV = 1, teleVoltLow = false, teleVoltRefill = 0;
+var teleAmpKick = 0, teleAmpKickT = 0, teleAmpSpike = 0, teleAmpPhys = { p: 0, w: 0 }, teleAmpLive = false, teleVoltV = 1, teleVoltLow = false, teleVoltRefill = 0;   /* №221: амперметръ — импульсъ и пружина вместо осѣданія */
 var teleVoltCharge = false, teleVoltFillMs = 3000, teleChargeMsg = null, teleCurMsg = null;   /* №180: подзарядъ въ паузѣ отмѣненъ — зарядъ живётъ отъ депеши къ депеше */
 function teleNeedle(id, v) {
   var el = document.getElementById('needle-' + id);
   if (el) el.setAttribute('transform', 'rotate(' + (-68 + 136 * Math.max(-0.05, Math.min(1.1, v))).toFixed(1) + ' 110 58)');
+}
+/* №221: амперметръ — двусторонняя карта: −1…0…+1 → −68°…0°…+68°, покой на нулевой серединѣ */
+function teleNeedleAmp(v) {
+  var el = document.getElementById('needle-amp');
+  if (el) el.setAttribute('transform', 'rotate(' + (68 * Math.max(-0.55, Math.min(1.05, v))).toFixed(1) + ' 110 58)');
+}
+/* №226: пружина амперметра — №224 (ω=20, ζ=0.16, откатъ 55% пика; интеграторъ аналитическій, какъ въ №191):
+   импульсъ держится 60 мс (клавиша нажата) и гаснетъ за 40 мс; стрѣлка всплескиваетъ до импульса,
+   по инерціи проходитъ ноль и отклоняется въ минусъ (обычная до −2.9 А, пробѣлъ зеркально до −3.6 А), затѣмъ затихаетъ;
+   пробѣлъ — обратная полярность, буквамъ — спайкъ самоиндукціи 0.10 силы */
+function teleAmpPhysStep(dt) {
+  var target = teleAmpKick + teleAmpSpike;
+  var wn = 20, z = 0.16, od = wn * Math.sqrt(1 - z * z);
+  var e = Math.exp(-z * wn * dt), c = Math.cos(od * dt), si = Math.sin(od * dt);
+  var x = teleAmpPhys.p - target, v = teleAmpPhys.w;
+  teleAmpPhys.p = e * (x * c + (v + z * wn * x) / od * si) + target;
+  teleAmpPhys.w = e * (v * c - (z * wn * v + wn * wn * x) / od * si);
+  teleAmpLive = Math.abs(teleAmpPhys.p) > 0.004 || Math.abs(teleAmpPhys.w) > 0.06 || Math.abs(teleAmpKick) > 0.004 || Math.abs(teleAmpSpike) > 0.004;
+}
+function teleAmpSnap(v) {
+  teleAmpPhys.p = (v === undefined ? 0 : v); teleAmpPhys.w = 0; teleAmpKick = 0; teleAmpSpike = 0; teleAmpLive = false;
 }
 /* №191: инерція стрѣлки вольтметра — недодемпфированная пружина (ω=3.2, ζ=0.66):
    цель меняется скачкомъ — стрѣлка догоняетъ, проѣзжаетъ отметку (~0.6 вольта) и медленно отыгрываетъ назадъ */
@@ -1913,7 +1933,7 @@ function teleVoltSnap(v) {
   teleVoltPhys.p = (v === undefined ? teleVoltV : v); teleVoltPhys.w = 0; teleVoltKickV = 0; teleVoltLive = false;
 }
 function teleMetersDraw() {
-  teleNeedle('amp', teleAmpV); teleNeedle('volt', teleVoltPhys.p);   /* №191: стрѣлка вольта — по пружинѣ съ инерціей */
+  teleNeedleAmp(teleAmpPhys.p); teleNeedle('volt', teleVoltPhys.p);   /* №191: стрѣлка вольта — по пружинѣ съ инерціей; №221: амперметръ — по своей пружинѣ */
 
 }
 /* №201: подсвѣтка приборовъ — новая логика, прежняя снята целиком. Норма тока 2.5–5 А:
@@ -1927,7 +1947,7 @@ function flareTick() {
   if (flareHalt) ether = false;   /* №220: стражъ обратнаго хода — свѣтъ приборовъ потушенъ до стыка, классъ эфира не в счётъ */
   var b = 0;
   if (!light && ether) {
-    var aN = Math.max(0, Math.min(1, typeof teleAmpV === 'number' ? teleAmpV : 0));   /* токъ, шкала 0–10 */
+    var aN = Math.max(0, Math.min(1, typeof teleAmpKick === 'number' ? teleAmpKick : 0));   /* №221: токъ линіи (импульсъ), шкала 0–10 — откатъ стрѣлки въ минусъ подсвѣтку не задѣваетъ */
     var vN = Math.max(0, Math.min(1, typeof teleVoltPhys === 'object' && teleVoltPhys ? teleVoltPhys.p : 0)); /* стрѣлка вольта по пружинѣ №191 */
     b = 0.30;
     if (aN < 0.25) b += (0.25 - aN) / 0.25 * 0.35;             /* ниже 2.5 А — ярче */
@@ -1954,7 +1974,7 @@ function flareTick() {
 setInterval(flareTick, 60);   /* постоянный ходъ — всегда, независимо отъ телеграфа */
 function teleMetersSync() {
   if (!meterAmp) { meterAmp = document.getElementById('needle-amp'); meterVolt = document.getElementById('needle-volt'); }
-  if (document.body.classList.contains('light')) { teleNeedle('amp', 0); teleVoltSnap(0); return; }   /* лёгкій режимъ — приборы на покоя */
+  if (document.body.classList.contains('light')) { teleAmpSnap(0); teleNeedleAmp(0); teleVoltSnap(0); return; }   /* лёгкій режимъ — приборы на покоя */
   teleMetersDraw();
 }
 var shiftKeyEl = null, specKeyEl = null, specHeld = false;   // шифтъ и спец-клавиша
@@ -2285,10 +2305,13 @@ function teleBuildKeyMap() {
   shiftKeyEl = document.querySelector('#alphabet-bar .key-shift');
   specKeyEl = document.querySelector('#alphabet-bar .key-spec');
 }
-function telePressKey(keyEl, soft) {
+function telePressKey(keyEl, soft, specForce) {
   if (!keyEl) return;
   sndClick(!soft);   // щелчокъ клавиши (звонкомъ отключается)
-  teleAmpV = Math.min(1, teleAmpV + 0.25);   /* №158: ударъ литеры — толчокъ тока въ линіи */
+  var spec = keyEl.classList.contains('key-shift') || keyEl.classList.contains('key-spec') || !!specForce;   /* №221: особый знакъ — шифтъ, ϕ или заглавная */
+  var isSpace = keyEl.classList.contains('key-space');   /* №226: пробѣлъ — токъ обратной полярности */
+  teleAmpKick = spec ? 0.545 + Math.random() * 0.175 : (isSpace ? -(0.24 + Math.random() * 0.12) : 0.24 + Math.random() * 0.12);   /* №226: импульсы №224: обычный 2.4–3.6 А (пикъ 3–4.5), особый 5.45–7.2 А (пикъ 6.8–9); пробѣлъ бьётъ въ минусъ той же силой */
+  teleAmpKickT = performance.now();   /* №221: импульсъ держится 60 мс — пока клавиша нажата */
   teleVoltKick();   /* №191: микро-качанія вольтметра при печаті */
   teleWake();   /* №156: ударъ будитъ циклъ */
   if (keyEl._tgTimer) clearTimeout(keyEl._tgTimer);
@@ -2616,9 +2639,11 @@ function teleFrame(ts) {
     teleX += (teleTx - teleX) * (1 - Math.exp(-dt / tauP));
   }
   /* №158: приборы — осѣданіе амперметра и подзарядъ батареи въ кадрахъ цикла ленты */
-  teleAmpV *= Math.exp(-dt / 280);
+  if (teleAmpKick !== 0 && performance.now() - teleAmpKickT > 60) { teleAmpKick *= Math.exp(-dt / 40); teleAmpSpike = teleAmpKick > 0 ? -0.10 * teleAmpKick : 0; }   /* №226: импульсъ гаснетъ за 40 мс (токъ — по модулю, пробѣлъ въ минусъ); спайкъ самоиндукціи 0.10 силы — только буквамъ */
+  if (teleAmpSpike !== 0) { teleAmpSpike *= Math.exp(-dt / 250); if (Math.abs(teleAmpSpike) < 0.0004) teleAmpSpike = 0; }   /* №225: спайкъ затухаетъ за 0.25 с */
+  teleAmpPhysStep(dt / 1000);   /* №221: шагъ пружины амперметра */
   if (!teleVoltLow) {
-    teleVoltV -= teleAmpV * dt / 25830;   /* №196: расходъ — интегралъ тока: чемъ выше стрѣлка амперметра, тѣмъ сильнѣе садится батарея (калибровка: одинъ ударъ ≈ 1/369) */
+    teleVoltV -= Math.abs(teleAmpKick) * dt / 11068;   /* №196: расходъ — интегралъ тока линіи; №226: дѣлитель №224 (11068), токъ по модулю — пробѣлъ расходуетъ какъ буква */
     if (teleVoltV <= 0) { teleVoltV = 0; teleVoltLow = true; teleVoltRefill = performance.now(); }   /* батарея села */
   }
   if (teleVoltLow) {
@@ -2628,7 +2653,7 @@ function teleFrame(ts) {
   if (teleVoltKickV) teleVoltKickV *= Math.exp(-dt / 700);   /* №191: качанія печаті затухаютъ */
   teleVoltPhysStep(dt / 1000);   /* №191: шагъ пружины стрѣлки */
   if (!meterAmp) { meterAmp = document.getElementById('needle-amp'); meterVolt = document.getElementById('needle-volt'); }
-  if (!document.body.classList.contains('light') && (teleAmpV > 0.005 || teleVoltLow || teleVoltV < 1 || teleVoltLive)) teleMetersDraw();
+  if (!document.body.classList.contains('light') && (teleAmpLive || Math.abs(teleAmpKick) > 0.004 || teleVoltLow || teleVoltV < 1 || teleVoltLive)) teleMetersDraw();
   teleMaintain();
   var track = document.getElementById('tape-track');
   if (track) {
@@ -2638,7 +2663,7 @@ function teleFrame(ts) {
   teleStrike();   /* №157: удары послѣ записи transformъ — удаленіе ушедшей телеграммы сдвигаетъ раскладку мгновенно, а transformъ дописывается лишь здѣсь; удары до записи видѣли ложные пересѣченія рамки (залпъ щелчковъ, хрипъ, молчаніе клавишъ) */
   if (teleRev) teleReverseCheck();
   /* №156: сонъ цикла — лента стоитъ, обратного хода нѣтъ и строка печати догнала точку */
-  if (!teleRev && teleStopped && teleAmpV <= 0.005 && !teleVoltLow && !teleVoltLive && !(teleVoltCharge && teleVoltV < 1) && !(telePrintLine && telePrintLine.isConnected && Math.abs(teleTx - teleX) > 0.4)) {   /* №158: не спать, пока стрелки движутся; №159: и пока батарея наливается */
+  if (!teleRev && teleStopped && Math.abs(teleAmpKick) < 0.004 && !teleAmpLive && !teleVoltLow && !teleVoltLive && !(teleVoltCharge && teleVoltV < 1) && !(telePrintLine && telePrintLine.isConnected && Math.abs(teleTx - teleX) > 0.4)) {   /* №158: не спать, пока стрелки движутся; №159: и пока батарея наливается */
     teleRAF = null;
     return;
   }
@@ -2838,7 +2863,7 @@ function teleEndReverse() {
   });
   strikeArr = []; strikeIdx = 0;
   teleStopped = false; teleDone = false; teleSignDone = false; teleDealt = false; fetaStreak = 0;   /* финалъ забытъ — новая колода */
-  teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleVoltSnap(); teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
+  teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleAmpSnap(); teleVoltSnap(); teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
   teleHoldHTML = null;   /* держатель забытъ — новая колода */
   telePrintLine = null; teleTx = 0;   /* строка печати и цель подачи забыты — новая колода */
   var tgKey = document.querySelector('#alphabet-bar .key-tg');
@@ -3021,6 +3046,41 @@ function wxLine() {
   return s;
 }
 
+/* ===== №226 — Амперметръ: пробѣлъ въ минусъ, спайкъ тишѣ =====
+   По замѣчанію заказчика: амплитуда №225 слишкомъ велика — логика стрѣлки возвращена къ №224 (ω=20, ζ=0.16).
+   Пробѣлъ даётъ импульсъ обратной полярности той же силы, что обычная буква (−2.4…−3.6 А) — минусовая половина
+   шкалы оживаетъ. Буквамъ — немного самоиндукціи: спайкъ 0.10 силы (было 0.15 въ №225), только буквамъ.
+   Гашеніе, live, сонъ и отрисовка — по модулю тока; расходъ — модуль тока, дѣлитель №224 (11068).
+   Подсвѣтка читаетъ Math.max(0, teleAmpKick) — пробѣлъ подсвѣтку не зажигаетъ. 
+/* ===== №225 — Амперметръ: возвратъ и спайкъ самоиндукціи =====
+   Связка 1+2 по размѣру заказчика: жёсткость ω=20→26 — стрѣлка осѣдаетъ къ нулю между буквами;
+   треніе растётъ съ размахомъ удара (ζ = 0.09 + 0.16·импульсъ) — откатъ ложится въ окна на обоихъ концахъ диапазона.
+   Импульсы пересчитаны: обычный 2.2–3.4 А (пикъ 3.0–4.5 А, откатъ −2.0…−2.9 А), особый 5.3–7.3 А (пикъ 6.8–9.0 А, откатъ −3.9…−4.8 А).
+   Спайкъ самоиндукціи: въ моментъ спада импульса впрыскивается обратный токъ 0.15 силы, затуханіе 0.25 с — при каждомъ отпусканіи
+   клавиши стрѣлка киваетъ въ минусъ, минусовая половина шкалы оживаетъ. Спайкъ живётъ въ отдельной перемѣнной teleAmpSpike:
+   подсвѣтка читаетъ Math.max(0, teleAmpKick), расходъ батареи интегрируетъ только импульсъ — оба не тронуты. Печать (250 мс):
+   стрѣлка надъ нулёмъ 55% времени (было 67% въ №224). Стрѣлка вольтметра — геометрія амперметровой №224, наконечникъ красный. */
+/* ===== №224 — Амперметръ: логика №221 живѣе, оформленіе №223 =====
+   Логика — изъ №221: пружина (ω=20, удержаніе 60 мс, спадъ 40 мс), демпфірованіе ζ=0.22 → 0.16 —
+   откатъ выросъ съ 44% до 55% пика (обычная пикъ 3–4.5 А, откатъ −1.7…−2.5 А; особая пикъ 6.8–9 А,
+   откатъ −3.8…−4.9 А). Импульсы пересчитаны подъ пикъ-факторъ 1.251 (обычный 0.24–0.36,
+   особый 0.545–0.72), дѣлитель 12000 → 11068 — расходъ обычнаго удара тѣ же ≈ 1/369.
+   Стрѣлка амперметра перерисована по рисунку заказчика (см. CSS-летопись №224).
+   Подсвѣтка читаетъ импульсъ (≥ 0) — при откатѣ въ минусъ не мигнетъ.
+   Вольтметръ, занавесъ №219–220, заморозка №216 — не тронуты. */
+/* ===== №221 — Амперметръ: двусторонняя шкала и подпружиненная стрѣлка =====
+   Шкала −10…0…+10: нуль въ серединѣ (гдѣ было 5), покой — врътикально на нулѣ;
+   цифры тѣ же, кегль 18, мѣста тѣ же, правая подпись сдвинута на 5px влѣво («+10» шире).
+   Импульсъ задаётся заново каждымъ ударомъ (не накапливается): обычная буква — пикъ
+   3–4.5 А, особый знакъ (шифтъ, ϕ, заглавная) — пикъ 6.8–9 А; держится 60 мс и гаснетъ
+   за 40 мс. Пружина недодемпфированная (ω=20, ζ=0.22, аналитическій интеграторъ, какъ
+   №191, калибровка по кадру 1/60): всплескъ до пика ~0.1 с, по инерціи проходъ ноля,
+   откатъ въ минусъ 44% пика (обычная −1.3…−2.0 А на ~0.28 с, особая −3…−4 А), затиханіе ~1 с.
+   teleNeedleAmp — отдельная карта ±68° для амперметра; teleNeedle (вольтметръ) не тронутъ.
+   Подсвѣтка читаетъ токъ линіи (teleAmpKick ≥ 0) — при откатѣ въ минусъ не мигнетъ.
+   Расходъ батареи: делитель 25830 → 12000 подъ новую форму импульса — обычный ударъ
+   расходуетъ тѣ же ≈ 1/369, особый ≈ вдвое; сънъ/пробужденіе цикла — по пружинѣ.
+   Заморозка №216, занавесъ №219–220, вольтметръ №191 — не тронуты. */
 /* ===== №220 — Обратный ходъ: зеркальный занавесъ и мгновенное гашеніе подсвѣтки =====
    Порокъ: обратный ходъ не былъ виденъ — приборы поднимались надъ заливкой (z 5,
    рэликъ №214: подъёму взыть неоткуда — подложки tab-curtain-base болѣе нѣтъ съ
@@ -3280,7 +3340,7 @@ function toggleTelegraph() {
     strikeArr = []; strikeIdx = 0;
     teleQueue = []; teleDone = false; teleSignDone = false; fetaStreak = 0;   /* новая колода — перемѣшивается заново */
     teleStopped = false; teleDealt = false;
-    teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleVoltSnap(); teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
+    teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleAmpSnap(); teleVoltSnap(); teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
     teleHoldHTML = null;   /* держатель забытъ */
     telePrintLine = null; teleTx = 0;   /* строка печати и цель подачи забыты */
     tgNum = 1 + Math.floor(Math.random() * 100); tgClear();
@@ -3291,7 +3351,7 @@ function toggleTelegraph() {
       if (!telegraphOn || teleRev) return;   // обратный переходъ успелъ начаться — сшивку отмѣняемъ
       inner.innerHTML = '';
       teleQueue = []; teleLast = 0; teleStopped = false; teleDealt = false;
-      teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleVoltSnap(); teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
+      teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleAmpSnap(); teleVoltSnap(); teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
       teleHoldHTML = null;   /* держатель забытъ */
       telePrintLine = null; teleTx = 0;   /* строка печати и цель подачи забыты */
       /* Бесшовный переходъ: надписи поиска встаютъ на лентѣ тамъ же, гдѣ стояли.
@@ -4246,7 +4306,7 @@ window._kbStrikeChar = function (ch, force) {
   var u = (ch || '').toUpperCase();
   var keyEl = (strikeKeyMap && strikeKeyMap[u]) || document.querySelector('#alphabet-bar .letter[data-letter="' + u + '"]');
   if (!keyEl && ch === ' ') keyEl = document.querySelector('#alphabet-bar .key-space');
-  if (keyEl) telePressKey(keyEl, !!force); else sndClick(true);
+  if (keyEl) telePressKey(keyEl, !!force, ch !== ch.toLowerCase()); else sndClick(true);   /* №221: заглавная — особый импульсъ */
 };
 window.kbDismissNative = function () {
   if (!window._kbCoarse) return;               /* на компьютерѣ фокусъ не трогаемъ */
@@ -4786,7 +4846,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 220</div>
+<div class="build-info">Сшивъ № 226</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -5267,6 +5327,22 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
 /* №176: углубленіе приборовъ перенесено на слой поверхъ прибора —
    SVG циферблата накрывалъ inset-тень кнопки, теперь тень рисуетъ .tab-meter::after;
    стражъ починенъ: сломанное «; !important;» стало честнымъ «!important». */
+/* ===== №226 — Стрѣлка вольтметра: наконечникъ тѣмлее =====
+   Геометрія №225 сохранена (ромбъ съ остріемъ, стерженьъ #1b1b3a); красный наконечникъ приглушёнъ:
+   #c0281c → #9e2116. Стрѣлка амперметра не тронута. Логика амперметра — въ JS-летописи №226. 
+/* ===== №225 — Стрѣлка вольтметра =====
+   Замѣна по просьбѣ заказчика: вмѣсто линіи 3.2 съ краснымъ треугольникомъ — геометрія амперметровой стрѣлки №224
+   (ромбъ вдвое шире стержня на 17.9% длины, вогнутыя бока, длинное остріе). Наконечникъ — красный #c0281c, стерженьъ — #1b1b3a.
+   Логика пружины амперметра — въ JS-летописи №225. */
+/* ===== №224 — Амперметръ: цифры и стрѣлка =====
+   Цифры −10 и +10 опущены на y=52 (оформленіе №223), ноль и кегль не тронуты.
+   Стрѣлка перерисована по рисунку заказчика: ромбъ слитъ со стержнемъ вогнутыми боками,
+   широчайшая точка вдвое шире стержня (±2.8) на 17.9% длины отъ острія, слитіе на 23%,
+   остріе длинное вогнутое. Логика пружины — въ JS-летописи №224. */
+/* ===== №221 — Амперметръ: двусторонняя шкала =====
+   Цифры −10 / 0 / +10 въ SVG амперметра (кегль 18, мѣста тѣ же, правая сдвинута на
+   5px влѣво); стрѣлка покоится на нулевой серединѣ, въртикально. Пружина и импульсы —
+   въ JS-летописи №221; подсвѣтка и вольтметръ не тронуты. */
 /* ===== №220 — Обратный ходъ: подсвѣтка гаснетъ въ моментъ нажатія =====
    Обратный ходъ не былъ виденъ: приборы поднимались надъ заливкой (z 5 — рэликъ
    №214 отъ подложки tab-curtain-base, которой болѣе нѣтъ съ №219), и заливка

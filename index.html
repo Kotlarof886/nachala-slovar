@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 47. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №214, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №220, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №214: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №220: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -1216,6 +1216,7 @@ body.curtain-on .tab .tab-label { visibility: hidden; }
   border: 1px solid var(--card-border);
   border-radius: 0.25rem;
   overflow: hidden;
+  /* №219: плашка прозрачна — за сѣзжающей заливкой открывается приборъ, а не статичная копія фона */
   pointer-events: none;
   z-index: 6;
   transition: left 0.45s ease, width 0.45s ease;
@@ -1225,23 +1226,17 @@ body.curtain-on .tab .tab-label { visibility: hidden; }
     0 2px 4px rgba(0,0,0,0.45);
 }
 .tab-curtain--active { border-color: var(--gold-bright); }
-.tab-curtain-base {   /* №214: плотная подложка — братъ рамки, ниже прибора; прикрываетъ фонъ сайта въ поляхъ */
-  position: absolute;
-  border-radius: 0.25rem;
-  pointer-events: none;
-  z-index: 4;
-  transition: left 0.45s ease, width 0.45s ease;
-}
 .tab-curtain-fill {
   position: absolute;
   top: 0;
-  bottom: 0;
+  height: 100%;   /* №218: якорь у спокойнаго края и сдвигъ на эфирную ширину ставитъ скриптъ */
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.45s ease;   /* №214: заливка болѣе не растворяется — срезается краемъ рамки */
+  transition: transform 0.45s ease;
 }
 .tab-curtain-label { font-size: 0.9rem; white-space: nowrap; }
+
 </style>
 </head>
 <body>
@@ -1925,9 +1920,11 @@ function teleMetersDraw() {
    ниже — свѣтъ ярче (чѣмъ ниже, тѣмъ ярче), выше — тусклѣе (чѣмъ выше, тѣмъ тусклѣе).
    Норма напряжения 2.5–17.5 В: ниже — тусклѣе (чѣмъ ниже, тѣмъ тусклѣе), выше — ярче (чѣмъ выше, тѣмъ ярче).
    Яркость одна на оба прибора и слѣдуетъ за стрѣлками въ каждый тикъ. */
+var flareHalt = false;   /* №220: стражъ обратнаго хода — истина, пока идётъ возвратъ въ поискъ */
 function flareTick() {
   var light = document.body.classList.contains('light');
   var ether = document.body.classList.contains('telegraph-on');   /* №205: подсвѣтка живётъ только въ эфирѣ */
+  if (flareHalt) ether = false;   /* №220: стражъ обратнаго хода — свѣтъ приборовъ потушенъ до стыка, классъ эфира не в счётъ */
   var b = 0;
   if (!light && ether) {
     var aN = Math.max(0, Math.min(1, typeof teleAmpV === 'number' ? teleAmpV : 0));   /* токъ, шкала 0–10 */
@@ -2651,6 +2648,12 @@ function teleFrame(ts) {
 function teleStartReverse() {
   if (teleRev) return;
   teleRev = true;
+  /* №220: подсвѣтка приборовъ гаснетъ въ моментъ нажатія — до всякой анімаціи */
+  flareHalt = true;
+  var _fa = document.getElementById('flare-amp'), _fv = document.getElementById('flare-volt');
+  if (_fa) _fa.style.opacity = '0';
+  if (_fv) _fv.style.opacity = '0';
+  document.documentElement.style.removeProperty('--flare-shadow');
   document.body.classList.add('telegraph-on');   // лента телеграфа видна до стыка
   fitTabFrames();   /* №165: рамки подъ приборы */
   teleQueue = [];
@@ -3018,7 +3021,73 @@ function wxLine() {
   return s;
 }
 
-/* ===== №212 — занавесъ: рамки сжимаются до приборовъ, фоны съ надписями уезжаютъ за край ===== */
+/* ===== №220 — Обратный ходъ: зеркальный занавесъ и мгновенное гашеніе подсвѣтки =====
+   Порокъ: обратный ходъ не былъ виденъ — приборы поднимались надъ заливкой (z 5,
+   рэликъ №214: подъёму взыть неоткуда — подложки tab-curtain-base болѣе нѣтъ съ
+   №219), и заливка ехала позади приборовъ; глазу являлся лишь мгновенный перескокъ.
+   Лѣкъ: рэликъ снятъ — плашка лежитъ надъ приборами, заливка выплываетъ изъ-за
+   разжимающагося края и накрываетъ ихъ постепенно, строго зеркально прямому ходѣ.
+   Попутно выровненъ стартъ заливки: въ обратномъ ходѣ она ставилась на сдвинутую
+   позицію съ живымъ переходомъ и дёргалась въ первыхъ кадрахъ — теперь стартовое
+   состояніе ставится безъ анімаціи, а переходъ возвращается передъ ходомъ, какъ
+   въ прямомъ. Второе: подсвѣтка приборовъ доживала до стыка — тикъ смотрѣлъ только
+   на классъ эфира, а классъ стоялъ всю фазу ленты. Лѣкъ двоякій: въ моментъ нажатія
+   клавиши возврата плашки гаснутъ мгновенно и ореолъ снимается; стражъ flareHalt
+   держитъ свѣтъ потушеннымъ всю фазу обратнаго хода независимо отъ класса, а при
+   входѣ въ эфиръ стражъ снимается — подсвѣтка оживаетъ, какъ была замышлена.
+   Порядокъ ходовъ прежній: лента доигрываетъ — стыкъ — занавесъ; заморозка №216
+   и геометрія №218 не тронуты. Предыдущий сшивъ: №219. ===== */
+/* ===== №219 — Занавесъ: заливка едетъ на видѣ — плашка прозрачна =====
+   Настоящій корень пороковъ №215–218 найденъ: геометрія заливки была верна
+   (якорь у спокойнаго края, встрѣча съ идущимъ краемъ ровно въ концѣ хода),
+   но ходъ ея глазу не былъ виденъ. Плашка-рамка съ №215 оставалась
+   непрозрачной, и въ освобождённой полосѣ стоялъ её собственный фонъ: у
+   активной кнопки — градіентъ, якоренный къ окну (background-attachment:
+   fixed), у пассивной — сплошной цвѣтъ, неотличимый отъ заливки. Глазу
+   казалось: фонъ приклеенъ, едутъ лишь надписи, а въ концѣ хода заливка
+   исчезала разомъ и приборы являлись мгновенно. Лѣкъ двоякій. Плашка стала
+   прозрачной — остались рамка, тень и скругленіе; за съѣзжающей заливкой
+   приборъ открывается полосою отъ спокойнаго края, постепенно, а не разомъ.
+   Градіентъ активной заливки отцепленъ отъ окна — онъ едетъ вмѣстѣ съ
+   заливкой, слайдъ фона виденъ. Заливка непрозрачна, какъ и была: она несётъ
+   старое лицо кнопки и прячетъ приборъ подъ собой. Геометрія №218 не тронута:
+   эфирная ширина + путь края = обычная ширина — края сходятся въ концѣ хода
+   безъ щелей (порокъ №213) и безъ приклейки (№216–217). Кривая одна всѣмъ —
+   0.45s ease. Оба хода зеркальны. Предыдущий сшивъ: №218. */
+/* ===== №218 — Занавесъ: заливка идётъ навстрѣчу краю =====
+   Порокъ №217: якорь стоялъ у сжимающагося края, а сдвигъ равнялся пути
+   рамки — край заливки повторялъ край рамки въ каждомъ кадрѣ, фонъ стоялъ
+   мёртво, приклеенный. Лѣкъ: якорь перенесёнъ къ спокойному краю — рядъ
+   центрированъ, въ эфирѣ сжимаются только внѣшніе края, внутренніе стоятъ:
+   у амперметра спокойный правый, у вольтметра лѣвый, и онъ одинаковъ въ
+   обоихъ ходахъ. Заливка же сѣзжаетъ ровно на эфирную ширину навстрѣчу
+   идущему краю: ея задній край и край рамки сходятся ровно въ концѣ хода —
+   фонъ уходитъ за рамку, не доезжая перв ея (порокъ №213) и не прилипая
+   (пороки №216–217). Обратный ходъ: заливка рождается за краемъ невидимой
+   и выплываетъ навстрѣчу, накрывая плашку ровно къ концу. Кривая одна
+   всѣмъ — 0.45s ease. Предыдущий сшивъ: №217. */
+/* ===== №217 — Занавесъ: заливка отлипла отъ рамки =====
+   Остатокъ порока №216: заливка сидѣла inset: 0 въ рамкѣ и тянулась за ней —
+   фонъ не съѣзжалъ за сжимающійся край, а сжимался вмѣстѣ съ рамкой.
+   Лѣкъ: заливке отдана ширина обычной кнопки, якорь — къ спокойному краю
+   (влѣво у амперметра, вправо у вольтметра), а сдвигъ — ровно на путь края
+   рамки: фонъ съѣзжаетъ за край, не сжимаясь; край фона и край рамки въ
+   каждомъ кадрѣ одна линія. Кривая одна всѣмъ — 0.45s ease.
+   Обратный ходъ стартуетъ тамъ, гдѣ прямой закончилъ — съ того же края,
+   тѣм же путёмъ, зеркаленъ прямому; заморозка №216 не тронута.
+   Предыдущий сшивъ: №216. */
+/* ===== №216 — Занавесъ: одинъ край — фонъ и рамка совпадаютъ въ каждомъ кадрѣ ===== */
+/* Правки №216. Прямой ходъ: заливка приклеена къ рамкѣ (inset: 0) и срезается
+   её краемъ — фонъ больше не доезжаетъ первымъ, край фона и край рамки одна
+   линія въ каждомъ кадрѣ; надпись уходитъ за край той же кривой 0.45s ease.
+   Подложка №214 снята — рамка непрозрачна съ №215 и сама прикрываетъ поля.
+   curtain-on ставится и въ прямомъ ходѣ — приборы плотны съ перваго кадра.
+   Обратный ходъ: анімація вкладокъ гасится ДО снятия класса (иначе замеръ
+   обычной геометріи ловитъ стартовые кадры родного перехода all 0.2s),
+   эфирныя inline-ширины сняты до замера, заморозка держитъ только ширину
+   (flex-basis) съ обычными отступами — высота не схлопывается, кнопки не
+   налипаютъ на строку телеграфа и не «то узкіе то высокіе»; разморозка
+   безъ анімації, когда менять уже нечего. */
 var CURTAIN_MS = 450;
 
 function _curtainCreate(startRects, tabs, tabsEl, rev) {
@@ -3026,26 +3095,25 @@ function _curtainCreate(startRects, tabs, tabsEl, rev) {
   for (var i = 0; i < tabs.length; i++) {
     var t = tabs[i];
     var lab = t.querySelector('.tab-label');
-    /* №214: плотная подложка — отдельный слой ниже прибора (z 4) */
-    var base = document.createElement('div');
-    base.className = 'tab-curtain-base';
-    if (t.classList.contains('active')) {
-      base.style.background = 'linear-gradient(135deg, rgb(193,161,101), rgb(168,136,76))';
-    } else {
-      base.style.background = 'rgb(26, 21, 53)';
-    }
     var fill = document.createElement('div');
     fill.className = 'tab-curtain-fill';
-    if (i === 0) { fill.style.left = '0px'; } else { fill.style.right = '0px'; }
-    fill.style.width = Math.max(1, startRects[i].w - 2) + 'px';
     if (t.classList.contains('active')) {
       /* №213: сплошныя заливки — сквозъ полупрозрачный фонъ просвѣчивалъ приборъ */
       fill.style.background = 'linear-gradient(135deg, rgb(193,161,101), rgb(168,136,76))';
+      /* №219: градіентъ отцепленъ отъ окна — онъ едетъ вмѣстѣ съ заливкой, слайдъ фона виденъ */
       fill.style.color = '#1a1535';
     } else {
       fill.style.background = 'rgb(26, 21, 53)';
       fill.style.color = lab ? getComputedStyle(lab).color : '';
     }
+    /* №218: якорь — къ спокойному краю: рядъ центрированъ, въ эфирѣ сжимаются
+       только внѣшніе края, внутренніе стоятъ на мѣстѣ въ обоихъ ходахъ */
+    fill.style.top = '0';
+    fill.style.height = '100%';
+    fill.style.width = startRects[i].w + 'px';
+    if (i === 0) { fill.style.right = '0'; fill.style.left = ''; }   /* амперметръ: спокойный край — правый (внутренній) */
+    else { fill.style.left = '0'; fill.style.right = ''; }           /* вольтметръ: спокойный край — лѣвый (внутренній) */
+    fill.style.transform = 'translateX(0)';
     var sp = document.createElement('span');
     sp.className = 'tab-curtain-label';
     if (lab) {
@@ -3055,18 +3123,17 @@ function _curtainCreate(startRects, tabs, tabsEl, rev) {
     fill.appendChild(sp);
     var c = document.createElement('div');
     c.className = 'tab-curtain' + (t.classList.contains('active') ? ' tab-curtain--active' : '');
+    /* №219: плашка прозрачна — съѣзжая, заливка открываетъ приборъ, а не
+       статичную копію фона: непрозрачная плашка (№215) съ градіентомъ,
+       якореннымъ къ окну, закрашивала освобождённую полосу — фонъ стоялъ
+       мёртво, а въ концѣ хода всё исчезало разомъ */
     c.style.left = startRects[i].x + 'px';
     c.style.top = startRects[i].y + 'px';
     c.style.width = startRects[i].w + 'px';
     c.style.height = startRects[i].h + 'px';
     c.appendChild(fill);
-    base.style.left = startRects[i].x + 'px';
-    base.style.top = startRects[i].y + 'px';
-    base.style.width = startRects[i].w + 'px';
-    base.style.height = startRects[i].h + 'px';
-    tabsEl.appendChild(base);
     tabsEl.appendChild(c);
-    curtains.push({ c: c, fill: fill, base: base, w: startRects[i].w });
+    curtains.push({ c: c, fill: fill });
   }
   return curtains;
 }
@@ -3085,10 +3152,10 @@ function curtainBegin() {   /* входъ въ эфиръ */
   var tabs = document.querySelectorAll('.tabs .tab');
   var tabsEl = document.querySelector('.tabs');
   if (!tabsEl || !tabs.length || document.querySelector('.tab-curtain')) return;
+  for (var p = 0; p < tabs.length; p++) tabs[p].style.transition = 'none';   /* №216: замеры безъ промежуточныхъ кадровъ */
   var start = _curtainRel(tabs, tabsEl);
   var meters = document.querySelectorAll('.tabs .tab-meter');
-  /* №214: приборъ поднимается надъ подложкой (z 5) — открывается по мѣрѣ ухода заливки */
-  for (var m = 0; m < meters.length; m++) meters[m].style.zIndex = '5';
+  document.body.classList.add('curtain-on');   /* №216: приборы плотны и въ прямомъ ходѣ */
   var curtains = _curtainCreate(start, tabs, tabsEl);
   requestAnimationFrame(function() {
     requestAnimationFrame(function() {
@@ -3096,20 +3163,22 @@ function curtainBegin() {   /* входъ въ эфиръ */
       for (var i = 0; i < curtains.length; i++) {
         curtains[i].c.style.left = end[i].x + 'px';
         curtains[i].c.style.width = end[i].w + 'px';
-        curtains[i].base.style.left = end[i].x + 'px';   /* №214: подложка синхронна рамкѣ */
-        curtains[i].base.style.width = end[i].w + 'px';
-        curtains[i].fill.style.transform = (i === 0 ? 'translateX(-' : 'translateX(') + curtains[i].w + 'px)';
+        /* №218: заливка сѣзжаетъ на эфирную ширину навстрѣчу идущему краю —
+           ея задній край встрѣчаетъ край рамки ровно въ концѣ хода */
+        var dist = end[i].w;
+        curtains[i].fill.style.transform = 'translateX(' + (i === 0 ? '-' : '') + dist + 'px)';
       }
       window.setTimeout(function() {
-        for (var j = 0; j < curtains.length; j++) { curtains[j].c.remove(); curtains[j].base.remove(); }
+        for (var j = 0; j < curtains.length; j++) curtains[j].c.remove();
         for (var j4 = 0; j4 < meters.length; j4++) meters[j4].style.zIndex = '';
+        for (var i3 = 0; i3 < tabs.length; i3++) tabs[i3].style.transition = '';
         document.body.classList.remove('curtain-on');
       }, CURTAIN_MS + 80);
     });
   });
 }
 
-function curtainBeginReverse() {   /* №213: выходъ изъ эфира — зеркально */
+function curtainBeginReverse() {   /* выходъ изъ эфира — зеркально */
   var tabs = document.querySelectorAll('.tabs .tab');
   var tabsEl = document.querySelector('.tabs');
   if (!tabsEl || !tabs.length || document.querySelector('.tab-curtain')) {
@@ -3118,52 +3187,59 @@ function curtainBeginReverse() {   /* №213: выходъ изъ эфира —
     return;
   }
   var meters = document.querySelectorAll('.tabs .tab-meter');
-  var start = _curtainRel(tabs, tabsEl);   /* эфирная геометрія — до снятия класса */
+  var start = _curtainRel(tabs, tabsEl);   /* эфирная геометрія — классъ ещё стоитъ */
   var curtains = _curtainCreate(start, tabs, tabsEl, true);
-  /* №214: приборъ поднимается надъ подложкой (z 5) — виденъ, пока заливка не накрыла его */
-  for (var m0 = 0; m0 < meters.length; m0++) meters[m0].style.zIndex = '5';
-  document.body.classList.add('curtain-on');
+  /* №220: рэликъ №214 снятъ — приборы болѣе не поднимаются надъ заливкой (z 5 былъ
+     нуженъ подъ подложку tab-curtain-base z 4, которой болѣе нѣтъ съ №219): плашка
+     лежитъ надъ приборами, заливка накрываетъ ихъ — зеркально прямому ходѣ */
+  /* №216: анімацію гасимъ ДО снятия класса — иначе замеръ обычной геометріи ловитъ стартовые кадры */
+  for (var p0 = 0; p0 < tabs.length; p0++) tabs[p0].style.transition = 'none';
   document.body.classList.remove('telegraph-on');
+  for (var w0 = 0; w0 < tabs.length; w0++) {
+    var tw = tabs[w0];
+    tw.style.width = '';
+    var svw = tw.querySelector('.tab-meter svg');
+    if (svw) { svw.style.width = ''; svw.style.height = ''; }
+  }
+  document.body.classList.add('curtain-on');   /* надпись скрыта visibility — высоту не мѣняетъ */
   fitTabLabels();
-  /* замеряемъ обычную геометрію — классъ уже снятъ, вкладки въ обычномъ видѣ */
-  var end = _curtainRel(tabs, tabsEl);
-  /* №213: заливка обратного хода — шириною обычной кнопки и рождается за краемъ:
-     сдвинута на всю свою ширину (въ свою сторону) и невидима; рамка разжимается —
-     заливка выплываетъ изъ-за края съ проявленіемъ */
-  var fillW = [];
-  for (var f = 0; f < curtains.length; f++) {
-    fillW[f] = Math.max(1, end[f].w - 2);
-    curtains[f].fill.style.width = fillW[f] + 'px';
-  }
-  for (var r0 = 0; r0 < curtains.length; r0++) {
-    curtains[r0].fill.style.transform = (r0 === 0 ? 'translateX(-' : 'translateX(') + fillW[r0] + 'px)';
-  }
-  /* №213: заморозка черезъ flex — flex-basis сильнѣе inline-ширины (у вкладокъ flex: 1 1 0),
-     вкладки стоятъ въ эфирном видѣ всю анімацію и приборъ остаётся своего размѣра */
+  void tabsEl.offsetWidth;   /* переустановка закончена */
+  var end = _curtainRel(tabs, tabsEl);   /* честная обычная геометрія */
+  /* №216: заморозка только ширины — отступы обычные, высота не схлопывается */
   for (var i = 0; i < tabs.length; i++) {
     tabs[i].style.transition = 'none';
     tabs[i].style.flex = '0 0 ' + start[i].w + 'px';
-    tabs[i].style.padding = '0';
+  }
+  /* №218: заливка рождается за сжимавшимся краемъ невидимой — сдвинута на
+     эфирную ширину отъ спокойного якоря; выплываетъ навстрѣчу отступающему
+     краю и накрываетъ плашку ровно въ концѣ хода — зеркально прямому */
+  for (var f2 = 0; f2 < curtains.length; f2++) {
+    var fillr = curtains[f2].fill;
+    fillr.style.transition = 'none';   /* №220: стартовое состояніе — безъ анімаціи, какъ въ прямомъ ходѣ */
+    fillr.style.width = end[f2].w + 'px';
+    var dist = start[f2].w;
+    fillr.style.transform = 'translateX(' + (f2 === 0 ? '-' : '') + dist + 'px)';
   }
   void tabsEl.offsetWidth;
   requestAnimationFrame(function() {
     requestAnimationFrame(function() {
+      /* №216: кнопки отпускаемъ съ той же кривой 0.45s — совпадаютъ съ рамками въ каждомъ кадрѣ */
+      for (var k = 0; k < tabs.length; k++) tabs[k].style.transition = 'flex-basis 0.45s ease';
+      for (var k2 = 0; k2 < tabs.length; k2++) tabs[k2].style.flex = '0 0 ' + end[k2].w + 'px';
       for (var i2 = 0; i2 < curtains.length; i2++) {
         curtains[i2].c.style.left = end[i2].x + 'px';
         curtains[i2].c.style.width = end[i2].w + 'px';
-        curtains[i2].base.style.left = end[i2].x + 'px';   /* №214: подложка синхронна рамкѣ */
-        curtains[i2].base.style.width = end[i2].w + 'px';
-        curtains[i2].fill.style.transform = 'none';
+        curtains[i2].fill.style.transition = 'transform 0.45s ease';   /* №220: анімація возвращена передъ ходомъ — заливка выплываетъ */
+        curtains[i2].fill.style.transform = 'translateX(0)';   /* №218: заливка выплываетъ изъ-за края на мѣсто */
       }
       window.setTimeout(function() {
         for (var j = 0; j < meters.length; j++) { meters[j].style.transition = 'none'; meters[j].style.opacity = '0'; }
-        for (var j2 = 0; j2 < curtains.length; j2++) { curtains[j2].c.remove(); curtains[j2].base.remove(); }
-        /* №213: заморозка снята съ возвращённой анімаціей — возвратъ въ обычный видъ плавный */
-        for (var i3 = 0; i3 < tabs.length; i3++) { tabs[i3].style.flex = ''; tabs[i3].style.padding = ''; tabs[i3].style.transition = ''; }
+        for (var j2 = 0; j2 < curtains.length; j2++) curtains[j2].c.remove();
         fitTabFrames();   /* честный замеръ обычной геометріи — №211 */
         document.body.classList.remove('curtain-on');
         requestAnimationFrame(function() {
-          for (var j3 = 0; j3 < meters.length; j3++) { meters[j3].style.opacity = ''; meters[j3].style.transition = ''; meters[j3].style.zIndex = ''; }
+          for (var j3 = 0; j3 < meters.length; j3++) { meters[j3].style.opacity = ''; meters[j3].style.transition = ''; }
+          for (var i4 = 0; i4 < tabs.length; i4++) { tabs[i4].style.transition = ''; tabs[i4].style.flex = ''; }
         });
       }, CURTAIN_MS + 80);
     });
@@ -3173,6 +3249,7 @@ function curtainBeginReverse() {   /* №213: выходъ изъ эфира —
 function toggleTelegraph() {
   if (teleRev) return;   // идётъ обратный переходъ — клавиша молчитъ
   telegraphOn = !telegraphOn;
+  if (telegraphOn) flareHalt = false;   /* №220: входъ въ эфиръ — подсвѣтка снова оживаетъ */
   /* замеръ надписи — до переключенія класса, пока #s-tape ещё виденъ */
   var tgHand = (telegraphOn && window.sTapeHandoff) ? window.sTapeHandoff() : null;
   if (telegraphOn) curtainBegin();   /* №212: крышки-занавесы на мѣстахъ кнопокъ до перестройки */
@@ -4709,7 +4786,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 214</div>
+<div class="build-info">Сшивъ № 220</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -5190,6 +5267,60 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
 /* №176: углубленіе приборовъ перенесено на слой поверхъ прибора —
    SVG циферблата накрывалъ inset-тень кнопки, теперь тень рисуетъ .tab-meter::after;
    стражъ починенъ: сломанное «; !important;» стало честнымъ «!important». */
+/* ===== №220 — Обратный ходъ: подсвѣтка гаснетъ въ моментъ нажатія =====
+   Обратный ходъ не былъ виденъ: приборы поднимались надъ заливкой (z 5 — рэликъ
+   №214 отъ подложки tab-curtain-base, которой болѣе нѣтъ съ №219), и заливка
+   ехала позади приборовъ. Лѣкъ: рэликъ снятъ — заливка накрываетъ приборы,
+   строго зеркально прямому ходѣ; стартовое состояніе заливки ставится безъ
+   анімаціи, переходъ возвращается передъ ходомъ. Подсвѣтка приборовъ теперь
+   гаснетъ въ моментъ нажатія клавиши возврата: стражъ flareHalt въ тикѣ держитъ
+   свѣтъ потушеннымъ всю фазу обратнаго хода, плашки гаснутъ мгновенно и ореолъ
+   снимается до всякой анімаціи; при входѣ въ эфиръ стражъ снимается.
+   Предыдущий сшивъ: №219. ===== */
+/* ===== №219 — Занавесъ: плашка прозрачна, градіентъ едетъ съ заливкой =====
+   Корень пороковъ №215–218: непрозрачная плашка закрашивала полосу, освободившуюся
+   за сѣзжающей заливкой, своимъ статичным фономъ (градіентъ — якоренный къ окну,
+   сплошной цвѣтъ — неотличимый отъ заливки), потому фонъ казался приклееннымъ.
+   Лѣкъ: фонъ плашки снятъ — за съѣзжающей заливкой открывается приборъ; градіентъ
+   заливки отцепленъ отъ окна и едетъ вмѣстѣ съ ней. Предыдущий сшивъ: №218. */
+/* ===== №218 — Занавесъ: заливка идётъ навстрѣчу краю =====
+   Порокъ №217: якорь стоялъ у сжимающагося края и сдвигъ равнялся пути рамки —
+   заливка повторяла край рамки въ каждомъ кадрѣ, фонъ стоялъ мёртво. Лѣкъ:
+   якорь къ спокойному краю (внутренній — онъ не двигается ни въ одномъ ходѣ),
+   сдвигъ — на эфирную ширину навстрѣчу идущему краю; края сходятся ровно
+   въ концѣ хода, кривая одна — 0.45s ease. Обратный ходъ зеркаленъ прямому.
+   Предыдущий сшивъ: №217. */
+/* ===== №217 — Занавесъ: заливка отлипла отъ рамки =====
+   inset: 0 снятъ — заливка больше не приклеена къ рамкѣ; ширину, якорь
+   къ спокойному краю и сдвигъ ставитъ скриптъ: ширина — обычной кнопки,
+   сдвигъ — ровно на путь края рамки, кривая одна — 0.45s ease.
+   Обратный ходъ зеркаленъ прямому. Предыдущий сшивъ: №216. */
+/* ===== №216 — Занавесъ синхроненъ, обратный ходъ зеркаленъ =====
+   Два порока. Прямой ходъ: заливка уезжала translateX на всю ширину кнопки,
+   тогда какъ рамка проходила лишь путь до прибора — фонъ доезжалъ первымъ,
+   и лишь потомъ сжималась рамка. Теперьъ заливка приклеена къ рамкѣ (inset: 0)
+   и срезается её краемъ: край фона и край рамки въ каждомъ кадрѣ одна линія,
+   надпись уходитъ за край той же кривой 0.45s ease. Подложка №214 снята —
+   рамка непрозрачна съ №215 и сама прикрываетъ поля; curtain-on стоитъ
+   и въ прямомъ ходѣ. Обратный ходъ: замеръ обычной геометріи делался сразу
+   после снятия telegraph-on, когда ещё жилъ родной переходъ all 0.2s — замеръ
+   ловилъ стартовые кадры, а заморозка съ padding: 0 схлопывала высоту:
+   кнопки подпрыгивали, налипали на строку телеграфа, «то узкіе то высокіе».
+   Теперьъ анімація гасится до снятия класса, эфирныя inline-ширины сняты
+   до замера, заморозка держитъ только ширину (flex-basis) съ обычными
+   отступами, а кнопки отпускаются съ той же кривой 0.45s — совпадаютъ
+   съ рамками въ каждомъ кадрѣ; разморозка безъ анімації, когда менять
+   уже нечего. Предыдущий сшивъ: №215. */
+/* ===== №215 — Рамка непрозрачна: просвѣтъ закрытъ у источника =====
+   Остатокъ порока: въ сжимающейся рамкѣ межъ убегающимъ краемъ заливки
+   и приборомъ проступалъ фонъ сайта — подложка стояла ниже прибора, а рамка
+   сама была прозрачна. Лѣкъ: рамка получила собственную плотную заливку цвѣта
+   плашки (тёмную, у активной — золото). У золотыхъ слоёвъ фоновое изображеніе
+   якорится къ окну (background-attachment: fixed): заливка, рамка и подложка
+   совпадаютъ пиксель въ пиксель на всёмъ ходѣ, шовъ межъ ними невидимъ.
+   Ходы зеркальны по построенію: прямой — надпись уезжаетъ за край непрозрачной
+   и срезается, обратный — рождается за краемъ и выплываетъ; темпъ и кривая общіе.
+   Предыдущий сшивъ: №214. */
 /* ===== №214 — Занавесъ: подложка и честная срезка =====
    Порокъ обоихъ ходовъ: заливка растворялась (opacity-переходъ), и въ поляхъ
    сжимающейся рамки проступалъ фонъ сайта — приборъ закрывалъ лишь свою площадь.

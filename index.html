@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 64. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №257, устаревшие слова">
+    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 65. Словарь устарѣвшихъ словъ.">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №261, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №257: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №261: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -1934,7 +1934,7 @@ function kbType(ch, fromScreen) {   /* Сшивъ №99: fromScreen — вызо
   window._kbSelf = true;
   searchBox.value = (searchBox.value || '') + ch;
   window._kbSyncPrev(); window._kbSelf = false;
-  render();
+  renderSoon(60);
   if (fromScreen) window.kbDismissNative();   /* Сшивъ №99: экранная буква сворачиваетъ нативную клавиатуру */
   sTapePush(ch, true);   // тихо: щелчокъ уже далъ оттискъ клавиши — двойного звука нѣтъ
 }
@@ -1966,7 +1966,7 @@ function eraseSearchOne() {
       var L = el.dataset.letter || null;
       el.classList.toggle('active', L ? L === lastCh : (lastCh ? false : el.classList.contains('key-vs')));
     });
-    render();
+    renderSoon(60);
     sTapeSync();   // лента поиска перестраивается по строке
     return;
     return;
@@ -1983,7 +1983,7 @@ function eraseSearchOne() {
     });
     currentLetter = prev || null;
     secretBuf = sm.textContent.slice(-SECRET.length);
-    render();
+    renderSoon(60);
     return;
   }
   if (currentLetter) {
@@ -3387,6 +3387,15 @@ function wxLine() {
    (ровно 2560×132 × 0.7, пропорція сохранена), повтореніе repeat-x отъ центра — узоръ тянется
    до обоихъ краёвъ на любой ширинѣ экрана. Якоря у наружнаго края сохранены (top/bottom).
    Остальное не тронуто: №254, №253, №252 и ранее. */
+/* ===== №261 — Лёгкій словарь: отложенный наборъ и ленивая отрисовка =====
+   Заказъ: карточки въ режимѣ словаря нагружаютъ систему.
+   Стало: пересборка списка отложена — строка поиска 120 мсъ послѣ паузы въ наборѣ,
+   клавиатура и стираніе по буквѣ 60 мсъ. Списокъ рисуетъ первые 28 статей,
+   дальше докладываетъ по скроллу партиями по 14 съ запасомъ 900px и проверкой
+   разъ на кадръ. Потолокъ 80 статей не тронутъ. Стражъ _bound въ bindButtons —
+   слушатели не дублируются при партияхъ. Рамки, фонъ и всё прочее не тронуты;
+   опыты №258–260 (свѣтъ рамокъ) отброшены заказчикомъ.
+   Остальное не тронуто: №257, №255, №254 и ранее. */
 /* ===== №257 — Фонъ растягивается пропорцiонально =====
    Замѣчено: въ №256 плитка 1277px дала видимые швы повторовъ на экранѣ.
    Заказъ: пусть фонъ растягивается, но строго пропорцiонально.
@@ -3922,6 +3931,45 @@ function matchDefn(e, qt) {
 /* Сшивъ №98: анімація въѣзда — только при смѣнѣ запроса; при допечатыванії и стираніи
    карточки обновляются тихо, безъ миганія. Разысканія переживаютъ пересборку (кэшъ). */
 var _lastRaw = null, _renderAnim = true, _slotCache = new Map();
+/* Сшивъ №261: отложенная пересборка списка (debounce набора) */
+var _renderTimer = null;
+function renderSoon(ms) {
+  if (_renderTimer) clearTimeout(_renderTimer);
+  _renderTimer = setTimeout(function () { _renderTimer = null; render(); }, ms || 120);
+}
+
+/* Сшивъ №261: ленивая отрисовка — первые 28 статей, дальше партиями по 14 */
+var _lazy = null;
+var LAZY_FIRST = 28, LAZY_BATCH = 14, LAZY_RESERVE = 900;
+function startLazyRender(out, chunks) {
+  _lazy = { out: out, chunks: chunks, i: 0, done: false };
+  lazyAppend(_lazy, LAZY_FIRST);
+}
+function lazyAppend(st, need) {
+  if (!st || st.done) return;
+  while (need > 0 && st.i < st.chunks.length) {
+    const ch = st.chunks[st.i++];
+    st.out.insertAdjacentHTML('beforeend', ch.h);
+    need -= ch.c;
+  }
+  bindButtons(st.out, []);
+  if (st.i >= st.chunks.length) st.done = true;
+  else if (document.documentElement.scrollHeight - window.scrollY - window.innerHeight < LAZY_RESERVE) lazyAppend(st, LAZY_BATCH);
+}
+(function () {
+  var ticking = false;
+  function probe() {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () {
+      ticking = false;
+      if (!_lazy || _lazy.done) return;
+      if (document.documentElement.scrollHeight - window.scrollY - window.innerHeight < LAZY_RESERVE) lazyAppend(_lazy, LAZY_BATCH);
+    });
+  }
+  window.addEventListener('scroll', probe, { passive: true });
+  window.addEventListener('resize', probe);
+})();
 function render() {
   const raw = searchBox.value.trim();
   const out = resultsEl;
@@ -3942,9 +3990,8 @@ function render() {
     if (currentLetter === '\u0463') pool = pool.filter(e => String(e.w).indexOf('\u0463') >= 0);
     else if (currentLetter) pool = pool.filter(e => e.l === currentLetter);
     countNote.textContent = 'Статей: ' + pool.length;
-    out.innerHTML = pool.slice(0, 80).map((e, i) => cardHtml(e, '', i)).join('');
-    if (pool.length > 80) out.insertAdjacentHTML('beforeend', '<p class="count-note">Показаны первые 80 статей из ' + pool.length + '. Уточните поиск или выберите букву.</p>');
-    bindButtons(out, pool.slice(0, 80));
+    const noteA = pool.length > 80 ? '<p class="count-note">Показаны первые 80 статей из ' + pool.length + '. Уточните поиск или выберите букву.</p>' : '';
+    startLazyRender(out, pool.slice(0, 80).map((e, i) => ({ h: cardHtml(e, '', i), c: 1 })).concat(noteA ? [{ h: noteA, c: 0 }] : []));
     return;
   }
 
@@ -3964,29 +4011,25 @@ function render() {
     }
   }
 
-  const parts = [];
-  if (hits1.length) parts.push('<div class="block-title">Найдено в словах — начинается с запроса <span class="n">(' + hits1.length + ')</span></div>');
-  if (hits2.length) parts.push('<div class="block-title">Запрос в начале другого слова <span class="n">(' + hits2.length + ')</span></div>');
-  let html = parts.join('');
   const LIMIT = 80;
-  html += hits1.slice(0, LIMIT).map((e, i) => cardHtml(e, raw, 'a' + i)).join('');
-  if (hits1.length > LIMIT) html += '<p class="count-note">Показаны первые ' + LIMIT + ' статей. Уточните запрос.</p>';
-  html += hits2.slice(0, LIMIT).map((e, i) => cardHtml(e, raw, 'b' + i)).join('');
+  let chunks = [];
+  if (hits1.length) chunks.push({ h: '<div class="block-title">Найдено в словах — начинается с запроса <span class="n">(' + hits1.length + ')</span></div>', c: 0 });
+  if (hits2.length) chunks.push({ h: '<div class="block-title">Запрос в начале другого слова <span class="n">(' + hits2.length + ')</span></div>', c: 0 });
+  chunks = chunks.concat(hits1.slice(0, LIMIT).map((e, i) => ({ h: cardHtml(e, raw, 'a' + i), c: 1 })));
+  if (hits1.length > LIMIT) chunks.push({ h: '<p class="count-note">Показаны первые ' + LIMIT + ' статей. Уточните запрос.</p>', c: 0 });
+  chunks = chunks.concat(hits2.slice(0, LIMIT).map((e, i) => ({ h: cardHtml(e, raw, 'b' + i), c: 1 })));
   if (hits3.length) {
-    html += '<div class="block-title">Найдено в толкованиях <span class="n">(' + hits3.length + ')</span></div>';
-    html += hits3.slice(0, LIMIT).map((e, i) => cardHtml(e, raw, 'c' + i)).join('');
-    if (hits3.length > LIMIT) html += '<p class="count-note">Показаны первые ' + LIMIT + ' статей из ' + hits3.length + '. Уточните запрос.</p>';
+    chunks.push({ h: '<div class="block-title">Найдено в толкованиях <span class="n">(' + hits3.length + ')</span></div>', c: 0 });
+    chunks = chunks.concat(hits3.slice(0, LIMIT).map((e, i) => ({ h: cardHtml(e, raw, 'c' + i), c: 1 })));
+    if (hits3.length > LIMIT) chunks.push({ h: '<p class="count-note">Показаны первые ' + LIMIT + ' статей из ' + hits3.length + '. Уточните запрос.</p>', c: 0 });
   }
-  if (!hits1.length && !hits2.length && !hits3.length) {
-    html = '<p class="empty">Ничего не найдено. Попробуйте поиск в старинных словарях.</p>';
-  }
-  out.innerHTML = html;
   countNote.textContent = 'в словах — ' + hits1.length + ' · в других словах — ' + hits2.length + ' · в толкованиях — ' + hits3.length;
-  const allCards = [];
-  for (const e of hits1.slice(0,LIMIT)) allCards.push(e);
-  for (const e of hits2.slice(0,LIMIT)) allCards.push(e);
-  for (const e of hits3.slice(0,LIMIT)) allCards.push(e);
-  bindButtons(out, allCards);
+  if (!hits1.length && !hits2.length && !hits3.length) {
+    out.innerHTML = '<p class="empty">Ничего не найдено. Попробуйте поиск в старинных словарях.</p>';
+    renderAzbukaSuggest(out, raw);
+    return;
+  }
+  startLazyRender(out, chunks);
   renderAzbukaSuggest(out, raw);
 }
 
@@ -4041,6 +4084,7 @@ function liveSlotByWord(w) {
 }
 function bindButtons(out, list) {
   out.querySelectorAll('.wiktionary-btn').forEach((b, i) => {
+    if (b._bound) return; b._bound = true;
     const w = b.dataset.w || (list[i] && list[i].w) || '';
     const wm = toModern(w);
     /* Сшивъ №98: кнопка не отнимаетъ фокусъ у строки — отложенное стираніе не сжигаетъ списокъ */
@@ -4723,7 +4767,7 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
   eng.style.transform = 'translateX(' + x.toFixed(2) + 'px)';
 })();
 
-searchBox.addEventListener('input', function () { render(); sTapeSync(); if (currentTab !== 'online') { try { azbukaDictPromise().catch(function(){}); } catch (e) {} } });
+searchBox.addEventListener('input', function () { renderSoon(120); sTapeSync(); if (currentTab !== 'online') { try { azbukaDictPromise().catch(function(){}); } catch (e) {} } });
 searchBox.addEventListener('focus', sTapeFocus);
 searchBox.addEventListener('blur', sTapeBlur);
 wxStart();
@@ -5288,7 +5332,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 257</div>
+<div class="build-info">Сшивъ № 261</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -5896,6 +5940,15 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
    (ровно 2560×132 × 0.7, пропорція сохранена), повтореніе repeat-x отъ центра — узоръ тянется
    до обоихъ краёвъ на любой ширинѣ экрана. Якоря у наружнаго края сохранены (top/bottom).
    Остальное не тронуто: №254, №253, №252 и ранее. */
+/* ===== №261 — Лёгкій словарь: отложенный наборъ и ленивая отрисовка =====
+   Заказъ: карточки въ режимѣ словаря нагружаютъ систему.
+   Стало: пересборка списка отложена — строка поиска 120 мсъ послѣ паузы въ наборѣ,
+   клавиатура и стираніе по буквѣ 60 мсъ. Списокъ рисуетъ первые 28 статей,
+   дальше докладываетъ по скроллу партиями по 14 съ запасомъ 900px и проверкой
+   разъ на кадръ. Потолокъ 80 статей не тронутъ. Стражъ _bound въ bindButtons —
+   слушатели не дублируются при партияхъ. Рамки, фонъ и всё прочее не тронуты;
+   опыты №258–260 (свѣтъ рамокъ) отброшены заказчикомъ.
+   Остальное не тронуто: №257, №255, №254 и ранее. */
 /* ===== №257 — Фонъ растягивается пропорцiонально =====
    Замѣчено: въ №256 плитка 1277px дала видимые швы повторовъ на экранѣ.
    Заказъ: пусть фонъ растягивается, но строго пропорцiонально.

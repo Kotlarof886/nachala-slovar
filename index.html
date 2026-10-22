@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 52. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №245, устаревшие слова">
+    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версия 59. Словарь устарѣвшихъ словъ.">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №252, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №245: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №252: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -86,6 +86,8 @@ body * {
 @media (prefers-reduced-motion: reduce) {
   #pen-top { transition: none; }
 }
+/* №246: въ эфирѣ пера нетъ — возвратъ къ клавиатурѣ нуженъ только въ словарѣ */
+body.telegraph-on #pen-top { display: none !important; }
 
 
 @font-face {
@@ -1265,6 +1267,11 @@ body.curtain-on .tab .tab-label { visibility: hidden; }
         <stop offset="0.5" stop-color="#b98f4e"/>
         <stop offset="1" stop-color="#8a6534"/>
       </linearGradient>
+      <linearGradient id="brass-amp-dk" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#d4ac66"/>
+        <stop offset="0.5" stop-color="#9c7333"/>
+        <stop offset="1" stop-color="#5f421a"/>
+      </linearGradient>
       <radialGradient id="dial-amp" gradientUnits="userSpaceOnUse" cx="110" cy="24" r="210">
         <stop offset="0.0" stop-color="#f2ecd6"/>
         <stop offset="0.059" stop-color="#f0e7cd"/>
@@ -1351,9 +1358,57 @@ body.curtain-on .tab .tab-label { visibility: hidden; }
     <circle cx="110" cy="58" r="1.3" fill="#8a6534"/>   <!-- №170: тёмно-золотая, какъ рамки -->
 
     <!-- №166: надпись снята — имя прибора читаетъ aria-label -->
-    <text x="196" y="28" font-size="20" text-anchor="middle" fill="#5c4a2e" font-family="Elizabeth Unicode,Georgia,serif">A</text>
+    <text x="186" y="28" font-size="20" text-anchor="middle" fill="#5c4a2e" font-family="Elizabeth Unicode,Georgia,serif">A</text>
 
     <!-- блики стекла -->
+    <!-- №250: винты въ цвѣтъ рамки (brass-градіентъ) съ объёмомъ: двойная тень, свѣтлая дуга сверху, тёмная снизу, бликъ и шлицъ -->
+    <g class="dial-screws">
+      <g transform="translate(11 9) scale(0.82)">
+        <ellipse cx="1.3" cy="1.6" rx="5.0" ry="4.6" fill="rgba(30,20,8,0.50)"/>
+        <ellipse cx="0.7" cy="0.9" rx="4.5" ry="4.3" fill="rgba(26,17,6,0.38)"/>
+        <circle r="4.2" fill="url(#brass-amp-dk)"/>
+        <circle r="3.5" fill="none" stroke="rgba(48,32,12,0.60)" stroke-width="0.6"/>
+        <path d="M -3.35 -1.55 A 3.7 3.7 0 0 1 1.35 -3.45" fill="none" stroke="rgba(246,232,198,0.65)" stroke-width="1.1" stroke-linecap="round"/>
+        <path d="M -1.35 3.45 A 3.7 3.7 0 0 1 -3.35 1.55" fill="none" stroke="rgba(40,26,8,0.80)" stroke-width="1.1" stroke-linecap="round"/>
+        <circle cx="-1.2" cy="-1.5" r="0.75" fill="rgba(250,240,214,0.62)"/>
+        <line x1="-2.5" y1="0" x2="2.5" y2="0" stroke="#241806" stroke-width="1.1" stroke-linecap="round" transform="rotate(40)"/>
+        <circle r="4.2" fill="none" stroke="rgba(26,17,6,0.75)" stroke-width="0.7"/>
+      </g>
+      <g transform="translate(209 9) scale(0.82)">
+        <ellipse cx="1.3" cy="1.6" rx="5.0" ry="4.6" fill="rgba(30,20,8,0.50)"/>
+        <ellipse cx="0.7" cy="0.9" rx="4.5" ry="4.3" fill="rgba(26,17,6,0.38)"/>
+        <circle r="4.2" fill="url(#brass-amp-dk)"/>
+        <circle r="3.5" fill="none" stroke="rgba(48,32,12,0.60)" stroke-width="0.6"/>
+        <path d="M -3.35 -1.55 A 3.7 3.7 0 0 1 1.35 -3.45" fill="none" stroke="rgba(246,232,198,0.65)" stroke-width="1.1" stroke-linecap="round"/>
+        <path d="M -1.35 3.45 A 3.7 3.7 0 0 1 -3.35 1.55" fill="none" stroke="rgba(40,26,8,0.80)" stroke-width="1.1" stroke-linecap="round"/>
+        <circle cx="-1.2" cy="-1.5" r="0.75" fill="rgba(250,240,214,0.62)"/>
+        <line x1="-2.5" y1="0" x2="2.5" y2="0" stroke="#241806" stroke-width="1.1" stroke-linecap="round" transform="rotate(-65)"/>
+        <circle r="4.2" fill="none" stroke="rgba(26,17,6,0.75)" stroke-width="0.7"/>
+      </g>
+      <g transform="translate(11 44) scale(0.82)">
+        <ellipse cx="1.3" cy="1.6" rx="5.0" ry="4.6" fill="rgba(30,20,8,0.50)"/>
+        <ellipse cx="0.7" cy="0.9" rx="4.5" ry="4.3" fill="rgba(26,17,6,0.38)"/>
+        <circle r="4.2" fill="url(#brass-amp-dk)"/>
+        <circle r="3.5" fill="none" stroke="rgba(48,32,12,0.60)" stroke-width="0.6"/>
+        <path d="M -3.35 -1.55 A 3.7 3.7 0 0 1 1.35 -3.45" fill="none" stroke="rgba(246,232,198,0.65)" stroke-width="1.1" stroke-linecap="round"/>
+        <path d="M -1.35 3.45 A 3.7 3.7 0 0 1 -3.35 1.55" fill="none" stroke="rgba(40,26,8,0.80)" stroke-width="1.1" stroke-linecap="round"/>
+        <circle cx="-1.2" cy="-1.5" r="0.75" fill="rgba(250,240,214,0.62)"/>
+        <line x1="-2.5" y1="0" x2="2.5" y2="0" stroke="#241806" stroke-width="1.1" stroke-linecap="round" transform="rotate(75)"/>
+        <circle r="4.2" fill="none" stroke="rgba(26,17,6,0.75)" stroke-width="0.7"/>
+      </g>
+      <g transform="translate(209 44) scale(0.82)">
+        <ellipse cx="1.3" cy="1.6" rx="5.0" ry="4.6" fill="rgba(30,20,8,0.50)"/>
+        <ellipse cx="0.7" cy="0.9" rx="4.5" ry="4.3" fill="rgba(26,17,6,0.38)"/>
+        <circle r="4.2" fill="url(#brass-amp-dk)"/>
+        <circle r="3.5" fill="none" stroke="rgba(48,32,12,0.60)" stroke-width="0.6"/>
+        <path d="M -3.35 -1.55 A 3.7 3.7 0 0 1 1.35 -3.45" fill="none" stroke="rgba(246,232,198,0.65)" stroke-width="1.1" stroke-linecap="round"/>
+        <path d="M -1.35 3.45 A 3.7 3.7 0 0 1 -3.35 1.55" fill="none" stroke="rgba(40,26,8,0.80)" stroke-width="1.1" stroke-linecap="round"/>
+        <circle cx="-1.2" cy="-1.5" r="0.75" fill="rgba(250,240,214,0.62)"/>
+        <line x1="-2.5" y1="0" x2="2.5" y2="0" stroke="#241806" stroke-width="1.1" stroke-linecap="round" transform="rotate(-25)"/>
+        <circle r="4.2" fill="none" stroke="rgba(26,17,6,0.75)" stroke-width="0.7"/>
+      </g>
+    </g>
+
     <rect x="0" y="0" width="220" height="62" fill="url(#glass-amp)" pointer-events="none"/>
   </svg></span></button>
       <button class="tab" onclick="switchTab('online')"><span class="tab-label">Изысканіе въ эфирѣ</span><span class="tab-meter" aria-hidden="true"><svg class="meter" viewBox="0 0 220 62" width="220" height="62" role="img" preserveAspectRatio="none" aria-label="ВОЛЬТЪ">
@@ -1362,6 +1417,11 @@ body.curtain-on .tab .tab-label { visibility: hidden; }
         <stop offset="0" stop-color="#e9c98a"/>
         <stop offset="0.5" stop-color="#b98f4e"/>
         <stop offset="1" stop-color="#8a6534"/>
+      </linearGradient>
+      <linearGradient id="brass-volt-dk" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#d4ac66"/>
+        <stop offset="0.5" stop-color="#9c7333"/>
+        <stop offset="1" stop-color="#5f421a"/>
       </linearGradient>
       <radialGradient id="dial-volt" gradientUnits="userSpaceOnUse" cx="110" cy="24" r="210">
         <stop offset="0.0" stop-color="#f2ecd6"/>
@@ -1460,9 +1520,57 @@ body.curtain-on .tab .tab-label { visibility: hidden; }
     <circle cx="110" cy="58" r="1.3" fill="#8a6534"/>   <!-- №170: тёмно-золотая, какъ рамки -->
 
     <!-- №166: надпись снята — имя прибора читаетъ aria-label -->
-    <text x="196" y="28" font-size="20" text-anchor="middle" fill="#5c4a2e" font-family="Elizabeth Unicode,Georgia,serif">V</text>
+    <text x="186" y="28" font-size="20" text-anchor="middle" fill="#5c4a2e" font-family="Elizabeth Unicode,Georgia,serif">V</text>
 
     <!-- блики стекла -->
+    <!-- №250: винты въ цвѣтъ рамки (brass-градіентъ) съ объёмомъ: двойная тень, свѣтлая дуга сверху, тёмная снизу, бликъ и шлицъ -->
+    <g class="dial-screws">
+      <g transform="translate(11 9) scale(0.82)">
+        <ellipse cx="1.3" cy="1.6" rx="5.0" ry="4.6" fill="rgba(30,20,8,0.50)"/>
+        <ellipse cx="0.7" cy="0.9" rx="4.5" ry="4.3" fill="rgba(26,17,6,0.38)"/>
+        <circle r="4.2" fill="url(#brass-volt-dk)"/>
+        <circle r="3.5" fill="none" stroke="rgba(48,32,12,0.60)" stroke-width="0.6"/>
+        <path d="M -3.35 -1.55 A 3.7 3.7 0 0 1 1.35 -3.45" fill="none" stroke="rgba(246,232,198,0.65)" stroke-width="1.1" stroke-linecap="round"/>
+        <path d="M -1.35 3.45 A 3.7 3.7 0 0 1 -3.35 1.55" fill="none" stroke="rgba(40,26,8,0.80)" stroke-width="1.1" stroke-linecap="round"/>
+        <circle cx="-1.2" cy="-1.5" r="0.75" fill="rgba(250,240,214,0.62)"/>
+        <line x1="-2.5" y1="0" x2="2.5" y2="0" stroke="#241806" stroke-width="1.1" stroke-linecap="round" transform="rotate(40)"/>
+        <circle r="4.2" fill="none" stroke="rgba(26,17,6,0.75)" stroke-width="0.7"/>
+      </g>
+      <g transform="translate(209 9) scale(0.82)">
+        <ellipse cx="1.3" cy="1.6" rx="5.0" ry="4.6" fill="rgba(30,20,8,0.50)"/>
+        <ellipse cx="0.7" cy="0.9" rx="4.5" ry="4.3" fill="rgba(26,17,6,0.38)"/>
+        <circle r="4.2" fill="url(#brass-volt-dk)"/>
+        <circle r="3.5" fill="none" stroke="rgba(48,32,12,0.60)" stroke-width="0.6"/>
+        <path d="M -3.35 -1.55 A 3.7 3.7 0 0 1 1.35 -3.45" fill="none" stroke="rgba(246,232,198,0.65)" stroke-width="1.1" stroke-linecap="round"/>
+        <path d="M -1.35 3.45 A 3.7 3.7 0 0 1 -3.35 1.55" fill="none" stroke="rgba(40,26,8,0.80)" stroke-width="1.1" stroke-linecap="round"/>
+        <circle cx="-1.2" cy="-1.5" r="0.75" fill="rgba(250,240,214,0.62)"/>
+        <line x1="-2.5" y1="0" x2="2.5" y2="0" stroke="#241806" stroke-width="1.1" stroke-linecap="round" transform="rotate(-65)"/>
+        <circle r="4.2" fill="none" stroke="rgba(26,17,6,0.75)" stroke-width="0.7"/>
+      </g>
+      <g transform="translate(11 44) scale(0.82)">
+        <ellipse cx="1.3" cy="1.6" rx="5.0" ry="4.6" fill="rgba(30,20,8,0.50)"/>
+        <ellipse cx="0.7" cy="0.9" rx="4.5" ry="4.3" fill="rgba(26,17,6,0.38)"/>
+        <circle r="4.2" fill="url(#brass-volt-dk)"/>
+        <circle r="3.5" fill="none" stroke="rgba(48,32,12,0.60)" stroke-width="0.6"/>
+        <path d="M -3.35 -1.55 A 3.7 3.7 0 0 1 1.35 -3.45" fill="none" stroke="rgba(246,232,198,0.65)" stroke-width="1.1" stroke-linecap="round"/>
+        <path d="M -1.35 3.45 A 3.7 3.7 0 0 1 -3.35 1.55" fill="none" stroke="rgba(40,26,8,0.80)" stroke-width="1.1" stroke-linecap="round"/>
+        <circle cx="-1.2" cy="-1.5" r="0.75" fill="rgba(250,240,214,0.62)"/>
+        <line x1="-2.5" y1="0" x2="2.5" y2="0" stroke="#241806" stroke-width="1.1" stroke-linecap="round" transform="rotate(75)"/>
+        <circle r="4.2" fill="none" stroke="rgba(26,17,6,0.75)" stroke-width="0.7"/>
+      </g>
+      <g transform="translate(209 44) scale(0.82)">
+        <ellipse cx="1.3" cy="1.6" rx="5.0" ry="4.6" fill="rgba(30,20,8,0.50)"/>
+        <ellipse cx="0.7" cy="0.9" rx="4.5" ry="4.3" fill="rgba(26,17,6,0.38)"/>
+        <circle r="4.2" fill="url(#brass-volt-dk)"/>
+        <circle r="3.5" fill="none" stroke="rgba(48,32,12,0.60)" stroke-width="0.6"/>
+        <path d="M -3.35 -1.55 A 3.7 3.7 0 0 1 1.35 -3.45" fill="none" stroke="rgba(246,232,198,0.65)" stroke-width="1.1" stroke-linecap="round"/>
+        <path d="M -1.35 3.45 A 3.7 3.7 0 0 1 -3.35 1.55" fill="none" stroke="rgba(40,26,8,0.80)" stroke-width="1.1" stroke-linecap="round"/>
+        <circle cx="-1.2" cy="-1.5" r="0.75" fill="rgba(250,240,214,0.62)"/>
+        <line x1="-2.5" y1="0" x2="2.5" y2="0" stroke="#241806" stroke-width="1.1" stroke-linecap="round" transform="rotate(-25)"/>
+        <circle r="4.2" fill="none" stroke="rgba(26,17,6,0.75)" stroke-width="0.7"/>
+      </g>
+    </g>
+
     <rect x="0" y="0" width="220" height="62" fill="url(#glass-volt)" pointer-events="none"/>
   </svg></span></button>
     </div>
@@ -1886,12 +1994,13 @@ var telegraphOn = false;
 var teleRAF = null, teleX = 0, teleQueue = [], teleLast = 0, teleDone = false, teleSignDone = false, fetaStreak = 0, teleStopped = false, teleDealt = false, teleHoldHTML = null, telePrintLine = null, teleTx = 0;
 var strikeKeyMap = null, strikeArr = [], strikeIdx = 0;
 /* №158: приборы станціи — амперметръ вздрагиваетъ отъ каждаго удара и осѣдаетъ въ тишинѣ,
-   вольтметръ — батарея депеши: каждая новая телеграмма прибавляетъ къ остатку десять вольтъ,
+   вольтметръ — батарея депеши: каждая отпечатанная телеграмма прибавляетъ къ остатку семь вольтъ — въ мигъ ея послѣдняго знака,
    каждая литера расходуетъ; на нулѣ наборъ вдвое мѣдленнѣе, подзарядъ за 3 секундамъ.
    Стрелки питаются отъ цикла ленты — станція спитъ, приборы замерли. */
 var meterAmp = null, meterVolt = null;
 var teleAmpKick = 0, teleAmpKickT = 0, teleAmpSpike = 0, teleSurgeCd = 0, teleAmpPhys = { p: 0, w: 0 }, teleAmpLive = false, teleVoltV = 1, teleVoltLow = false, teleVoltRefill = 0, teleAmpHold = 0;   /* №239: держатель инерціи линіи — накопленный минусъ держитъ стрѣлку между ударами */   /* №221: амперметръ — импульсъ и пружина вместо осѣданія */
-var teleVoltCharge = false, teleVoltFillMs = 3000, teleChargeMsg = null, teleCurMsg = null;   /* №180: подзарядъ въ паузѣ отмѣненъ — зарядъ живётъ отъ депеши къ депеше */
+var teleVoltFillMs = 3000, teleChargeMsg = null, teleCurMsg = null;   /* №180: подзарядъ въ паузѣ отмѣненъ — зарядъ живётъ отъ депеши къ депеше */
+var teleChargeAnim = null;   /* №248: плавный наборъ семи вольтъ — нелинейный, съ микро-откатами */
 /* №233: порогъ записи стрѣлокъ — поворотъ пишется въ DOM лишь при сдвигѣ болѣе 0.2°;
    неподвижная стрѣлка больше не переписываетъ стиль каждый кадръ. Кешъ узловъ №158 —
    поискъ по дереву только при утрачѣ (isConnected=false), уголъ тогда сбрасывается вмѣстѣ. */
@@ -1955,6 +2064,35 @@ function teleVoltKick() {
 }
 function teleVoltSnap(v) {
   teleVoltPhys.p = (v === undefined ? teleVoltV : v); teleVoltPhys.w = 0; teleVoltKickV = 0; teleVoltLive = false; teleVoltAngLast = NaN;   /* №233: порогъ сброшенъ — слѣдующая запись гарантирована */
+}
+/* ===== №248: плавный наборъ семи вольтъ =====
+   Зарядъ начинается въ мигъ отпечатки послѣдняго знака депеши (№247) и идётъ до
+   начала печати слѣдующей. Ходъ нелинейный — гладкая кривая со разгономъ и торможеніемъ;
+   поверхъ — микро-откаты: набранное врѣменно сдаётъ назадъ, откатъ гаснетъ къ концу окна.
+   Къ концу окна кривая сходится точно къ +0,35 (семь вольтъ по шкалѣ 0–20). Если слѣдующая
+   депеша начинается раньше расчётнаго срока — остатокъ досыпается мгновенно (стражъ въ teleStrike). */
+var CHARGE_TOTAL = 0.35, CHARGE_WOBBLE = 0.014;   /* 7 В по шкалѣ 0–20; размахъ отката ≈ 0,28 В */
+function teleChargeStart(dur) {
+  teleChargeAnim = { t0: performance.now(), dur: dur, cum: 0,
+    a1: 2.1 + Math.random() * 1.6, a2: 4.7 + Math.random() * 2.3,
+    p1: Math.random() * 6.28, p2: Math.random() * 6.28 };
+}
+function teleChargeFinish() {
+  if (!teleChargeAnim) return;
+  var rest = CHARGE_TOTAL - teleChargeAnim.cum;
+  if (rest > 0) teleVoltV = Math.min(1, teleVoltV + rest);
+  teleChargeAnim = null;
+}
+function teleChargeStep() {
+  var A = teleChargeAnim; if (!A) return;
+  var p = (performance.now() - A.t0) / A.dur;
+  if (p >= 1) { teleChargeFinish(); return; }
+  var e = p * p * (3 - 2 * p);   /* гладкій нелинейный ходъ: разгонъ — полнога — торможеніе */
+  var w = Math.sin(6.283185 * A.a1 * p + A.p1) * 0.65 + Math.sin(6.283185 * A.a2 * p + A.p2) * 0.35;
+  var v = CHARGE_TOTAL * e + CHARGE_WOBBLE * Math.pow(1 - p, 1.5) * w;   /* откаты таютъ къ концу */
+  if (v < 0) v = 0; else if (v > CHARGE_TOTAL) v = CHARGE_TOTAL;
+  teleVoltV = Math.min(1, teleVoltV + (v - A.cum));
+  A.cum = v;
 }
 function teleMetersDraw() {
   teleNeedleAmp(teleAmpPhys.p); teleNeedle('volt', teleVoltPhys.p);   /* №191: стрѣлка вольта — по пружинѣ съ инерціей; №221: амперметръ — по своей пружинѣ */
@@ -2632,9 +2770,7 @@ function teleStrike() {
     if (!o.span.isConnected) { strikeIdx++; continue; }
     var r = o.span.getBoundingClientRect();
     if (r.left < edge) {
-      if (teleVoltCharge && o.msg !== undefined && o.msg !== teleChargeMsg) {   /* №180: новая депеша прибавляетъ къ остатку семь вольтъ */
-        teleVoltV = Math.min(1, teleVoltV + 0.35); teleVoltLow = false; teleVoltCharge = false;
-      }
+      if (o.msg && teleChargeAnim && o.msg !== teleChargeAnim.msg) teleChargeFinish();   /* №248: депеша началась — наборъ дожатъ до полныхъ семи вольтъ */
       telePressKey(o.key);
       if (o.aux) telePressKey(o.aux, false);   // шифтъ или ϕ нажимаются вмѣстѣ съ буквой
       if (o.mark === 'curse-open') { teleSpeedMul = 1.5; }   // ругательство — наборъ въ полтора раза быстрее; №159: отповѣдь батарею не поднимаетъ — расходуетъ наравнѣ съ текстомъ
@@ -2649,13 +2785,28 @@ function teleStrike() {
           var so = strikeArr[si];
           if (so.span && so.span.isConnected) { nn = so; break; }
         }
+        var oSep = o.span.parentElement && o.span.parentElement.hasAttribute('data-tgcut');   /* №247: разделитель ленты — не частьъ телеграммы */
+        var nSep = nn && nn.msg === teleCurMsg && nn.span.parentElement && nn.span.parentElement.hasAttribute('data-tgcut');   /* №247: впереди разделитель — текстъ кончился */
+        if (!oSep && (nSep || !nn || nn.msg !== teleCurMsg)) {   /* №247: послѣдній знакъ текста отстучанъ — точка, кавычки, иное окончаніе или просто конецъ текста */
+          if (o.msg !== teleChargeMsg) {   /* №247: семь вольтъ откладываются отъ мига отпечатки послѣдняго знака телеграммы, а не съ началомъ слѣдующей депеши */
+            teleVoltLow = false;
+            teleChargeMsg = o.msg;
+            var nMsg = null;   /* №248: окно набора — время до перваго знака слѣдующей депеши */
+            for (var qc = strikeIdx; qc < strikeArr.length; qc++) {
+              var sq = strikeArr[qc];
+              if (sq.span && sq.span.isConnected && sq.msg && sq.msg !== teleCurMsg) { nMsg = sq; break; }
+            }
+            var spdC = TELE_SPEED * teleSpeedMul;   /* teleVoltLow только что снятъ — скоростьъ обычная */
+            var durC = nMsg ? (nMsg.span.getBoundingClientRect().left - edge) / spdC * 1000 : 3000;
+            teleChargeStart(Math.max(250, Math.min(4000, durC)));   /* №248: наборъ съ микро-откатами, къ началу слѣдующей депеши — ровно семь вольтъ */
+          }
+        }
         if (!nn || nn.msg !== teleCurMsg) {   /* впереди только чужія буквы или пусто — депеша отпечаталась */
           if (nn) {
             var nr = nn.span.getBoundingClientRect();
             var spd = TELE_SPEED * teleSpeedMul * (teleVoltLow && !teleRev ? 0.375 : 1)   /* №230: печать замѣдлена ещё на четверть — итого въ 2⅔ раза мѣдленнѣе обычнаго */;
             teleVoltFillMs = Math.max(250, Math.min(3000, (nr.left - edge) / spd * 1000));   /* №180: подзарядъ отмѣненъ — величина оставлена для совместимости */
           } else teleVoltFillMs = 3000;   /* колода кончилась */
-          teleVoltCharge = true;
         }
       }
       if (teleBoost && !o.span.closest('.tape-greet') && (o.span.textContent || '').trim()) {
@@ -2706,10 +2857,11 @@ function teleFrame(ts) {
     teleVoltV = Math.min(1, (performance.now() - teleVoltRefill) / 4000);   /* №230: зарядъ до полныхъ 20 вольтъ — 4 секунды */
     if (teleVoltV >= 1) { teleVoltV = 1; teleVoltLow = false; }   /* батарея отдышалась — скоростьъ вернулась */
   }
+  teleChargeStep(dt);   /* №248: плавный наборъ семи вольтъ въ окнѣ паузы — откатъ влечётъ стрѣлку назадъ */
   if (teleVoltKickV) teleVoltKickV *= Math.exp(-dt / 700);   /* №191: качанія печаті затухаютъ */
   teleVoltPhysStep(dt / 1000);   /* №191: шагъ пружины стрѣлки */
   if (!meterAmp) { meterAmp = document.getElementById('needle-amp'); meterVolt = document.getElementById('needle-volt'); }
-  if (!document.body.classList.contains('light') && (teleAmpLive || Math.abs(teleAmpKick) > 0.004 || teleVoltLow || teleVoltV < 1 || teleVoltLive)) teleMetersDraw();
+  if (!document.body.classList.contains('light') && (teleAmpLive || Math.abs(teleAmpKick) > 0.004 || teleVoltLow || teleVoltV < 1 || teleVoltLive || teleChargeAnim)) teleMetersDraw();   /* №248: наборъ живётъ — приборы рисуются */
   teleMaintain();
   var track = (teleMT && teleMT.isConnected) ? teleMT : (teleMT = document.getElementById('tape-track'));
   if (track) {
@@ -2719,7 +2871,7 @@ function teleFrame(ts) {
   teleStrike();   /* №157: удары послѣ записи transformъ — удаленіе ушедшей телеграммы сдвигаетъ раскладку мгновенно, а transformъ дописывается лишь здѣсь; удары до записи видѣли ложные пересѣченія рамки (залпъ щелчковъ, хрипъ, молчаніе клавишъ) */
   if (teleRev) teleReverseCheck();
   /* №156: сонъ цикла — лента стоитъ, обратного хода нѣтъ и строка печати догнала точку */
-  if (!teleRev && teleStopped && Math.abs(teleAmpKick) < 0.004 && !teleAmpLive && !teleVoltLow && !teleVoltLive && !(teleVoltCharge && teleVoltV < 1) && !(telePrintLine && telePrintLine.isConnected && Math.abs(teleTx - teleX) > 0.4)) {   /* №158: не спать, пока стрелки движутся; №159: и пока батарея наливается */
+  if (!teleRev && teleStopped && Math.abs(teleAmpKick) < 0.004 && !teleAmpLive && !teleVoltLow && !teleVoltLive && !teleChargeAnim &&   /* №248: не спать, пока идётъ наборъ */ !(telePrintLine && telePrintLine.isConnected && Math.abs(teleTx - teleX) > 0.4)) {   /* №158: не спать, пока стрелки движутся; №159: и пока батарея наливается */
     teleRAF = null;
     return;
   }
@@ -2919,7 +3071,7 @@ function teleEndReverse() {
   });
   strikeArr = []; strikeIdx = 0;
   teleStopped = false; teleDone = false; teleSignDone = false; teleDealt = false; fetaStreak = 0;   /* финалъ забытъ — новая колода */
-  teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleAmpSnap(); teleVoltSnap(); teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
+  teleVoltV = 1; teleVoltLow = false; teleAmpSnap(); teleVoltSnap(); teleChargeMsg = null; teleCurMsg = null; teleChargeAnim = null; teleMetersSync();   /* №248: наборъ погашенъ */   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
   teleHoldHTML = null;   /* держатель забытъ — новая колода */
   telePrintLine = null; teleTx = 0;   /* строка печати и цель подачи забыты — новая колода */
   var tgKey = document.querySelector('#alphabet-bar .key-tg');
@@ -3162,6 +3314,79 @@ function wxLine() {
    Стало: приростъ +0,35 (= 7 В). Комментарій №180 и описаніе физики вольтметра поправлены: перелётъ при ζ=0,66 — 6,32% отъ шага, то есть 0,44 В вместо 0,63 В.
    Остальное не тронуто: упоры №244 (цѣль ±8,6 А, размахъ ±8,9 А), физика №240. */
 
+/* ===== №246 — Перо живётъ только въ словарѣ =====
+   По заказу: навигаційное перо возврата къ клавиатурѣ всплывало и въ режимѣ телеграфа.
+   Причина: перо позиціонируется по первой плашкѣ .card-frame — въ эфирѣ плашки строятся
+   темъ же классомъ, и стражъ клавиатуры пропускалъ перо въ эфиръ.
+   Стало: CSS-стражъ body.telegraph-on #pen-top { display:none !important; } и гвардъ
+   въ onScroll — въ эфирѣ перо не всплываетъ; наблюдатель за классомъ body гаситъ перо
+   тотчасъ при входѣ въ эфиръ. Въ словарѣ перо не тронуто. */
+
+/* ===== №247 — Зарядъ падаетъ въ мигъ послѣдняго знака телеграммы =====
+   По заказу: батарея пополнялась не въ мигъ конца телеграммы, а съ первымъ знакомъ
+   слѣдующей — флагъ teleVoltCharge ставился при отпечаткѣ послѣдняго знака депеши,
+   но расходовалъся лишь когда слѣдующая начинала печатать.
+   Стало: семь вольтъ (+0,35 шкалы) падаютъ тотчасъ — въ мигъ удара по послѣднему
+   знаку текста телеграммы: точка, кавычки, иное окончаніе или просто конецъ текста.
+   Разделитель ленты (data-tgcut) знакомъ телеграммы не считается — зарядъ не ждётъ его.
+   Концевой знакъ узнаётся вперёдъ по очереди: если за текущимъ знакомъ идётъ
+   разделитель или чужая буква — текстъ кончился. Стражъ teleChargeMsg держитъ
+   одинъ зарядъ на телеграмму; вставки-отповѣди (безъ msg) батарею по-прежнему
+   не поднимаютъ — №159. Верхній блокъ заряда съ началомъ новой депеши снятъ,
+   флагъ teleVoltCharge снятъ вовсе — въ т. ч. изъ условія сна цикла №156 (пружину
+   стрѣлки держитъ teleVoltLive, дозарядъ — teleVoltLow).
+   Остальное не тронуто: упоры №244, физика №240, семивольтовый приростъ №245. */
+
+/* ===== №248 — Зарядъ наливается плавно, къ началу слѣдующей депеши =====
+   По заказу: семь вольтъ должны успѣть набраться до перваго знака слѣдующей телеграммы,
+   причёмъ наборъ — не линейный, а съ микро-откатами: набранное врѣменно сдаётъ назадъ.
+   Стало: въ мигъ отпечатки послѣдняго знака (№247) открывается окно набора — срокъ
+   до перваго знака слѣдующей депеши (по мѣсту въ очереди; полка 250 мс … 4 с; если
+   впереди только отчётъ — 3 с). Ходъ — гладкая кривая (разгонъ — полнога — торможеніе),
+   поверхъ — микро-откаты амплитудой ≈ 0,28 В по синусамъ со случайными фазами;
+   откатъ гаснетъ къ концу окна (степень 1,5). Къ концу окна кривая сходится точно
+   къ +0,35 (семь вольтъ по шкалѣ 0–20). Страховка: если слѣдующая депеша началась
+   раньше срока, остатокъ досыпается мгновенно въ teleStrike — к началу первой буквы
+   батарея всегда полна. Пружина стрѣлки (№191) отслѣживаетъ кривую сама — рывковъ нѣтъ.
+   Пока идётъ наборъ, циклъ не спитъ и приборы рисуются. Сбросъ колоды гаситъ наборъ.
+   Остальное не тронуто: №247, №246, №245, упоры №244, физика №240. */
+
+/* ===== №249 — Винты на циферблатахъ =====
+   По заказу: по угламъ циферблата каждого прибора — по четыре винта.
+   Стало: въ defs обоихъ приборовъ добавленъ латунный градіентъ (screw-amp /
+   screw-volt), по угламъ циферблата — четыре винта: мягкая тень подъ головкой,
+   бликъ слѣва-сверху, тёмный ободъ и шлицъ; шлицы повёрнуты по-разному
+   (40°, −65°, 75°, −25°), какъ на настоящемъ щиткѣ. Винты стоятъ подъ стекломъ —
+   слою бликовъ предшествуютъ, и не задѣваютъ шкалу, мѣтки, цифры и буквы A/V.
+   Остальное не тронуто: №248, №247, №246, №245, упоры №244, физика №240. */
+
+/* ===== №250 — Винты въ цвѣтъ рамки, объёмъ; A/V влѣво =====
+   По заказу: винты — въ цветъ рамки, съ тенью и объёмомъ; обозначенія A и V —
+   немного влѣво отъ рамки.
+   Стало: винты въ обоихъ приборахъ заливаны рамочнымъ латуннымъ градіентомъ
+   (brass-amp / brass-volt: #e9c98a → #b98f4e → #8a6534), которыя прежде въ
+   файлахъ не использовались. Объёмъ собранъ заново: двойная мягкая тень подъ
+   головкой, свѣтлая дуга сверху-слѣва и тёмная снизу, капля-бликъ и тёмный
+   ободъ по краю; шлицы на своихъ мѣстахъ (40°, −65°, 75°, −25°). Старые
+   градіенты screw-amp / screw-volt сняты. Буквы A и V сдвинуты влѣво:
+   x 196 → 186, отъ рамки сталъ зазоръ.
+   Остальное не тронуто: №249, №248, №247, №246, №245, упоры №244, физика №240. */
+/* ===== №251 — Винты тѣмнѣе, нижніе выше =====
+   По заказу: винты ещё немного тѣмнѣе; нижніе чуть подънять.
+   Стало: головки залиты новыми градіентами brass-amp-dk / brass-volt-dk
+   (#d4ac66 → #9c7333 → #5f421a) — на ступѣнь тѣмнѣе рамочныхъ. Объёмъ углублёнъ:
+   ободъ и наружное кольцо тѣмнѣе и плотнѣе, тѣмная дуга снизу и шлицъ тѣмнѣе,
+   бликъ и капля притушены, тѣнь подъ головкой гуще. Нижніе винты подъняты
+   съ y=47 на y=44. Верхніе винты и шлицы (40°, −65°, 75°, −25°) не тронуты.
+   Остальное не тронуто: №250, №249, №248, №247, №246, №245, упоры №244, физика №240. */
+
+/* ===== №252 — Винты меньше =====
+   По заказу: винты поменьше. Стало: къ каждойъ изъ восьми винтовыхъ группъ
+   (по четыре на амперметрѣ и вольтметрѣ) добавленъ масштабъ 0.82 — головка
+   сжалась съ r=4.2 на r≈3.4, пропорціонально сжались тѣни, дуги, шлицъ и
+   штрихи; рисунокъ остался цѣльнымъ. Позиції по угламъ не тронуты (верхніе
+   y=9, нижніе y=44), повороты шлицовъ прежніе (40°, −65°, 75°, −25°).
+   Остальное не тронуто: №251, №250, №249, №248, №247, №246, №245, упоры №244, физика №240. */
 
 /* ===== №240 — Сила редкаго знака подъ цель =====
    По заказу: редкій усиленный знакъ долженъ доставатьъ въ предѣлахъ −9 ± 0,5 А.
@@ -3515,7 +3740,7 @@ function toggleTelegraph() {
     strikeArr = []; strikeIdx = 0;
     teleQueue = []; teleDone = false; teleSignDone = false; fetaStreak = 0;   /* новая колода — перемѣшивается заново */
     teleStopped = false; teleDealt = false;
-    teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleAmpSnap(); teleVoltSnap(); teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
+    teleVoltV = 1; teleVoltLow = false; teleAmpSnap(); teleVoltSnap(); teleChargeMsg = null; teleCurMsg = null; teleChargeAnim = null; teleMetersSync();   /* №248: наборъ погашенъ */   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
     teleHoldHTML = null;   /* держатель забытъ */
     telePrintLine = null; teleTx = 0;   /* строка печати и цель подачи забыты */
     tgNum = 1 + Math.floor(Math.random() * 100); tgClear();
@@ -3526,7 +3751,7 @@ function toggleTelegraph() {
       if (!telegraphOn || teleRev) return;   // обратный переходъ успелъ начаться — сшивку отмѣняемъ
       inner.innerHTML = '';
       teleQueue = []; teleLast = 0; teleStopped = false; teleDealt = false;
-      teleVoltV = 1; teleVoltLow = false; teleVoltCharge = true; teleAmpSnap(); teleVoltSnap(); teleChargeMsg = null; teleCurMsg = null; teleMetersSync();   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
+      teleVoltV = 1; teleVoltLow = false; teleAmpSnap(); teleVoltSnap(); teleChargeMsg = null; teleCurMsg = null; teleChargeAnim = null; teleMetersSync();   /* №248: наборъ погашенъ */   /* №158: новая колода — батарея въ максимумъ; №159: первая депеша пойдётъ съ полнымъ зарядомъ */
       teleHoldHTML = null;   /* держатель забытъ */
       telePrintLine = null; teleTx = 0;   /* строка печати и цель подачи забыты */
       /* Бесшовный переходъ: надписи поиска встаютъ на лентѣ тамъ же, гдѣ стояли.
@@ -5021,7 +5246,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 245</div>
+<div class="build-info">Сшивъ № 252</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -5557,6 +5782,79 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
    Стало: приростъ +0,35 (= 7 В). Комментарій №180 и описаніе физики вольтметра поправлены: перелётъ при ζ=0,66 — 6,32% отъ шага, то есть 0,44 В вместо 0,63 В.
    Остальное не тронуто: упоры №244 (цѣль ±8,6 А, размахъ ±8,9 А), физика №240. */
 
+/* ===== №246 — Перо живётъ только въ словарѣ =====
+   По заказу: навигаційное перо возврата къ клавиатурѣ всплывало и въ режимѣ телеграфа.
+   Причина: перо позиціонируется по первой плашкѣ .card-frame — въ эфирѣ плашки строятся
+   темъ же классомъ, и стражъ клавиатуры пропускалъ перо въ эфиръ.
+   Стало: CSS-стражъ body.telegraph-on #pen-top { display:none !important; } и гвардъ
+   въ onScroll — въ эфирѣ перо не всплываетъ; наблюдатель за классомъ body гаситъ перо
+   тотчасъ при входѣ въ эфиръ. Въ словарѣ перо не тронуто. */
+
+/* ===== №247 — Зарядъ падаетъ въ мигъ послѣдняго знака телеграммы =====
+   По заказу: батарея пополнялась не въ мигъ конца телеграммы, а съ первымъ знакомъ
+   слѣдующей — флагъ teleVoltCharge ставился при отпечаткѣ послѣдняго знака депеши,
+   но расходовалъся лишь когда слѣдующая начинала печатать.
+   Стало: семь вольтъ (+0,35 шкалы) падаютъ тотчасъ — въ мигъ удара по послѣднему
+   знаку текста телеграммы: точка, кавычки, иное окончаніе или просто конецъ текста.
+   Разделитель ленты (data-tgcut) знакомъ телеграммы не считается — зарядъ не ждётъ его.
+   Концевой знакъ узнаётся вперёдъ по очереди: если за текущимъ знакомъ идётъ
+   разделитель или чужая буква — текстъ кончился. Стражъ teleChargeMsg держитъ
+   одинъ зарядъ на телеграмму; вставки-отповѣди (безъ msg) батарею по-прежнему
+   не поднимаютъ — №159. Верхній блокъ заряда съ началомъ новой депеши снятъ,
+   флагъ teleVoltCharge снятъ вовсе — въ т. ч. изъ условія сна цикла №156 (пружину
+   стрѣлки держитъ teleVoltLive, дозарядъ — teleVoltLow).
+   Остальное не тронуто: упоры №244, физика №240, семивольтовый приростъ №245. */
+
+/* ===== №248 — Зарядъ наливается плавно, къ началу слѣдующей депеши =====
+   По заказу: семь вольтъ должны успѣть набраться до перваго знака слѣдующей телеграммы,
+   причёмъ наборъ — не линейный, а съ микро-откатами: набранное врѣменно сдаётъ назадъ.
+   Стало: въ мигъ отпечатки послѣдняго знака (№247) открывается окно набора — срокъ
+   до перваго знака слѣдующей депеши (по мѣсту въ очереди; полка 250 мс … 4 с; если
+   впереди только отчётъ — 3 с). Ходъ — гладкая кривая (разгонъ — полнога — торможеніе),
+   поверхъ — микро-откаты амплитудой ≈ 0,28 В по синусамъ со случайными фазами;
+   откатъ гаснетъ къ концу окна (степень 1,5). Къ концу окна кривая сходится точно
+   къ +0,35 (семь вольтъ по шкалѣ 0–20). Страховка: если слѣдующая депеша началась
+   раньше срока, остатокъ досыпается мгновенно въ teleStrike — к началу первой буквы
+   батарея всегда полна. Пружина стрѣлки (№191) отслѣживаетъ кривую сама — рывковъ нѣтъ.
+   Пока идётъ наборъ, циклъ не спитъ и приборы рисуются. Сбросъ колоды гаситъ наборъ.
+   Остальное не тронуто: №247, №246, №245, упоры №244, физика №240. */
+
+/* ===== №249 — Винты на циферблатахъ =====
+   По заказу: по угламъ циферблата каждого прибора — по четыре винта.
+   Стало: въ defs обоихъ приборовъ добавленъ латунный градіентъ (screw-amp /
+   screw-volt), по угламъ циферблата — четыре винта: мягкая тень подъ головкой,
+   бликъ слѣва-сверху, тёмный ободъ и шлицъ; шлицы повёрнуты по-разному
+   (40°, −65°, 75°, −25°), какъ на настоящемъ щиткѣ. Винты стоятъ подъ стекломъ —
+   слою бликовъ предшествуютъ, и не задѣваютъ шкалу, мѣтки, цифры и буквы A/V.
+   Остальное не тронуто: №248, №247, №246, №245, упоры №244, физика №240. */
+
+/* ===== №250 — Винты въ цвѣтъ рамки, объёмъ; A/V влѣво =====
+   По заказу: винты — въ цветъ рамки, съ тенью и объёмомъ; обозначенія A и V —
+   немного влѣво отъ рамки.
+   Стало: винты въ обоихъ приборахъ заливаны рамочнымъ латуннымъ градіентомъ
+   (brass-amp / brass-volt: #e9c98a → #b98f4e → #8a6534), которыя прежде въ
+   файлахъ не использовались. Объёмъ собранъ заново: двойная мягкая тень подъ
+   головкой, свѣтлая дуга сверху-слѣва и тёмная снизу, капля-бликъ и тёмный
+   ободъ по краю; шлицы на своихъ мѣстахъ (40°, −65°, 75°, −25°). Старые
+   градіенты screw-amp / screw-volt сняты. Буквы A и V сдвинуты влѣво:
+   x 196 → 186, отъ рамки сталъ зазоръ.
+   Остальное не тронуто: №249, №248, №247, №246, №245, упоры №244, физика №240. */
+/* ===== №251 — Винты тѣмнѣе, нижніе выше =====
+   По заказу: винты ещё немного тѣмнѣе; нижніе чуть подънять.
+   Стало: головки залиты новыми градіентами brass-amp-dk / brass-volt-dk
+   (#d4ac66 → #9c7333 → #5f421a) — на ступѣнь тѣмнѣе рамочныхъ. Объёмъ углублёнъ:
+   ободъ и наружное кольцо тѣмнѣе и плотнѣе, тѣмная дуга снизу и шлицъ тѣмнѣе,
+   бликъ и капля притушены, тѣнь подъ головкой гуще. Нижніе винты подъняты
+   съ y=47 на y=44. Верхніе винты и шлицы (40°, −65°, 75°, −25°) не тронуты.
+   Остальное не тронуто: №250, №249, №248, №247, №246, №245, упоры №244, физика №240. */
+
+/* ===== №252 — Винты меньше =====
+   По заказу: винты поменьше. Стало: къ каждойъ изъ восьми винтовыхъ группъ
+   (по четыре на амперметрѣ и вольтметрѣ) добавленъ масштабъ 0.82 — головка
+   сжалась съ r=4.2 на r≈3.4, пропорціонально сжались тѣни, дуги, шлицъ и
+   штрихи; рисунокъ остался цѣльнымъ. Позиції по угламъ не тронуты (верхніе
+   y=9, нижніе y=44), повороты шлицовъ прежніе (40°, −65°, 75°, −25°).
+   Остальное не тронуто: №251, №250, №249, №248, №247, №246, №245, упоры №244, физика №240. */
 
 /* ===== №240 — Сила редкаго знака подъ цель =====
    По заказу: редкій усиленный знакъ долженъ доставатьъ въ предѣлахъ −9 ± 0,5 А.
@@ -5827,6 +6125,7 @@ body.light.telegraph-on .tab.active {
     pen.classList.add('show');
   }
   function onScroll() {
+    if (document.body.classList.contains('telegraph-on')) { hideNow(); return; }   /* №246: въ эфирѣ перо не всплываетъ */
     var y = window.scrollY || document.documentElement.scrollTop || 0;
     var dy = y - lastY;
     lastY = y;
@@ -5873,6 +6172,12 @@ body.light.telegraph-on .tab.active {
       lastY = window.scrollY || document.documentElement.scrollTop || 0;
     }, 1200);
   });
+  /* №246: стражъ режима — входъ въ эфиръ гаситъ перо тотчасъ, безъ ожиданія прокрутки */
+  if (window.MutationObserver) {
+    new MutationObserver(function () {
+      if (document.body.classList.contains('telegraph-on')) hideNow();
+    }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  }
 })();
 </script>
 

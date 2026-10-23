@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 68. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №264, устаревшие слова">
+    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 71. Словарь устарѣвшихъ словъ.">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №267, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №264: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №267: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -332,23 +332,15 @@ body.telegraph-on #s-tape { display: none; }
   #s-ph, #s-tape-inner .tpc { font-size: 22px; }
 }
 #search-box {
-  --flame: 0;
-  filter: drop-shadow(0 0 10px rgba(240, 150, 60, calc(0.45 * var(--flame) * var(--flk))));
-  animation: none;   /* пульс крутимъ только при пламени: въ покоѣ тень прозрачна — не тратимъ кадры */
-  will-change: filter;
-  transition: box-shadow 1.7s ease, border-color 1.7s ease, background 1.7s ease,
-              --flame 0.6s ease;
+  transition: box-shadow 1.7s ease, border-color 1.7s ease, background 1.7s ease;
 }
 #search-box:focus {
-  animation: flk-pulse 5.2s ease-in-out infinite;   /* пламя включено — пульс оправданъ */
-  transition: box-shadow 1.7s ease, border-color 1.7s ease, background 1.7s ease,
-              --flame 0.9s ease 0.7s;
+  transition: box-shadow 1.7s ease, border-color 1.7s ease, background 1.7s ease;
   border-color: var(--gold-bright);
   background: #262042;
   box-shadow:
     0 0 6px rgba(212, 176, 106, 0.55),
     0 0 22px rgba(212, 176, 106, 0.25);
-  --flame: 1;
 }
 /* ===== Пламя на активныхъ: окно поиска и клавиатура ===== */
 /* мѣханизмъ рамокъ статей: яркость и мерцаніе раздѣлены.
@@ -365,7 +357,7 @@ body.telegraph-on #s-tape { display: none; }
   74% { --flk: 0.9; }
 }
 @media (prefers-reduced-motion: reduce) {
-  #search-box, .alphabet-bar { animation: none; }
+  #search-box, .alphabet-bar, .tape-slot { animation: none; }
 }
 
 
@@ -438,9 +430,27 @@ body.telegraph-on #s-tape { display: none; }
 @property --c-flame { syntax: '<number>'; inherits: false; initial-value: 0; }
 @property --c-flick { syntax: '<number>'; inherits: false; initial-value: 1; }
 
-/* золотой слой — копия узора, ровный тёплый свет */
-.fr-corner::before,
+/* золотой слой линій: свѣтеніе box-shadow — для сплошныхъ полосъ то же свѣтеніе,
+   но тѣнь кэшируется и не пересчитывается каждый кадръ (Сшивъ №265) */
 .fr-line::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  border: inherit;
+  border-radius: inherit;
+  clip-path: inherit;
+  pointer-events: none;
+  --c-glow: 0;
+  opacity: var(--c-glow);
+  box-shadow:
+    0 0 4px rgba(212, 176, 106, 0.8),
+    0 0 14px rgba(212, 176, 106, 0.35);
+  transition: --c-glow 3s ease;
+}
+
+/* золотой слой уголковъ: свѣтеніе по силуэту картинки — drop-shadow */
+.fr-corner::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -456,9 +466,26 @@ body.telegraph-on #s-tape { display: none; }
   transition: --c-glow 3s ease;
 }
 
-/* пламя — оранжевый слой, он же мерцает */
-.fr-corner::after,
+/* пламя линій — оранжевый слой, он же мерцаетъ (Сшивъ №265: box-shadow) */
 .fr-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  border: inherit;
+  border-radius: inherit;
+  clip-path: inherit;
+  pointer-events: none;
+  --c-flame: 0;
+  opacity: calc(var(--c-flame) * var(--c-flick));
+  box-shadow: 0 0 10px rgba(240, 150, 60, 0.55);
+  transition: --c-flame 1.5s ease;
+  animation: flicker 2.6s ease-in-out infinite;
+  animation-play-state: paused;
+}
+
+/* пламя уголковъ — drop-shadow по силуэту рисунка */
+.fr-corner::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -592,7 +619,6 @@ mark{background:transparent;color:#e8c96a;text-shadow:0 0 7px rgba(232,201,106,.
   box-shadow: 0 0 0 rgba(212, 176, 106, 0);
   filter: drop-shadow(0 0 10px rgba(240, 150, 60, calc(0.45 * var(--flame) * var(--flk))));
   animation: none;   /* пульс крутимъ только при пламени: въ покоѣ тень прозрачна — не тратимъ кадры */
-  will-change: filter;
   --flame: 0;
   transition: box-shadow 1.7s ease, border-color 1.7s ease, background 1.7s ease,
               --flame 1.7s ease;
@@ -750,7 +776,36 @@ letter:hover { transform: translateY(-2px); border-color: var(--gold); color: va
   box-shadow: inset 0 0 14px rgba(0,0,0,0.55);
 }
 /* оболочка держитъ высоту строки поиска; трясётся только бумага внутри рамки */
-.tape-slot { position: relative; margin-top: 1.2rem; }
+.tape-slot {
+  position: relative;
+  margin-top: 1.2rem;
+  --ts-flame: 0;
+  transition: --ts-flame 0.6s ease;
+}
+/* Сшивъ №265: свѣтеніе строки — статичная тѣнь на псевдо-обёрткѣ, пульсируетъ лишь прозрачность */
+.tape-slot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0.375rem;
+  pointer-events: none;
+  box-shadow: 0 0 10px rgba(240, 150, 60, 0.45);
+  opacity: calc(var(--ts-flame) * var(--ts-flk));
+}
+.tape-slot:focus-within {
+  animation: ts-pulse 5.2s ease-in-out infinite;
+  --ts-flame: 1;
+  transition: --ts-flame 0.9s ease 0.7s;
+}
+@property --ts-flame { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --ts-flk   { syntax: '<number>'; inherits: true; initial-value: 1; }
+@keyframes ts-pulse {
+  0%, 17%, 45%, 100% { --ts-flk: 1; }
+  8%  { --ts-flk: 0.7; }
+  31% { --ts-flk: 0.55; }
+  58% { --ts-flk: 0.75; }
+  74% { --ts-flk: 0.9; }
+}
 .tape-shaker { position: absolute; inset: 0; animation: tape-shake 0.16s linear infinite; }
 @keyframes tape-shake {
   0%   { transform: translateY(0); }
@@ -3418,6 +3473,38 @@ function wxLine() {
    однократная переотрисовка панели (opacity 0.999 → 1). Рисунокъ и откликъ
    клавишъ не мѣнены; №263 цѣлъ цѣликомъ.
    Остальное не тронуто: №263, №261, №257, №255, №254 и ранее. */
+/* ===== №266 — Свѣченіе: запечённый свѣтъ и панель безъ фильтра =====
+   Найдено: свѣчи держали процѣссоръ (37-41%). №265 убралъ линіи (box-shadow)
+   и строку поиска, остались два очага: 4 уголка на карточку съ живымъ
+   drop-shadow (8 размытій на карточку при наведеніи) и фильтръ панели
+   машинки, живой даже въ покоѣ (альфа нулевая, а фильтръ въ вычисленномъ
+   стилѣ есть). Лѣченіе: свѣтеніе уголковъ запекается при стартѣ на canvas
+   (золото 4px+14px, пламя 10px, масштабъ --u: 0.055) въ готовыя картинки —
+   живыхъ drop-shadow на карточкахъ болѣе нѣтъ, дышитъ лишь прозрачность;
+   фильтръ панели снятъ, контекстъ слоёвъ держитъ isolation: isolate (узор
+   ::before подъ клавишами цѣлъ), оранжевый пульсъ — статичная box-shadow
+   на ::after, дышитъ только прозрачность (--ab-flame/--ab-flk, inherit:true).
+   При отказѣ canvas (file://) уголки держатъ прежніе фильтры.
+   Видъ неизмѣненъ; №265 цѣлъ цѣликомъ.
+   Остальное не тронуто: №265, №264, №263, №261, №257, №255, №254 и ранее. */
+/* ===== №265 — Свѣченіе рамокъ: лёгкій свѣтъ вмѣсто процѣссорной рубки =====
+   Найдено: каждая карточка несла 40 псевдослоёвъ (4 уголка и 16 линій, по двѣ
+   свечи на каждомъ) со своимъ drop-shadow — 60 размытій на карточку, 1680 на
+   28 статей на экранѣ. Разгораніе и мерцаніе вѣдутъ @property-перемѣнныя на
+   главномъ потокѣ: каждый кадръ браузеръ пересчитывалъ стили и заново
+   перерисовывалъ размытыя слои — GPU такой анімаціи отдать нельзя.
+   Лѣканіе: линіямъ свѣтеніе перенесено съ drop-shadow на box-shadow — для
+   сплошныхъ полосъ свѣтеніе то же, но тѣнь кэшируется и не пересчитывается
+   (размытій на карточку: 60 → 24; линійныхъ: 32 → 0). Уголки остались на
+   drop-shadow — свѣтеніе по силуэту рисунка, а слои малы (≈42px).
+   Строкѣ поиска: живой фильтръ снятъ со строки; свѣтеніе — статичная тѣнь
+   на псевдо-обёрткѣ .tape-slot, пульсируетъ лишь прозрачность (--flame
+   переехалъ на .tape-slot съ фокусомъ-внутри; тайминги тѣ же: разгораніе
+   0.9s черезъ 0.7s, затуханіе 0.6s). will-change: filter снятъ со строки
+   и съ машинки — слои болѣе не держатся растрованными постоянно; пульсъ
+   машинки оставленъ прежнимъ — одна плашка сѣдаетъ пренебрежимо мало.
+   Уголки, линіи, пламя, мерцаніе и тайминги — прежніе; №264 цѣлъ цѣликомъ.
+   Остальное не тронуто: №264, №263, №261, №257, №255, №254 и ранее. */
 /* ===== №257 — Фонъ растягивается пропорцiонально =====
    Замѣчено: въ №256 плитка 1277px дала видимые швы повторовъ на экранѣ.
    Заказъ: пусть фонъ растягивается, но строго пропорцiонально.
@@ -5366,7 +5453,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 264</div>
+<div class="build-info">Сшивъ № 267</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -6031,6 +6118,38 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
    однократная переотрисовка панели (opacity 0.999 → 1). Рисунокъ и откликъ
    клавишъ не мѣнены; №263 цѣлъ цѣликомъ.
    Остальное не тронуто: №263, №261, №257, №255, №254 и ранее. */
+/* ===== №266 — Свѣченіе: запечённый свѣтъ и панель безъ фильтра =====
+   Найдено: свѣчи держали процѣссоръ (37-41%). №265 убралъ линіи (box-shadow)
+   и строку поиска, остались два очага: 4 уголка на карточку съ живымъ
+   drop-shadow (8 размытій на карточку при наведеніи) и фильтръ панели
+   машинки, живой даже въ покоѣ (альфа нулевая, а фильтръ въ вычисленномъ
+   стилѣ есть). Лѣченіе: свѣтеніе уголковъ запекается при стартѣ на canvas
+   (золото 4px+14px, пламя 10px, масштабъ --u: 0.055) въ готовыя картинки —
+   живыхъ drop-shadow на карточкахъ болѣе нѣтъ, дышитъ лишь прозрачность;
+   фильтръ панели снятъ, контекстъ слоёвъ держитъ isolation: isolate (узор
+   ::before подъ клавишами цѣлъ), оранжевый пульсъ — статичная box-shadow
+   на ::after, дышитъ только прозрачность (--ab-flame/--ab-flk, inherit:true).
+   При отказѣ canvas (file://) уголки держатъ прежніе фильтры.
+   Видъ неизмѣненъ; №265 цѣлъ цѣликомъ.
+   Остальное не тронуто: №265, №264, №263, №261, №257, №255, №254 и ранее. */
+/* ===== №265 — Свѣченіе рамокъ: лёгкій свѣтъ вмѣсто процѣссорной рубки =====
+   Найдено: каждая карточка несла 40 псевдослоёвъ (4 уголка и 16 линій, по двѣ
+   свечи на каждомъ) со своимъ drop-shadow — 60 размытій на карточку, 1680 на
+   28 статей на экранѣ. Разгораніе и мерцаніе вѣдутъ @property-перемѣнныя на
+   главномъ потокѣ: каждый кадръ браузеръ пересчитывалъ стили и заново
+   перерисовывалъ размытыя слои — GPU такой анімаціи отдать нельзя.
+   Лѣканіе: линіямъ свѣтеніе перенесено съ drop-shadow на box-shadow — для
+   сплошныхъ полосъ свѣтеніе то же, но тѣнь кэшируется и не пересчитывается
+   (размытій на карточку: 60 → 24; линійныхъ: 32 → 0). Уголки остались на
+   drop-shadow — свѣтеніе по силуэту рисунка, а слои малы (≈42px).
+   Строкѣ поиска: живой фильтръ снятъ со строки; свѣтеніе — статичная тѣнь
+   на псевдо-обёрткѣ .tape-slot, пульсируетъ лишь прозрачность (--flame
+   переехалъ на .tape-slot съ фокусомъ-внутри; тайминги тѣ же: разгораніе
+   0.9s черезъ 0.7s, затуханіе 0.6s). will-change: filter снятъ со строки
+   и съ машинки — слои болѣе не держатся растрованными постоянно; пульсъ
+   машинки оставленъ прежнимъ — одна плашка сѣдаетъ пренебрежимо мало.
+   Уголки, линіи, пламя, мерцаніе и тайминги — прежніе; №264 цѣлъ цѣликомъ.
+   Остальное не тронуто: №264, №263, №261, №257, №255, №254 и ранее. */
 /* ===== №257 — Фонъ растягивается пропорцiонально =====
    Замѣчено: въ №256 плитка 1277px дала видимые швы повторовъ на экранѣ.
    Заказъ: пусть фонъ растягивается, но строго пропорцiонально.
@@ -6281,6 +6400,113 @@ body.light.telegraph-on .tab.active {
 }
 </style>
 
+<style id="glow266">
+/* ===== №266 — Свѣченіе: запечённый свѣтъ и панель безъ фильтра =====
+   Найдено: свѣчи держали процѣссоръ (37-41%). №265 убралъ линіи (box-shadow)
+   и строку поиска, остались два очага: 4 уголка на карточку съ живымъ
+   drop-shadow (8 размытій на карточку при наведеніи) и фильтръ панели
+   машинки, живой даже въ покоѣ (альфа нулевая, а фильтръ въ вычисленномъ
+   стилѣ есть). Лѣченіе: свѣтеніе уголковъ запекается при стартѣ на canvas
+   (золото 4px+14px, пламя 10px, масштабъ --u: 0.055) въ готовыя картинки —
+   живыхъ drop-shadow на карточкахъ болѣе нѣтъ, дышитъ лишь прозрачность;
+   фильтръ панели снятъ, контекстъ слоёвъ держитъ isolation: isolate (узор
+   ::before подъ клавишами цѣлъ), оранжевый пульсъ — статичная box-shadow
+   на ::after, дышитъ только прозрачность (--ab-flame/--ab-flk, inherit:true).
+   При отказѣ canvas (file://) уголки держатъ прежніе фильтры.
+   Видъ неизмѣненъ; №265 цѣлъ цѣликомъ.
+   Остальное не тронуто: №265, №264, №263, №261, №257, №255, №254 и ранее. */
+@property --ab-flame { syntax: '<number>'; inherits: true; initial-value: 0; }
+@property --ab-flk   { syntax: '<number>'; inherits: true; initial-value: 1; }
+@keyframes ab-pulse {
+  0%, 17%, 45%, 100% { --ab-flk: 1; }
+  8%  { --ab-flk: 0.7; }
+  31% { --ab-flk: 0.55; }
+  58% { --ab-flk: 0.75; }
+  74% { --ab-flk: 0.9; }
+}
+/* панель: фильтръ снятъ; контекстъ слоёвъ теперь держитъ isolation —
+   узор ::before съ z-index:-1 остаётся надъ фономъ панели и подъ клавишами */
+.alphabet-bar {
+  filter: none;
+  isolation: isolate;
+}
+/* оранжевое пламя панели: статичная внѣшняя box-shadow (рисуется только
+   внѣ рамки, какъ drop-shadow по силуэту), дышитъ лишь прозрачность */
+.alphabet-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 0.375rem;
+  pointer-events: none;
+  box-shadow: 0 0 10px rgba(240, 150, 60, 0.55);
+  opacity: calc(0.45 * var(--ab-flame) * var(--ab-flk));
+}
+.alphabet-bar {
+  --ab-flame: 0;
+  transition: box-shadow 1.7s ease, border-color 1.7s ease, background 1.7s ease,
+              --ab-flame 1.7s ease;
+}
+.alphabet-bar:hover {
+  animation: ab-pulse 5.2s ease-in-out infinite;   /* пламя включено — пульс оправданъ */
+  --ab-flame: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .alphabet-bar, .alphabet-bar:hover { animation: none; }
+}
+/* уголки: запечённое свѣтеніе вмѣсто живого drop-shadow.
+   Псевдослой расширенъ на --corner-pad (запасъ подъ тень), рисунокъ стоитъ
+   на прежнемъ мѣстѣ (позиція компенсирована) и обрезанъ въ canvas по той же
+   видимой части 760×760 — внѣшній видъ и силуэтъ тени прежние */
+html.corners-baked .fr-corner::before {
+  inset: calc(-1 * var(--corner-pad, 0px));
+  background: var(--corner-gold) var(--corner-pos, 0 0) / var(--corner-size) no-repeat;
+  filter: none;
+}
+html.corners-baked .fr-corner::after {
+  inset: calc(-1 * var(--corner-pad, 0px));
+  background: var(--corner-flame) var(--corner-pos, 0 0) / var(--corner-size) no-repeat;
+  filter: none;
+}
+</style>
+
+<style id="diag267">
+/* ===== №267 — Диагностика свѣта и подъёмъ слоёвъ прозрачности =====
+   Найдено: цифры №266 у хозяина не двинулись (покой 7-10%, наведеніе ~25%).
+   Двѣ вѣроятныя причины: (1) запеканie уголковъ не активировалось въ браузерѣ
+   (canvas подъ запретомъ, картинка не найдена, кэшъ) — тогда уголки живутъ на
+   прежнихъ drop-shadow; (2) пульсирующіе слои не подъяты композіторомъ —
+   прозрачность мѣняется каждый кадръ на главной нити, слои перерисовываются
+   (полоса поиска — ts-pulse — широка и дорога въ покоѣ при фокусѣ въ строкѣ).
+   Лѣканіе: бейджъ у штампа показываетъ статусъ запеканія и имя GPU
+   (SwiftShader/llvmpipe значатъ: ускореніе выключено); ?plain въ адресѣ
+   полностью гаситъ украшенія для чистаго сравненія; пульсирующим слоямъ
+   дано will-change: opacity — прозрачность уходитъ композітору, перерисовка
+   каждый кадръ болѣе не нужна. Видъ не мѣняется.
+   Остальное не тронуто: №266, №265, №264, №263, №261, №257, №255, №254 и ранее. */
+.tape-slot::after,
+.alphabet-bar::after,
+.tab.active::after { will-change: opacity; }
+.card-frame:hover .fr-corner::before,
+.card-frame:hover .fr-corner::after,
+.card-frame:hover .fr-line::before,
+.card-frame:hover .fr-line::after { will-change: opacity; }
+html.plain-267 .fr-corner::before, html.plain-267 .fr-corner::after,
+html.plain-267 .fr-line::before,  html.plain-267 .fr-line::after,
+html.plain-267 .tab.active::after, html.plain-267 .tape-slot::after,
+html.plain-267 .alphabet-bar::after { display: none !important; }
+html.plain-267 .letter.glow .well { animation: none !important; text-shadow: none !important; }
+html.plain-267 #s-tape.typing .s-shaker,
+html.plain-267 .tape-shaker { animation: none !important; }
+#bake-badge {
+  display: inline-block; vertical-align: middle;
+  margin-left: 10px; padding: 1px 8px;
+  font-size: 11px; letter-spacing: 0.04em;
+  color: rgba(212, 176, 106, 0.75);
+  border: 1px solid rgba(212, 176, 106, 0.25);
+  border-radius: 3px; opacity: 0.85;
+}
+</style>
+
 <!-- №154: перо возврата къ клавиатурѣ (введено въ №141) — всплываетъ при прокруткѣ снизу вверхъ,
      таетъ скольженіемъ вверхъ; въ №144 исправлено направленіе, въ №145 устранено морганье,
      въ №146 порогъ и инерція, въ №147 сглаженная инерція, въ №148 ходъ на композиторѣ,
@@ -6426,5 +6652,106 @@ body.light.telegraph-on .tab.active {
   window.addEventListener('resize', schedule);
 })();
 </script>
+
+<script id="glow266">
+/* ===== №266 — запеканie свѣтенія уголковъ =====
+   corner.png рисуется на canvas съ тѣнями (золото 4px и 14px, пламя 10px),
+   готовые картинки отдаются псевдослоямъ уголковъ; при отказѣ canvas
+   (локальный файлъ) уголки держатъ прежніе живые фильтры. */
+(function () {
+  function bake(img) {
+    try {
+      var u = 0.055, pad = 18;
+      var imgW = 1431 * u, imgH = 1398 * u, visW = 760 * u, visH = 760 * u;
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      // видимый фрагментъ рисунка — тотъ же, что показывалъ элементъ 760×760 * u
+      var crop = document.createElement('canvas');
+      crop.width = Math.ceil(visW * dpr);
+      crop.height = Math.ceil(visH * dpr);
+      var cx = crop.getContext('2d');
+      cx.drawImage(img,
+        0, 0, img.naturalWidth * (visW / imgW), img.naturalHeight * (visH / imgH),
+        0, 0, crop.width, crop.height);
+      var cw = Math.ceil((imgW + 2 * pad) * dpr), ch = Math.ceil((imgH + 2 * pad) * dpr);
+      function make(shadows) {
+        var c = document.createElement('canvas');
+        c.width = cw; c.height = ch;
+        var x = c.getContext('2d');
+        for (var k = 0; k < shadows.length; k++) {
+          x.shadowColor = shadows[k][1];
+          x.shadowBlur = shadows[k][0] * dpr;
+          x.drawImage(crop, pad * dpr, pad * dpr);
+        }
+        return c.toDataURL('image/png');
+      }
+      var gold = make([[4, 'rgba(212,176,106,0.8)'], [14, 'rgba(212,176,106,0.35)']]);
+      var flame = make([[10, 'rgba(240,150,60,0.55)']]);
+      var st = document.documentElement.style;
+      st.setProperty('--corner-gold', 'url("' + gold + '")');
+      st.setProperty('--corner-flame', 'url("' + flame + '")');
+      st.setProperty('--corner-pad', pad + 'px');
+      st.setProperty('--corner-pos', pad + 'px ' + pad + 'px');
+      st.setProperty('--corner-size', (imgW + 2 * pad).toFixed(2) + 'px ' + (imgH + 2 * pad).toFixed(2) + 'px');
+      document.documentElement.classList.add('corners-baked');
+      document.documentElement.setAttribute('data-bake', 'ok');
+    } catch (e) { document.documentElement.setAttribute('data-bake', 'fail'); }
+  }
+  function start() {
+    var img = new Image();
+    img.onload = function () { bake(img); };
+    img.onerror = function () { document.documentElement.setAttribute('data-bake', 'noimg'); };
+    img.src = 'images/corner.png';
+  }
+  if (document.readyState === 'complete') start();
+  else window.addEventListener('load', start);
+})();
+</script>
+
+
+<script id="diag267">
+/* ===== №267 — бейджъ диагностики: статусъ запеканія и GPU ===== */
+(function () {
+  var plain = /[?&#]plain/.test(location.search + ' ' + location.hash);
+  if (plain) document.documentElement.classList.add('plain-267');
+  var gpu = 'н/д', soft = false;
+  try {
+    var c = document.createElement('canvas');
+    var gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (gl) {
+      var ext = gl.getExtension('WEBGL_debug_renderer_info');
+      gpu = String(ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)
+                       : (gl.getParameter(gl.RENDERER) || 'н/д'));
+      soft = /swiftshader|llvmpipe|software|basic render/i.test(gpu);
+    }
+  } catch (e) {}
+  function text(bake) {
+    var t = '№267 · запеканie уголковъ: ' + bake;
+    if (plain) t += ' · режимъ БЕЗЪ украшеній';
+    return t + ' · GPU: ' + gpu + (soft ? ' (ускореніе выключено!)' : '');
+  }
+  function mount() {
+    var host = document.querySelector('.build-info');
+    if (!host) return;
+    var el = document.createElement('div');
+    el.id = 'bake-badge';
+    el.textContent = 'диагностика…';
+    host.appendChild(el);
+    var n = 0;
+    var iv = setInterval(function () {
+      var b = document.documentElement.getAttribute('data-bake');
+      if (b) {
+        clearInterval(iv);
+        el.textContent = text(b === 'ok' ? 'OK'
+          : (b === 'noimg' ? 'картинка не найдена' : 'живые фильтры'));
+        return;
+      }
+      if (++n > 26) { clearInterval(iv); el.textContent = text('не завершилось'); }
+    }, 300);
+  }
+  if (document.readyState === 'complete') mount();
+  else window.addEventListener('load', mount);
+})();
+</script>
+
 </body>
 </html>

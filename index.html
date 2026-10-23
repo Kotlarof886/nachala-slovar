@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 97. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №290, устаревшие слова">
+    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 98. Словарь устарѣвшихъ словъ.">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №291, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №290: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №291: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -556,6 +556,27 @@ html.tg-sliding { overflow: hidden !important; }   /* на время сколь
   }
 }
 
+
+/* ===== №290 — Мерцаніе пламени на сенсорѣ возвращено =====
+   Глушитель №283 (animation: none) задуманъ для фильтроваго пути,
+   когда каждый кадръ мерцанія пересчитывалъ до 40 фильтровыхъ слоёвъ.
+   Съ №286 въ рантаймѣ фильтровъ нѣтъ — пламя живётъ готовымъ спрайтомъ,
+   и мерцаніе снова дешево. Возвратъ тѣмъ же механизмомъ, что на ПК:
+   вѣчная анімація flicker вѣдётъ --c-flick на композиторѣ; въ покоѣ
+   пауза, при касаніи — running. Запасный фильтровый путь мерцаніе
+   не получаетъ — защита №283 сохранена. */
+@media (hover: none) and (pointer: coarse) {
+  html.glow-baked .card-frame .fr-corner::after,
+  html.glow-baked .card-frame .fr-line::after {
+    animation: flicker 2.6s ease-in-out infinite;
+    animation-play-state: paused;
+  }
+  html.glow-baked .card-frame:hover .fr-corner::after,
+  html.glow-baked .card-frame:hover .fr-line::after {
+    animation-play-state: running;
+  }
+}
+
 /* ===== №286 — Свѣчъ запечёнъ: спрайты вмѣсто фильтровъ =====
    Нагрузка: до 40 псевдослоёвъ съ drop-shadow на карточку растеризуются
    и портятся при перерисовкѣ содержанія. Лѣкарство: скриптъ №286 одинъ
@@ -589,27 +610,27 @@ html.glow-baked .fr-line::after {
   box-shadow: 0 0 10px rgba(240, 150, 60, 0.55);
 }
 
-/* ===== №290 — Мерцаніе пламени возвращено на сенсорѣ (въ запечённомъ пути) =====
-   Причина снятія (№283): фильтровые слои пересчитывались каждый кадръ.
-   Съ №286 фильтровъ въ рантаймѣ нѣтъ: мерцаніе вѣдётъ перемѣнную --c-flick
-   (@property) по готовому спрайту — цена кадровая мала. Специфичность
-   (html.glow-baked ...) старше тач-блока №283, его глушитель animation: none
-   перебитъ; запасный фильтровый путь мерцанія не получаетъ — защита №283
-   сохранена. Десктопъ не тронутъ (running остаётся у родного hover-правила,
-   перебитъ лишь въ большѣй специфичності — running вѣрнулъ). */
-html.glow-baked .card-frame .fr-corner::after,
-html.glow-baked .card-frame .fr-line::after,
-html.glow-baked .card-frame:hover .fr-corner::after,
-html.glow-baked .card-frame:hover .fr-line::after {
-  animation: flicker 2.6s ease-in-out infinite;
-  animation-play-state: paused;
+/* ===== №291 — Маски растворенія виньетокъ у краёвъ экрана =====
+   Ореолъ уголка тянется за карточку на 40px, а отступъ отъ края
+   экрана — 16px: на телефонахъ свѣтъ обрывался краемъ экрана.
+   Маска растворяетъ ореолъ въ нуль въ полосѣ передъ краемъ —
+   свѣтъ «доходитъ до конца» таяніемъ, а не обрывомъ. Повороты
+   уголковъ учтены: у tl/br наружная сторона экрана — локальная
+   лѣвая (тѣнь растиражирована въ поворотѣ), у tr/bl — локальная
+   верхняя. Рѣзка ореола въ горизонтали; вертикаль не тронута —
+   верхъ/низъ открываются прокруткой естественнымъ порядкомъ. */
+@media (max-width: 560px) {
+  html.glow-baked .fr-corner.tl::before, html.glow-baked .fr-corner.tl::after,
+  html.glow-baked .fr-corner.br::before, html.glow-baked .fr-corner.br::after {
+    -webkit-mask-image: linear-gradient(to right, transparent 0px, transparent 24px, #000 40px);
+            mask-image: linear-gradient(to right, transparent 0px, transparent 24px, #000 40px);
+  }
+  html.glow-baked .fr-corner.tr::before, html.glow-baked .fr-corner.tr::after,
+  html.glow-baked .fr-corner.bl::before, html.glow-baked .fr-corner.bl::after {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0px, transparent 24px, #000 40px);
+            mask-image: linear-gradient(to bottom, transparent 0px, transparent 24px, #000 40px);
+  }
 }
-html.glow-baked .card-frame:hover .fr-corner::after,
-html.glow-baked .card-frame:hover .fr-line::after {
-  animation-play-state: running;
-}
-/* страховка №290: если люфтъ живъ — горизонталь глушится на корнѣ */
-html.no-slack { overflow-x: clip !important; }
 
 .entry {
   margin-bottom: 0;
@@ -1145,6 +1166,8 @@ body.telegraph-on .build-info {
 }
 html, body { overflow-anchor: none; }   /* рожденіе и открытіе не сдвигаютъ прокрутку вверхъ */
 html { scrollbar-gutter: stable; overflow-x: hidden; overflow-x: clip; }      /* №289: горизонталь рѣжется на корнѣ — люфтъ снятъ */
+body { overflow-x: hidden; overflow-x: clip; }   /* №291: показанія мѣрителя №290 — body былъ open, телефонъ раздвигалъ страницу черезъ него */
+html.no-slack, body.no-slack { overflow-x: clip !important; }   /* страховка мѣрителя: при живомъ люфтѣ рѣзка вѣнчается важностью */
 body.telegraph-on .alphabet-bar { position: relative; z-index: 6; }  /* панель клавиатуры поверхъ столбца */
 body.telegraph-on #tg-plates { margin-top: -8px; padding-top: 12px; }   /* срезъ = нижняя рамка клавиатуры; зазоръ 12px — какъ меж плашками */
 .tgp-w {
@@ -3601,22 +3624,24 @@ function wxLine() {
    былъ невидимъ — потому и заметно лишь теперь); хвостъ тени ~32px
    обрѣзался краемъ холста. Лѣкарство: PAD 24→40 (спрайтовъ двѣ — память
    не страдаетъ), overflow-x: clip на html. Фильтровъ въ рантаймѣ нѣтъ. */
-/*
-===== №290 — Мерцаніе пламени возвращено на сенсорѣ; мѣритель люфта =====
-   Замѣчено: на телефонѣ рамки горѣли ровно, безъ дрожи, тогда какъ на
-   компьютерѣ пламя мерцало. Причина: глушитель animation: none въ тач-блокѣ —
-   наследіе №283, когда фильтровые слои пересчитывались каждый кадръ. Съ №286
-   фильтровъ въ рантаймѣ нѣтъ: мерцаніе вѣдётъ перемѣнную --c-flick (@property)
-   по готовому спрайту, цена кадровая мала. Лѣкарство: въ запечённомъ пути
-   мерцаніе возвращено тѣмъ же мѣханизмомъ, что на десктопѣ — пауза въ покоѣ,
-   running при касаніи; запасный фильтровый путь мерцанія не получаетъ,
-   защита №283 сохранена. Попутно: мѣритель люфта — золотая плашка при
-   загрузкѣ и на поворотѣ мѣряетъ горизонталь (scrollWidth, overflow, классъ
-   glow-baked, элементы за краемъ экрана) и пишеть въ консоль; страховка
-   no-slack глушитъ горизонталь на корнѣ при живомъ люфтѣ.
-   Остальное не тронуто: №289, №288, №287, №286, №285, №282, №281.
-*/
 
+   /* ===== №290 — Мерцаніе, маски, полоса-мѣритель =====
+      Вы правы: мерцаніе рамокъ было и пропало. Снятъ его тач-глушитель
+      №283 — тогда фильтры пересчитывались каждый кадръ; съ №286 фильтровъ
+      въ рантаймѣ нѣтъ, и мерцаніе возвращено тѣмъ же механизмомъ, что
+      на ПК: flicker вѣдётъ --c-flick на композиторѣ, въ покоѣ пауза,
+      при касаніи running — только въ запечённомъ пути; запасный
+      фильтровый путь мѣрцаніе не получаетъ. Маски растворяютъ ореолъ
+      виньетокъ у краёвъ экрана. Полоса-мѣритель внизу показала на
+      телефонѣ: люфтъ html 24px и body 24px. */
+   /* ===== №291 — Рѣзка на body, мѣритель v2 =====
+      Показанія №290 разобраны: overflowX html: clip, а body: visible —
+      документъ раздвигало черезъ открытый body; рѣзка поставлена на
+      оба корня, страховка no-slack вѣнчается важностью. Мѣритель v2
+      мѣряетъ настоящую прокрутку (scrollTo) и молчитъ на здоровой
+      страницѣ; ложныя тревоги клипующихся лентъ отфильтрованы
+      проверкой предковъ. Ореолъ растворяется въ полосѣ 24px передъ
+      краемъ экрана — виньетки больше не обрываются. */
 
 /*
 ===== №281 — Возвратъ къ основѣ №264; отводъ фокуса въ возвращеніи =====
@@ -5590,7 +5615,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 290</div>
+<div class="build-info">Сшивъ № 291</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -6346,22 +6371,24 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
    былъ невидимъ — потому и заметно лишь теперь); хвостъ тени ~32px
    обрѣзался краемъ холста. Лѣкарство: PAD 24→40 (спрайтовъ двѣ — память
    не страдаетъ), overflow-x: clip на html. Фильтровъ въ рантаймѣ нѣтъ. */
-/*
-===== №290 — Мерцаніе пламени возвращено на сенсорѣ; мѣритель люфта =====
-   Замѣчено: на телефонѣ рамки горѣли ровно, безъ дрожи, тогда какъ на
-   компьютерѣ пламя мерцало. Причина: глушитель animation: none въ тач-блокѣ —
-   наследіе №283, когда фильтровые слои пересчитывались каждый кадръ. Съ №286
-   фильтровъ въ рантаймѣ нѣтъ: мерцаніе вѣдётъ перемѣнную --c-flick (@property)
-   по готовому спрайту, цена кадровая мала. Лѣкарство: въ запечённомъ пути
-   мерцаніе возвращено тѣмъ же мѣханизмомъ, что на десктопѣ — пауза въ покоѣ,
-   running при касаніи; запасный фильтровый путь мерцанія не получаетъ,
-   защита №283 сохранена. Попутно: мѣритель люфта — золотая плашка при
-   загрузкѣ и на поворотѣ мѣряетъ горизонталь (scrollWidth, overflow, классъ
-   glow-baked, элементы за краемъ экрана) и пишеть въ консоль; страховка
-   no-slack глушитъ горизонталь на корнѣ при живомъ люфтѣ.
-   Остальное не тронуто: №289, №288, №287, №286, №285, №282, №281.
-*/
 
+   /* ===== №290 — Мерцаніе, маски, полоса-мѣритель =====
+      Вы правы: мерцаніе рамокъ было и пропало. Снятъ его тач-глушитель
+      №283 — тогда фильтры пересчитывались каждый кадръ; съ №286 фильтровъ
+      въ рантаймѣ нѣтъ, и мерцаніе возвращено тѣмъ же механизмомъ, что
+      на ПК: flicker вѣдётъ --c-flick на композиторѣ, въ покоѣ пауза,
+      при касаніи running — только въ запечённомъ пути; запасный
+      фильтровый путь мѣрцаніе не получаетъ. Маски растворяютъ ореолъ
+      виньетокъ у краёвъ экрана. Полоса-мѣритель внизу показала на
+      телефонѣ: люфтъ html 24px и body 24px. */
+   /* ===== №291 — Рѣзка на body, мѣритель v2 =====
+      Показанія №290 разобраны: overflowX html: clip, а body: visible —
+      документъ раздвигало черезъ открытый body; рѣзка поставлена на
+      оба корня, страховка no-slack вѣнчается важностью. Мѣритель v2
+      мѣряетъ настоящую прокрутку (scrollTo) и молчитъ на здоровой
+      страницѣ; ложныя тревоги клипующихся лентъ отфильтрованы
+      проверкой предковъ. Ореолъ растворяется въ полосѣ 24px передъ
+      краемъ экрана — виньетки больше не обрываются. */
 
 /*
 ===== №281 — Возвратъ къ основѣ №264; отводъ фокуса въ возвращеніи =====
@@ -6893,57 +6920,44 @@ window.addEventListener('error', function (e) {
 </script>
 
 <script>
-/* №290 — мѣритель люфта. Мѣряетъ при загрузкѣ и на поворотѣ: люфтъ html/body,
-   computed overflow, классъ glow-baked, элементы за краемъ экрана; отчёт —
-   золотая плашка (тапомъ гасится) и консоль. При живомъ люфтѣ — no-slack. */
-(function () {
-  function measure() {
-    var d = document, h = d.documentElement, b = d.body;
-    if (!h || !b) return;
-    var vw = h.clientWidth;
-    var hs = h.scrollWidth - h.clientWidth, bs = b.scrollWidth - b.clientWidth;
-    var wide = [];
+/* №291 — мѣритель v2: мѣряетъ настоящую прокрутку; молчитъ на здоровой страницѣ */
+(function(){
+  function run(){
     try {
-      var all = d.querySelectorAll('body *');
-      for (var i = 0; i < all.length; i++) {
+      var h = document.documentElement, b = document.body;
+      var y = window.pageYOffset || 0;
+      window.scrollTo(60, y);
+      var scrolled = (window.pageXOffset || 0) > 0;
+      window.scrollTo(0, y);
+      if (!scrolled) return;
+      h.classList.add('no-slack'); b.classList.add('no-slack');
+      var vw = h.clientWidth, out = [], n = 0;
+      var all = document.querySelectorAll('body *');
+      for (var i = 0; i < all.length && n < 5; i++) {
         var el = all[i], r = el.getBoundingClientRect();
-        if (r.right > vw + 1 && wide.length < 5) {
-          var nm = (el.className && el.className.baseVal === undefined) ? String(el.className) : el.tagName;
-          wide.push((nm || el.tagName) + '+' + Math.round(r.right - vw) + 'px');
+        if (r.right > vw + 1) {
+          var p = el, clipped = false;
+          while (p && p !== h) {
+            var ox = getComputedStyle(p).overflowX;
+            if (ox === 'hidden' || ox === 'clip' || ox === 'auto' || ox === 'scroll') { clipped = true; break; }
+            p = p.parentElement;
+          }
+          if (!clipped) { out.push(el.tagName + '+' + Math.round(r.right - vw)); n++; }
         }
       }
-    } catch (e) {}
-    var m = (b.textContent.match(/Сшивъ № ?\d+/) || ['нѣтъ'])[0];
-    var rep = '[№290] ' + m +
-      '; люфтъ html: ' + hs + 'px, body: ' + bs + 'px' +
-      '; overflowX html: ' + getComputedStyle(h).overflowX +
-      ', body: ' + getComputedStyle(b).overflowX +
-      '; glow-baked: ' + h.classList.contains('glow-baked') +
-      '; тачъ: ' + (window.matchMedia('(hover: none) and (pointer: coarse)').matches) +
-      '; за краемъ: ' + (wide.length ? wide.join(' | ') : 'нѣтъ');
-    console.log(rep);
-    if (hs > 0 || bs > 0) {
-      h.classList.add('no-slack');
-      setTimeout(function () { report(rep, 30000); }, 0);
-    } else {
-      report(rep, 12000);
-    }
+      var msg = '[№291] сшивъ №291; прокрутка въправо: ЕСТЬ; за краемъ (безъ рѣжущихъ предковъ): ' + (out.join(' | ') || 'нѣтъ') + '; overflowX html: ' + getComputedStyle(h).overflowX + ', body: ' + getComputedStyle(b).overflowX;
+      var bar = document.createElement('div');
+      bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:2147483647;background:#3d3416;color:#f0dfae;font:12px/1.5 monospace;padding:10px 12px;white-space:pre-wrap;word-break:break-all;box-shadow:0 -2px 8px rgba(0,0,0,.6)';
+      bar.textContent = msg;
+      document.body.appendChild(bar);
+      console.warn(msg);
+      var kill = function(){ if (bar.parentNode) bar.parentNode.removeChild(bar); };
+      bar.addEventListener('click', kill);
+      setTimeout(kill, 30000);
+    } catch(e) { if (window.console) console.warn('мѣритель:', e); }
   }
-  function report(text, ms) {
-    var el = document.getElementById('audit-banner');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'audit-banner';
-      el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99998;background:#3d2f10;color:#f3e2b6;font:12px/1.5 monospace;padding:8px 12px;word-break:break-all;';
-      (document.body || document.documentElement).appendChild(el);
-      el.addEventListener('click', function () { el.remove(); });
-    }
-    el.textContent = text;
-    clearTimeout(el._t);
-    el._t = setTimeout(function () { el.remove(); }, ms);
-  }
-  window.addEventListener('load', function () { setTimeout(measure, 1200); });
-  window.addEventListener('resize', function () { setTimeout(measure, 300); });
+  if (document.readyState === 'complete') setTimeout(run, 800);
+  else window.addEventListener('load', function(){ setTimeout(run, 800); });
 })();
 </script>
 </body>

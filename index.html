@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 88. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №281, устаревшие слова">
+    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 89. Словарь устарѣвшихъ словъ.">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №282, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №281: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №282: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -3418,6 +3418,19 @@ function wxLine() {
    однократная переотрисовка панели (opacity 0.999 → 1). Рисунокъ и откликъ
    клавишъ не мѣнены; №263 цѣлъ цѣликомъ.
    Остальное не тронуто: №263, №261, №257, №255, №254 и ранее. */
+/* ===== №282 — Миниатюра с явными мѣрами; справка встаётъ точечно =====
+   Замѣчено: при касаніи кнопки «Уточнить у адъютантовъ» мигаютъ правые углы
+   рамокъ, чаще всего — у карточекъ, что сейчас на экранѣ. Причина найдена:
+   миниатюра изъ Википедіи плыветъ (float:right) безъ явныхъ мѣровъ — покуда
+   она не загрузилась, текстъ занимает всю ширину, а по её приходѣ правая
+   сторона перекладывается, карточка перерисовывается, и слои свеченія
+   уголковъ перерастровываются — правые углы вспыхиваютъ. Слѣдом — полный
+   пересбор слота (live.innerHTML = slotInner(w)) после прихода справки.
+   Лѣкарство: мѣры 120×90 с обрезкой у миниатюры — мѣсто подъ неё занято
+   до загрузки; справка встаётъ точечно (заменяется лишь блокъ «Краткая
+   справка» по мѣткѣ wiki-block), слотъ и карточка не пересобираются.
+   Остальное не тронуто: №281 и всѣ ранѣе.
+*/
 /*
 ===== №281 — Возвратъ къ основѣ №264; отводъ фокуса въ возвращеніи =====
    Замѣчено: серія №277–№280 не дала тишины: миганіе текста и рамокъ осталось,
@@ -4099,17 +4112,21 @@ function slotInner(w) {
   if (!rec) return '';
   var wm = toModern(w);
   var html = rec.links || '';
-  if (rec.busy) html += '<div class="src-block"><h4>Краткая справка</h4><p class="loading">Ищу…</p></div>';
-  else if (rec.wiki === 'miss') html += '<div class="src-block"><h4>Краткая справка</h4><p class="empty">Въ словарѣ Брокгауза и Ефрона такой статьи нѣтъ. Разысканія выше по-прежнему живы.</p></div>';
-  else if (rec.wiki === 'err') html += '<div class="src-block"><h4>Краткая справка</h4><p class="empty">Эфиръ глухъ — въ этотъ мигъ отвѣта не дождались. Повторите попытку; разысканія выше всегда живы.</p></div>';
-  else if (rec.wiki) {
-    var r = rec.wiki, whtml = '';
-    if (r.th) whtml += '<img src="' + r.th + '" style="float:right;max-width:120px;margin:0 0 8px 12px;border-radius:6px;">';
-    whtml += '<p>' + escapeHtml(r.ex) + '</p>';
-    if (r.url) whtml += '<p><a href="' + r.url + '" target="_blank" rel="noopener">Читать в Википедии</a></p>';
-    html += '<div class="src-block"><h4>Краткая справка</h4>' + whtml + '</div>';
-  }
+  if (rec.busy) html += '<div class="src-block wiki-block"><h4>Краткая справка</h4><p class="loading">Ищу…</p></div>';
+  else if (rec.wiki === 'miss') html += wikiBlockHtml('miss');
+  else if (rec.wiki === 'err') html += wikiBlockHtml('err');
+  else if (rec.wiki) html += wikiBlockHtml(rec.wiki);
   return html;
+}
+/* Сшивъ №282: справка строится одним хелпером — у миниатюры явные мѣры, переливки при загрузкѣ нетъ */
+function wikiBlockHtml(rec) {
+  if (rec === 'miss') return '<div class="src-block wiki-block"><h4>Краткая справка</h4><p class="empty">Въ словарѣ Брокгауза и Ефрона такой статьи нѣтъ. Разысканія выше по-прежнему живы.</p></div>';
+  if (rec === 'err') return '<div class="src-block wiki-block"><h4>Краткая справка</h4><p class="empty">Эфиръ глухъ — въ этотъ мигъ отвѣта не дождались. Повторите попытку; разысканія выше всегда живы.</p></div>';
+  var r = rec, whtml = '';
+  if (r.th) whtml += '<img src="' + r.th + '" style="float:right;width:120px;height:90px;object-fit:cover;margin:0 0 8px 12px;border-radius:6px;">';
+  whtml += '<p>' + escapeHtml(r.ex) + '</p>';
+  if (r.url) whtml += '<p><a href="' + r.url + '" target="_blank" rel="noopener">Читать в Википедии</a></p>';
+  return '<div class="src-block wiki-block"><h4>Краткая справка</h4>' + whtml + '</div>';
 }
 function liveSlotByWord(w) {
   var slots = document.querySelectorAll('.online-results[data-w]');
@@ -4133,7 +4150,7 @@ function bindButtons(out, list) {
         + '</ul></div>';
       _slotCache.set(w, { links: slot.innerHTML, wiki: null, busy: true });   /* разысканія переживаютъ пересборку */
       const wikiBlock = document.createElement('div');
-      wikiBlock.className = 'src-block';
+      wikiBlock.className = 'src-block wiki-block';
       wikiBlock.innerHTML = '<h4>Краткая справка</h4><p class="loading">Ищу…</p>';
       slot.appendChild(wikiBlock);
       const cache = window._wikiCache || (window._wikiCache = new Map());
@@ -4156,13 +4173,21 @@ function bindButtons(out, list) {
         if (!entry) return;   /* слотъ закрыли, пока шла справка — не воскресаемъ */
         entry.wiki = rec; entry.busy = false;
         const live = liveSlotByWord(w);
-        if (live) live.innerHTML = slotInner(w);   /* справка встаётъ въ живую карточку */
+        if (live) {
+          const blk = live.querySelector('.wiki-block');
+          if (blk) blk.outerHTML = wikiBlockHtml(entry.wiki);   /* Сшивъ №282: справка встаётъ точечно — слотъ не пересобирается */
+          else live.innerHTML = slotInner(w);   /* запасная ветка — слотъ пересобрали, покуда шла справка */
+        }
       } catch (e) {
         const entry = _slotCache.get(w);
         if (!entry) return;
         entry.wiki = 'err'; entry.busy = false;
         const live = liveSlotByWord(w);
-        if (live) live.innerHTML = slotInner(w);
+        if (live) {
+          const blk = live.querySelector('.wiki-block');
+          if (blk) blk.outerHTML = wikiBlockHtml(entry.wiki);   /* Сшивъ №282: справка встаётъ точечно — слотъ не пересобирается */
+          else live.innerHTML = slotInner(w);
+        }
       }
     });
   });
@@ -5378,7 +5403,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 281</div>
+<div class="build-info">Сшивъ № 282</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -6043,6 +6068,19 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
    однократная переотрисовка панели (opacity 0.999 → 1). Рисунокъ и откликъ
    клавишъ не мѣнены; №263 цѣлъ цѣликомъ.
    Остальное не тронуто: №263, №261, №257, №255, №254 и ранее. */
+/* ===== №282 — Миниатюра с явными мѣрами; справка встаётъ точечно =====
+   Замѣчено: при касаніи кнопки «Уточнить у адъютантовъ» мигаютъ правые углы
+   рамокъ, чаще всего — у карточекъ, что сейчас на экранѣ. Причина найдена:
+   миниатюра изъ Википедіи плыветъ (float:right) безъ явныхъ мѣровъ — покуда
+   она не загрузилась, текстъ занимает всю ширину, а по её приходѣ правая
+   сторона перекладывается, карточка перерисовывается, и слои свеченія
+   уголковъ перерастровываются — правые углы вспыхиваютъ. Слѣдом — полный
+   пересбор слота (live.innerHTML = slotInner(w)) после прихода справки.
+   Лѣкарство: мѣры 120×90 с обрезкой у миниатюры — мѣсто подъ неё занято
+   до загрузки; справка встаётъ точечно (заменяется лишь блокъ «Краткая
+   справка» по мѣткѣ wiki-block), слотъ и карточка не пересобираются.
+   Остальное не тронуто: №281 и всѣ ранѣе.
+*/
 /*
 ===== №281 — Возвратъ къ основѣ №264; отводъ фокуса въ возвращеніи =====
    Замѣчено: серія №277–№280 не дала тишины: миганіе текста и рамокъ осталось,

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 92. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №285, устаревшие слова">
+    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 93. Словарь устарѣвшихъ словъ.">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №286, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №285: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №286: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -550,6 +550,40 @@ html.tg-sliding { overflow: hidden !important; }   /* на время сколь
     transform: translateZ(0);
   }
 }
+
+/* ===== №286 — Свѣчъ запечёнъ: спрайты вмѣсто фильтровъ =====
+   Нагрузка: до 40 псевдослоёвъ съ drop-shadow на карточку растеризуются
+   и портятся при перерисовкѣ содержанія. Лѣкарство: скриптъ №286 одинъ
+   разъ при загрузкѣ вычисляетъ на холстѣ точную копію результата фильтровъ
+   (золото — тень отъ тени двумя проходами, пламя — оранжевый ореолъ) и
+   выдаётъ готовые спрайты въ перемѣнныя --c-glow-spr и --c-flame-spr;
+   классъ html.glow-baked переводитъ уголки на спрайты, а линіи на
+   box-shadow (тождественно drop-shadow для сплошныхъ полосъ). Въ рантаймѣ
+   не остаётся ни одного фильтра свѣта — растеризовать нечего, порча
+   растровъ исчезаетъ какъ классъ. Пока классъ не поставленъ (картинка не
+   загрузилась, холстъ непрочитываемъ), работаютъ прежніе фильтры —
+   запасный путь №285. Лёгкій режимъ старше по каскаду и гаситъ слои
+   какъ прежде. Остальное не тронуто: №282, №281 и всѣ ранѣе. */
+html.glow-baked .fr-corner::before,
+html.glow-baked .fr-corner::after {
+  background: var(--c-glow-spr) 0 0 / var(--c-spr-size, 127px 125px) no-repeat;
+  inset: calc(-1 * var(--c-spr-pad, 24px));   /* запасъ подъ ореолъ */
+  filter: none;
+}
+html.glow-baked .fr-corner::after {
+  background: var(--c-flame-spr) 0 0 / var(--c-spr-size, 127px 125px) no-repeat;
+}
+html.glow-baked .fr-line::before {
+  filter: none;
+  box-shadow: 0 0 4px rgba(212, 176, 106, 0.8),
+              0 0 14px rgba(212, 176, 106, 0.35),
+              0 0 14.6px rgba(212, 176, 106, 0.28);   /* тень отъ тени */
+}
+html.glow-baked .fr-line::after {
+  filter: none;
+  box-shadow: 0 0 10px rgba(240, 150, 60, 0.55);
+}
+
 .entry {
   margin-bottom: 0;
 }
@@ -3503,6 +3537,20 @@ function wxLine() {
    не тронутъ. Остальное не тронуто: №282, №281 и всѣ ранѣе.
 */
 /*
+===== №286 — Свѣчъ запечёнъ: спрайты вмѣсто фильтровъ =====
+   Урокъ №285 не далъ покоя: слои изолированы, но до 40 псевдослоёвъ съ
+   drop-shadow на карточку всё ещё растеризуются и портятся при перерисовкѣ.
+   Лѣкарство: скриптъ №286 одинъ разъ при загрузкѣ вычисляетъ на холстѣ
+   точную копію результата фильтровъ (золото — тень отъ тени двумя проходами,
+   пламя — оранжевый ореолъ) и выдаётъ готовые спрайты въ перемѣнныя
+   --c-glow-spr и --c-flame-spr; классъ glow-baked переводитъ уголки на
+   спрайты, а линіи на box-shadow (тождественно drop-shadow для сплошныхъ
+   полосъ). Въ рантаймѣ не остаётся ни одного фильтра свѣта — порча растровъ
+   исчезаетъ какъ классъ. Запасъ: пока спрайты не готовы, работаютъ прежніе
+   фильтры №285. Лёгкій режимъ старше по каскаду и гаситъ слои какъ прежде.
+   Остальное не тронуто: №282, №281 и всѣ ранѣе.
+*/
+/*
 ===== №281 — Возвратъ къ основѣ №264; отводъ фокуса въ возвращеніи =====
    Замѣчено: серія №277–№280 не дала тишины: миганіе текста и рамокъ осталось,
    а свѣтъ уголковъ былъ поврежденъ (№278/№279). Веденіе смѣнилось: за основу
@@ -5474,7 +5522,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 285</div>
+<div class="build-info">Сшивъ № 286</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -6193,6 +6241,20 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
    не тронутъ. Остальное не тронуто: №282, №281 и всѣ ранѣе.
 */
 /*
+===== №286 — Свѣчъ запечёнъ: спрайты вмѣсто фильтровъ =====
+   Урокъ №285 не далъ покоя: слои изолированы, но до 40 псевдослоёвъ съ
+   drop-shadow на карточку всё ещё растеризуются и портятся при перерисовкѣ.
+   Лѣкарство: скриптъ №286 одинъ разъ при загрузкѣ вычисляетъ на холстѣ
+   точную копію результата фильтровъ (золото — тень отъ тени двумя проходами,
+   пламя — оранжевый ореолъ) и выдаётъ готовые спрайты въ перемѣнныя
+   --c-glow-spr и --c-flame-spr; классъ glow-baked переводитъ уголки на
+   спрайты, а линіи на box-shadow (тождественно drop-shadow для сплошныхъ
+   полосъ). Въ рантаймѣ не остаётся ни одного фильтра свѣта — порча растровъ
+   исчезаетъ какъ классъ. Запасъ: пока спрайты не готовы, работаютъ прежніе
+   фильтры №285. Лёгкій режимъ старше по каскаду и гаситъ слои какъ прежде.
+   Остальное не тронуто: №282, №281 и всѣ ранѣе.
+*/
+/*
 ===== №281 — Возвратъ къ основѣ №264; отводъ фокуса въ возвращеніи =====
    Замѣчено: серія №277–№280 не дала тишины: миганіе текста и рамокъ осталось,
    а свѣтъ уголковъ былъ поврежденъ (№278/№279). Веденіе смѣнилось: за основу
@@ -6622,6 +6684,64 @@ body.light.telegraph-on .tab.active {
     var y = window.pageYOffset || document.documentElement.scrollTop || 0;
     if (Math.abs(y - anchorY) > 150) { armed = false; window.kbDismissNative(); }
   }, { passive: true, capture: true });
+})();
+</script>
+<script>
+/* №286 — Свѣчъ запечёнъ: спрайты вмѣсто фильтровъ. Одинъ разъ при загрузкѣ
+   вычисляемъ на холстѣ точную копію того, что раньше рисовали фильтры
+   drop-shadow, и выдаёмъ готовые спрайты въ перемѣнныя --c-glow-spr и
+   --c-flame-spr; классъ glow-baked переводитъ уголки на спрайты, линіи —
+   на box-shadow. Въ рантаймѣ не остаётся ни одного фильтра свѣта. Если
+   картинка не загрузилась или холстъ непрочитываемъ (file://) — классъ
+   не ставится и работаетъ запасный фильтровый путь №285. */
+(function () {
+  'use strict';
+  var U = 0.055, PAD = 24;
+  var GW = 'rgba(212, 176, 106, 0.8)', GW2 = 'rgba(212, 176, 106, 0.35)';
+  var FL = 'rgba(240, 150, 60, 0.55)';
+  var test = document.createElement('canvas').getContext('2d');
+  if (typeof test.filter === 'undefined') return;   /* фильтровъ на холстѣ нетъ — запасъ №285 */
+  var img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = function () { try { apply(); } catch (e) { /* запасъ №285 */ } };
+  img.onerror = function () { /* запасъ №285 */ };
+  img.src = 'images/corner.png';
+  function apply() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 3);
+    var w = U * 1431, h = U * 1398;                 /* масштабъ узора, какъ въ CSS */
+    var padDev = Math.round(PAD * dpr);
+    var Wd = Math.ceil(w * dpr) + padDev * 2;
+    var Hd = Math.ceil(h * dpr) + padDev * 2;
+    /* золото: тень отъ тени — два прохода; пламя: одинъ */
+    var g1 = document.createElement('canvas');
+    g1.width = Wd; g1.height = Hd;
+    var x1 = g1.getContext('2d');
+    x1.imageSmoothingQuality = 'high';
+    x1.filter = 'drop-shadow(0 0 4px ' + GW + ')';
+    x1.drawImage(img, padDev, padDev, w * dpr, h * dpr);
+    var g2 = document.createElement('canvas');
+    g2.width = Wd; g2.height = Hd;
+    var x2 = g2.getContext('2d');
+    x2.imageSmoothingQuality = 'high';
+    x2.filter = 'drop-shadow(0 0 14px ' + GW2 + ')';
+    x2.drawImage(g1, 0, 0);
+    var fl = document.createElement('canvas');
+    fl.width = Wd; fl.height = Hd;
+    var xf = fl.getContext('2d');
+    xf.imageSmoothingQuality = 'high';
+    xf.filter = 'drop-shadow(0 0 10px ' + FL + ')';
+    xf.drawImage(img, padDev, padDev, w * dpr, h * dpr);
+    try {                                            /* холсты должны быть прочтаемы */
+      g2.getContext('2d').getImageData(0, 0, 1, 1);
+      fl.getContext('2d').getImageData(0, 0, 1, 1);
+    } catch (e) { return; }                          /* запасъ №285 */
+    var st = document.documentElement.style;
+    st.setProperty('--c-glow-spr', 'url("' + g2.toDataURL('image/png') + '")');
+    st.setProperty('--c-flame-spr', 'url("' + fl.toDataURL('image/png') + '")');
+    st.setProperty('--c-spr-size', (Wd / dpr).toFixed(2) + 'px ' + (Hd / dpr).toFixed(2) + 'px');
+    st.setProperty('--c-spr-pad', (padDev / dpr) + 'px');
+    document.documentElement.classList.add('glow-baked');
+  }
 })();
 </script>
 </body>

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 93. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №286, устаревшие слова">
+    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 95. Словарь устарѣвшихъ словъ.">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №288, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №286: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №288: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -566,12 +566,12 @@ html.tg-sliding { overflow: hidden !important; }   /* на время сколь
    какъ прежде. Остальное не тронуто: №282, №281 и всѣ ранѣе. */
 html.glow-baked .fr-corner::before,
 html.glow-baked .fr-corner::after {
-  background: var(--c-glow-spr) 0 0 / var(--c-spr-size, 127px 125px) no-repeat;
-  inset: calc(-1 * var(--c-spr-pad, 24px));   /* запасъ подъ ореолъ */
+  background: var(--c-glow-spr) 0 0 / var(--c-spr-size, 89.8px 89.8px) no-repeat;
+  inset: calc(-1 * var(--c-spr-pad, 24px));   /* запасъ подъ ореолъ; №288: спрайтъ = элементъ + два запаса */
   filter: none;
 }
 html.glow-baked .fr-corner::after {
-  background: var(--c-flame-spr) 0 0 / var(--c-spr-size, 127px 125px) no-repeat;
+  background: var(--c-flame-spr) 0 0 / var(--c-spr-size, 89.8px 89.8px) no-repeat;
 }
 html.glow-baked .fr-line::before {
   filter: none;
@@ -3551,6 +3551,21 @@ function wxLine() {
    Остальное не тронуто: №282, №281 и всѣ ранѣе.
 */
 /*
+===== №287 — Обрѣзокъ узора въ спрайтѣ =====
+   Замѣчено: на телефонѣ углы горятъ ярче и длиннѣе линій рамки.
+   Причина въ №286: спрайт пёкся изъ полнаго узора corner.png, а элементъ
+   уголка (41,8×41,8) показываетъ лишь левый-верхній обрѣзокъ 760×760
+   исходника; въ запасномъ фильтровомъ пути ::before былъ inset:0 и
+   обрезался рамкой элемента, а спрайтовый путь съ inset −24 открылъ
+   полосу узора шириной 24px за рамкой уголка — да ещё с ореоломъ,
+   испечённымъ вокругъ разросшейся формы. №287: печёмъ ровно видимую
+   часть (drawImage съ обрѣзкомъ 0,0,760,760), мѣры спрайта 89,8×89,8.
+   Геометрія совпадаетъ съ фильтровымъ путёмъ до пикселя; линіи (box-shadow)
+   были верны и не тронуты. Остальное не тронуто: №286, №285, №282, №281.
+*/
+
+/* ===== №288 — починка №287. Летопись №287 была вписана съ замороженными переносами; послѣ закрытія комментаторскаго знака въ живомъ кодѣ оставался одинокій обратный слэшъ — мгновенный SyntaxError, весь главный скриптъ не исполнялся: словарь не обрабатывался, карточки и машинный клавиатурный рядъ не строились. Переносы переписаны настоящими. Въ живомъ кодѣ поставлены ловецъ ошибокъ (первая ошибка является на экранѣ) и сторожъ словаря (безъ ENTRIES на страницѣ является внятная плашка, а не пустота). Файлъ проверять вмѣстѣ съ файлами-спутниками: words.js, news.js, rugatelstva.js, папка images. */
+/*
 ===== №281 — Возвратъ къ основѣ №264; отводъ фокуса въ возвращеніи =====
    Замѣчено: серія №277–№280 не дала тишины: миганіе текста и рамокъ осталось,
    а свѣтъ уголковъ былъ поврежденъ (№278/№279). Веденіе смѣнилось: за основу
@@ -5522,7 +5537,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 286</div>
+<div class="build-info">Сшивъ № 288</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -6255,6 +6270,21 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
    Остальное не тронуто: №282, №281 и всѣ ранѣе.
 */
 /*
+===== №287 — Обрѣзокъ узора въ спрайтѣ =====
+   Замѣчено: на телефонѣ углы горятъ ярче и длиннѣе линій рамки.
+   Причина въ №286: спрайт пёкся изъ полнаго узора corner.png, а элементъ
+   уголка (41,8×41,8) показываетъ лишь левый-верхній обрѣзокъ 760×760
+   исходника; въ запасномъ фильтровомъ пути ::before былъ inset:0 и
+   обрезался рамкой элемента, а спрайтовый путь съ inset −24 открылъ
+   полосу узора шириной 24px за рамкой уголка — да ещё с ореоломъ,
+   испечённымъ вокругъ разросшейся формы. №287: печёмъ ровно видимую
+   часть (drawImage съ обрѣзкомъ 0,0,760,760), мѣры спрайта 89,8×89,8.
+   Геометрія совпадаетъ съ фильтровымъ путёмъ до пикселя; линіи (box-shadow)
+   были верны и не тронуты. Остальное не тронуто: №286, №285, №282, №281.
+*/
+
+/* ===== №288 — починка №287. Летопись №287 была вписана съ замороженными переносами; послѣ закрытія комментаторскаго знака въ живомъ кодѣ оставался одинокій обратный слэшъ — мгновенный SyntaxError, весь главный скриптъ не исполнялся: словарь не обрабатывался, карточки и машинный клавиатурный рядъ не строились. Переносы переписаны настоящими. Въ живомъ кодѣ поставлены ловецъ ошибокъ (первая ошибка является на экранѣ) и сторожъ словаря (безъ ENTRIES на страницѣ является внятная плашка, а не пустота). Файлъ проверять вмѣстѣ съ файлами-спутниками: words.js, news.js, rugatelstva.js, папка images. */
+/*
 ===== №281 — Возвратъ къ основѣ №264; отводъ фокуса въ возвращеніи =====
    Замѣчено: серія №277–№280 не дала тишины: миганіе текста и рамокъ осталось,
    а свѣтъ уголковъ былъ поврежденъ (№278/№279). Веденіе смѣнилось: за основу
@@ -6693,10 +6723,14 @@ body.light.telegraph-on .tab.active {
    --c-flame-spr; классъ glow-baked переводитъ уголки на спрайты, линіи —
    на box-shadow. Въ рантаймѣ не остаётся ни одного фильтра свѣта. Если
    картинка не загрузилась или холстъ непрочитываемъ (file://) — классъ
-   не ставится и работаетъ запасный фильтровый путь №285. */
+   не ставится и работаетъ запасный фильтровый путь №285.
+   №287 — запечёнъ ОБРѢЗОКЪ узора: элементъ уголка (41,8×41,8) показываетъ
+   лишь левый-верхній кусокъ узора 760×760 исходника; прежній спрайт нёсъ
+   весь узоръ, и inset −24 открывалъ полосу за рамкой уголка — углы горѣли
+   ярче и длиннѣе линій. Теперъ печётся ровно видимая часть, с ореоломъ. */
 (function () {
   'use strict';
-  var U = 0.055, PAD = 24;
+  var U = 0.055, PAD = 24, EW = U * 760;   /* элементъ уголка 41.8×41.8; №287 */
   var GW = 'rgba(212, 176, 106, 0.8)', GW2 = 'rgba(212, 176, 106, 0.35)';
   var FL = 'rgba(240, 150, 60, 0.55)';
   var test = document.createElement('canvas').getContext('2d');
@@ -6708,17 +6742,17 @@ body.light.telegraph-on .tab.active {
   img.src = 'images/corner.png';
   function apply() {
     var dpr = Math.min(window.devicePixelRatio || 1, 3);
-    var w = U * 1431, h = U * 1398;                 /* масштабъ узора, какъ въ CSS */
+    /* №287: элементъ видитъ только обрѣзокъ 760×760 исходника — пекёмъ его */
     var padDev = Math.round(PAD * dpr);
-    var Wd = Math.ceil(w * dpr) + padDev * 2;
-    var Hd = Math.ceil(h * dpr) + padDev * 2;
+    var Wd = Math.ceil(EW * dpr) + padDev * 2;
+    var Hd = Wd;
     /* золото: тень отъ тени — два прохода; пламя: одинъ */
     var g1 = document.createElement('canvas');
     g1.width = Wd; g1.height = Hd;
     var x1 = g1.getContext('2d');
     x1.imageSmoothingQuality = 'high';
     x1.filter = 'drop-shadow(0 0 4px ' + GW + ')';
-    x1.drawImage(img, padDev, padDev, w * dpr, h * dpr);
+    x1.drawImage(img, 0, 0, 760, 760, padDev, padDev, EW * dpr, EW * dpr);   /* №287: обрѣзокъ */
     var g2 = document.createElement('canvas');
     g2.width = Wd; g2.height = Hd;
     var x2 = g2.getContext('2d');
@@ -6730,7 +6764,7 @@ body.light.telegraph-on .tab.active {
     var xf = fl.getContext('2d');
     xf.imageSmoothingQuality = 'high';
     xf.filter = 'drop-shadow(0 0 10px ' + FL + ')';
-    xf.drawImage(img, padDev, padDev, w * dpr, h * dpr);
+    xf.drawImage(img, 0, 0, 760, 760, padDev, padDev, EW * dpr, EW * dpr);   /* №287: обрѣзокъ */
     try {                                            /* холсты должны быть прочтаемы */
       g2.getContext('2d').getImageData(0, 0, 1, 1);
       fl.getContext('2d').getImageData(0, 0, 1, 1);
@@ -6742,6 +6776,36 @@ body.light.telegraph-on .tab.active {
     st.setProperty('--c-spr-pad', (padDev / dpr) + 'px');
     document.documentElement.classList.add('glow-baked');
   }
+})();
+</script>
+<script>
+/* №288: ловецъ ошибокъ — первая ошибка появляется на экранѣ, а не тонетъ въ консоли */
+window.addEventListener('error', function (e) {
+  var el = document.getElementById('err-banner');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'err-banner';
+    el.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#4a1414;color:#f3e2b6;font:13px/1.5 monospace;padding:8px 14px;';
+    (document.body || document.documentElement).appendChild(el);
+  }
+  el.textContent = 'Ошибка скрипта: ' + e.message;
+});
+</script>
+<script>
+/* №288: сторожъ словаря — безъ ENTRIES показываетъ внятную плашку, а не пустоту */
+(function () {
+  function guard() {
+    var ok = typeof ENTRIES !== 'undefined' && ENTRIES && ENTRIES.length > 0;
+    if (ok) return;
+    var note = document.createElement('div');
+    note.id = 'dict-guard';
+    note.style.cssText = 'max-width:660px;margin:26px auto;padding:18px 24px;text-align:center;font:15px/1.55 Georgia,serif;color:#e9d9a5;background:rgba(22,17,48,.94);border:1px solid #8a6d3b;border-radius:6px;';
+    note.innerHTML = 'Словарь не найденъ. Проверьте, что рядомъ съ index.html лежатъ файлы words.js, news.js и rugatelstva.js — или откройте страницу по адресy kotlarof886.github.io/nachala-slovar/';
+    var box = document.getElementById('results');
+    (box && box.parentNode ? box.parentNode : document.body).appendChild(note);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', guard);
+  else window.setTimeout(guard, 400);
 })();
 </script>
 </body>

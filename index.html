@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 98. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №291, устаревшие слова">
+    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 99. Словарь устарѣвшихъ словъ.">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №292, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №291: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №292: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -377,6 +377,8 @@ body.telegraph-on #s-tape { display: none; }
   width: 100%;
   margin: 0 0 1.2rem;
   margin: 0 auto 1.2rem;
+  content-visibility: auto;          /* №292: заэкранные карточки не рисуются и слоёвъ не порождаютъ */
+  contain-intrinsic-size: auto 320px;   /* запасная мѣра до первой отрисовки; дальше браузеръ помнитъ фактическую */
 }
 /* узорная подложка карточки с затуханием к рамке */
 .card-frame::before {
@@ -420,13 +422,16 @@ body.telegraph-on #s-tape { display: none; }
 .vr2 { right:  calc(var(--u) * 90px);   width: calc(var(--u) * 39px); background: #2B2449; }
 .vr3 { right:  calc(var(--u) * 168px);  width: calc(var(--u) * 39px); background: #2B2449; }
 .vr4 { right:  calc(var(--u) * 256px);  width: calc(var(--u) * 39px); background: #C3A464; }
+/* №292: стойки продлены подъ уголки на 1px (было встыкъ 760/760) —
+   дробная геометрія (--u 0.055) на DPR 2,6–3 скругляется по-разному,
+   на стыкѣ вылазилъ волосяной шовъ; перекрытіе делаетъ его невозможнымъ */
 .ht1, .ht2, .ht3, .ht4, .hb1, .hb2, .hb3, .hb4 {
-  left:  calc(var(--u) * 760px);
-  right: calc(var(--u) * 760px);
+  left:  calc(var(--u) * 760px - 1px);
+  right: calc(var(--u) * 760px - 1px);
 }
 .vl1, .vl2, .vl3, .vl4, .vr1, .vr2, .vr3, .vr4 {
-  top:    calc(var(--u) * 760px);
-  bottom: calc(var(--u) * 760px);
+  top:    calc(var(--u) * 760px - 1px);
+  bottom: calc(var(--u) * 760px - 1px);
 }
 .card-body {
   position: relative;
@@ -540,18 +545,25 @@ html.tg-sliding { overflow: hidden !important; }   /* на время сколь
    вспышки. Мерцаніе пламени на сенсорѣ остаётся снятымъ (десктопъ хранитъ
    свечу); лёгкій режимъ остаётся безъ анімацій.
    Остальное не тронуто: №282, №281 и всѣ ранѣе. */
+/* ===== №292 — Слои — только там, гдѣ свѣтъ живой =====
+   Непрорисовки рамокъ на телефонѣ — перегрузъ композитора: поголовная
+   promotion давала до 40 слоёвъ на карточку, а въ DOM накапливаются
+   сотни карточекъ (ленивый рендеръ не удаляетъ просмотренныя) — счётъ
+   слоёвъ идётъ на тысячи, мобильный GPU ихъ не держитъ и отдаётъ пустыя
+   или устаревшія растры. Promotion снята: will-change и translateZ(0)
+   остались только въ hover-правилахъ; заэкранныя карточки не рисуются
+   вовсе (content-visibility: auto въ базовѣмъ правилѣ .card-frame). */
 @media (hover: none) and (pointer: coarse) {
-  .card-frame .fr-corner::before, .card-frame .fr-line::before,
-  .card-frame:hover .fr-corner::before, .card-frame:hover .fr-line::before {
+  .card-frame .fr-corner::before, .card-frame .fr-line::before {
     transition: opacity 2.7s ease;                 /* свѣчъ ведётъ opacity на видеокартѣ */
-    will-change: opacity;                          /* слой композитора: растръ кэшуется */
-    transform: translateZ(0);
   }
-  .card-frame .fr-corner::after, .card-frame .fr-line::after,
-  .card-frame:hover .fr-corner::after, .card-frame:hover .fr-line::after {
+  .card-frame .fr-corner::after, .card-frame .fr-line::after {
     transition: opacity 2.7s cubic-bezier(0.75, 0, 0.25, 1);
-    animation: none;                               /* пламя горитъ ровно — безъ кадроваго перерасчёта */
-    will-change: opacity;
+    animation: none;                               /* запасный путь: пламя горитъ ровно (защита №283) */
+  }
+  .card-frame:hover .fr-corner::before, .card-frame:hover .fr-line::before,
+  .card-frame:hover .fr-corner::after, .card-frame:hover .fr-line::after {
+    will-change: opacity;                          /* слой композитора — только при живомъ свѣтѣ */
     transform: translateZ(0);
   }
 }
@@ -3642,6 +3654,21 @@ function wxLine() {
       страницѣ; ложныя тревоги клипующихся лентъ отфильтрованы
       проверкой предковъ. Ореолъ растворяется въ полосѣ 24px передъ
       краемъ экрана — виньетки больше не обрываются. */
+   /* ===== №292 — Слои — только там, гдѣ свѣтъ живой =====
+      Непрорисовки рамокъ на телефоне (раздвоеніе контуровъ, пропажа
+      цѣлыхъ полосъ) — перегрузъ композитора: тач-блокъ продвигалъ
+      въ композитныя слои псевдослои всѣхъ карточекъ безусловно
+      (до 40 слоёвъ на карточку; ленивый рендеръ просмотренныя не
+      удаляетъ — въ DOM сотни, счётъ слоёвъ идётъ на тысячи; GPU ихъ
+      не держитъ и отдаётъ пустыя или устаревшія растры — та же
+      хворь, что №264 вылечилъ у клавишъ). Promotion снята: will-change
+      и translateZ(0) остались только въ hover-правилахъ (при тапѣ
+      браузеръ даётъ «липкій» hover — свѣчъ работаетъ какъ прежде).
+      content-visibility: auto не рисуетъ карточки за экраномъ вовсе —
+      заэкранныя слоёвъ не порождаютъ даже при поголовной promotion.
+      Стойки линій продлены подъ уголки на 1px (было встыкъ) — волосяной
+      шовъ на стыкѣ при дробной геометріи невозможенъ. Маски №291 и
+      мѣритель №291 не тронуты. Остальное не тронуто. */
 
 /*
 ===== №281 — Возвратъ къ основѣ №264; отводъ фокуса въ возвращеніи =====
@@ -5615,7 +5642,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 291</div>
+<div class="build-info">Сшивъ № 292</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -6389,6 +6416,21 @@ body.light .tgp-w.tg-open { box-shadow: none; }                              /* 
       страницѣ; ложныя тревоги клипующихся лентъ отфильтрованы
       проверкой предковъ. Ореолъ растворяется въ полосѣ 24px передъ
       краемъ экрана — виньетки больше не обрываются. */
+   /* ===== №292 — Слои — только там, гдѣ свѣтъ живой =====
+      Непрорисовки рамокъ на телефоне (раздвоеніе контуровъ, пропажа
+      цѣлыхъ полосъ) — перегрузъ композитора: тач-блокъ продвигалъ
+      въ композитныя слои псевдослои всѣхъ карточекъ безусловно
+      (до 40 слоёвъ на карточку; ленивый рендеръ просмотренныя не
+      удаляетъ — въ DOM сотни, счётъ слоёвъ идётъ на тысячи; GPU ихъ
+      не держитъ и отдаётъ пустыя или устаревшія растры — та же
+      хворь, что №264 вылечилъ у клавишъ). Promotion снята: will-change
+      и translateZ(0) остались только въ hover-правилахъ (при тапѣ
+      браузеръ даётъ «липкій» hover — свѣчъ работаетъ какъ прежде).
+      content-visibility: auto не рисуетъ карточки за экраномъ вовсе —
+      заэкранныя слоёвъ не порождаютъ даже при поголовной promotion.
+      Стойки линій продлены подъ уголки на 1px (было встыкъ) — волосяной
+      шовъ на стыкѣ при дробной геометріи невозможенъ. Маски №291 и
+      мѣритель №291 не тронуты. Остальное не тронуто. */
 
 /*
 ===== №281 — Возвратъ къ основѣ №264; отводъ фокуса въ возвращеніи =====
@@ -6945,7 +6987,7 @@ window.addEventListener('error', function (e) {
           if (!clipped) { out.push(el.tagName + '+' + Math.round(r.right - vw)); n++; }
         }
       }
-      var msg = '[№291] сшивъ №291; прокрутка въправо: ЕСТЬ; за краемъ (безъ рѣжущихъ предковъ): ' + (out.join(' | ') || 'нѣтъ') + '; overflowX html: ' + getComputedStyle(h).overflowX + ', body: ' + getComputedStyle(b).overflowX;
+      var msg = '[№292] сшивъ №292; прокрутка въправо: ЕСТЬ; за краемъ (безъ рѣжущихъ предковъ): ' + (out.join(' | ') || 'нѣтъ') + '; overflowX html: ' + getComputedStyle(h).overflowX + ', body: ' + getComputedStyle(b).overflowX;
       var bar = document.createElement('div');
       bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:2147483647;background:#3d3416;color:#f0dfae;font:12px/1.5 monospace;padding:10px 12px;white-space:pre-wrap;word-break:break-all;box-shadow:0 -2px 8px rgba(0,0,0,.6)';
       bar.textContent = msg;

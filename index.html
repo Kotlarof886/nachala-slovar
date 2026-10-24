@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 101. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №295, устаревшие слова">
+    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 108. Словарь устарѣвшихъ словъ.">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №302, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №295: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №302: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -377,8 +377,6 @@ body.telegraph-on #s-tape { display: none; }
   width: 100%;
   margin: 0 0 1.2rem;
   margin: 0 auto 1.2rem;
-  content-visibility: auto;          /* №292: заэкранные карточки не рисуются и слоёвъ не порождаютъ */
-  contain-intrinsic-size: auto 320px;   /* запасная мѣра до первой отрисовки; дальше браузеръ помнитъ фактическую */
 }
 /* узорная подложка карточки с затуханием к рамке */
 .card-frame::before {
@@ -438,6 +436,16 @@ body.telegraph-on #s-tape { display: none; }
   z-index: 4;
   padding: 44px 60px;;
 }
+/* ===== Сборка №301 — свѣчъ карточекъ тождествененъ №55 дословно:
+   база разгоранія 3s (было 2.7s), content-visibility съ карточекъ снятъ
+   (contain обрѣзалъ выходъ свѣта за рамку), мобильный путь opacity снятъ —
+   на сенсорѣ свѣтъ ведётъ тѣ же --c-glow/--c-flame, чтоъ на десктопѣ. ===== */
+/* ===== №300 — Свѣтъ вѣрнутъ къ чистому пути №55 =====
+   Уроки №283–№292 сняты насовсѣмъ: кольца (st-glow-c), спрайты (glow-baked),
+   дѣханіе (lamp-breath). Золото — пара drop-shadow: кромка 4px (0.8) и мягкій
+   ореолъ 14px (0.35), одинаково для уголковъ и линій. Пламя — оранжевый ореолъ
+   10px съ мерцаніемъ 2.6s. Разгораніе при наведеніи — 2.7s. Свѣтъ живётъ чистымъ
+   CSS и работаетъ одинаково на диске и на GitHub. Остальное не тронуто. */
 /* свеча: фильтр статичный, меняется только прозрачность слоёв */
 @property --c-glow  { syntax: '<number>'; inherits: false; initial-value: 0; }
 @property --c-flame { syntax: '<number>'; inherits: false; initial-value: 0; }
@@ -553,96 +561,11 @@ html.tg-sliding { overflow: hidden !important; }   /* на время сколь
    или устаревшія растры. Promotion снята: will-change и translateZ(0)
    остались только въ hover-правилахъ; заэкранныя карточки не рисуются
    вовсе (content-visibility: auto въ базовѣмъ правилѣ .card-frame). */
-@media (hover: none) and (pointer: coarse) {
-  .card-frame .fr-corner::before, .card-frame .fr-line::before {
-    transition: opacity 2.7s ease;                 /* свѣчъ ведётъ opacity на видеокартѣ */
-  }
-  .card-frame .fr-corner::after, .card-frame .fr-line::after {
-    transition: opacity 2.7s cubic-bezier(0.75, 0, 0.25, 1);
-    animation: none;                               /* запасный путь: пламя горитъ ровно (защита №283) */
-  }
-  .card-frame:hover .fr-corner::before, .card-frame:hover .fr-line::before,
-  .card-frame:hover .fr-corner::after, .card-frame:hover .fr-line::after {
-    will-change: opacity;                          /* слой композитора — только при живомъ свѣтѣ */
-    transform: translateZ(0);
-  }
-}
 
 
-/* ===== №290 — Мерцаніе пламени на сенсорѣ возвращено =====
-   Глушитель №283 (animation: none) задуманъ для фильтроваго пути,
-   когда каждый кадръ мерцанія пересчитывалъ до 40 фильтровыхъ слоёвъ.
-   Съ №286 въ рантаймѣ фильтровъ нѣтъ — пламя живётъ готовымъ спрайтомъ,
-   и мерцаніе снова дешево. Возвратъ тѣмъ же механизмомъ, что на ПК:
-   вѣчная анімація flicker вѣдётъ --c-flick на композиторѣ; въ покоѣ
-   пауза, при касаніи — running. Запасный фильтровый путь мерцаніе
-   не получаетъ — защита №283 сохранена. */
-@media (hover: none) and (pointer: coarse) {
-  html.glow-baked .card-frame .fr-corner::after,
-  html.glow-baked .card-frame .fr-line::after {
-    animation: flicker 2.6s ease-in-out infinite;
-    animation-play-state: paused;
-  }
-  html.glow-baked .card-frame:hover .fr-corner::after,
-  html.glow-baked .card-frame:hover .fr-line::after {
-    animation-play-state: running;
-  }
-}
 
-/* ===== №286 — Свѣчъ запечёнъ: спрайты вмѣсто фильтровъ =====
-   Нагрузка: до 40 псевдослоёвъ съ drop-shadow на карточку растеризуются
-   и портятся при перерисовкѣ содержанія. Лѣкарство: скриптъ №286 одинъ
-   разъ при загрузкѣ вычисляетъ на холстѣ точную копію результата фильтровъ
-   (золото — тень отъ тени двумя проходами, пламя — оранжевый ореолъ) и
-   выдаётъ готовые спрайты въ перемѣнныя --c-glow-spr и --c-flame-spr;
-   классъ html.glow-baked переводитъ уголки на спрайты, а линіи на
-   box-shadow (тождественно drop-shadow для сплошныхъ полосъ). Въ рантаймѣ
-   не остаётся ни одного фильтра свѣта — растеризовать нечего, порча
-   растровъ исчезаетъ какъ классъ. Пока классъ не поставленъ (картинка не
-   загрузилась, холстъ непрочитываемъ), работаютъ прежніе фильтры —
-   запасный путь №285. Лёгкій режимъ старше по каскаду и гаситъ слои
-   какъ прежде. Остальное не тронуто: №282, №281 и всѣ ранѣе. */
-html.glow-baked .fr-corner::before,
-html.glow-baked .fr-corner::after {
-  background: var(--c-glow-spr) 0 0 / var(--c-spr-size, 121.8px 121.8px) no-repeat;
-  inset: calc(-1 * var(--c-spr-pad, 40px));   /* запасъ подъ ореолъ; №289: 40px — хвостъ тени до ~32px более не обрѣзается */
-  filter: none;
-}
-html.glow-baked .fr-corner::after {
-  background: var(--c-flame-spr) 0 0 / var(--c-spr-size, 121.8px 121.8px) no-repeat;
-}
-html.glow-baked .fr-line::before {
-  filter: none;
-  box-shadow: 0 0 4px rgba(212, 176, 106, 0.8),
-              0 0 14px rgba(212, 176, 106, 0.35),
-              0 0 14.6px rgba(212, 176, 106, 0.28);   /* тень отъ тени */
-}
-html.glow-baked .fr-line::after {
-  filter: none;
-  box-shadow: 0 0 10px rgba(240, 150, 60, 0.55);
-}
-
-/* ===== №291 — Маски растворенія виньетокъ у краёвъ экрана =====
-   Ореолъ уголка тянется за карточку на 40px, а отступъ отъ края
-   экрана — 16px: на телефонахъ свѣтъ обрывался краемъ экрана.
-   Маска растворяетъ ореолъ въ нуль въ полосѣ передъ краемъ —
-   свѣтъ «доходитъ до конца» таяніемъ, а не обрывомъ. Повороты
-   уголковъ учтены: у tl/br наружная сторона экрана — локальная
-   лѣвая (тѣнь растиражирована въ поворотѣ), у tr/bl — локальная
-   верхняя. Рѣзка ореола въ горизонтали; вертикаль не тронута —
-   верхъ/низъ открываются прокруткой естественнымъ порядкомъ. */
-@media (max-width: 560px) {
-  html.glow-baked .fr-corner.tl::before, html.glow-baked .fr-corner.tl::after,
-  html.glow-baked .fr-corner.br::before, html.glow-baked .fr-corner.br::after {
-    -webkit-mask-image: linear-gradient(to right, transparent 0px, transparent 24px, #000 40px);
-            mask-image: linear-gradient(to right, transparent 0px, transparent 24px, #000 40px);
-  }
-  html.glow-baked .fr-corner.tr::before, html.glow-baked .fr-corner.tr::after,
-  html.glow-baked .fr-corner.bl::before, html.glow-baked .fr-corner.bl::after {
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0px, transparent 24px, #000 40px);
-            mask-image: linear-gradient(to bottom, transparent 0px, transparent 24px, #000 40px);
-  }
-}
+/* ===== №297 — Маски №291 сняты: внешний ореолъ угловъ больше не гасится у краёвъ экрана.
+   От горизонтальнаго разъѣзда стережётъ overflow-x: clip (№289). ===== */
 
 .entry {
   margin-bottom: 0;
@@ -1379,6 +1302,8 @@ body.curtain-on .tab .tab-label { visibility: hidden; }
 </style>
 </head>
 <body>
+
+
 <script>try{if(localStorage.getItem('nachala-light')==='1')document.body.classList.add('light');}catch(e){}</script>
 <div class="rama rama-verh" aria-hidden="true"><div class="fill"></div><div class="cap"></div></div>
 <div class="wrap">
@@ -1721,7 +1646,7 @@ body.curtain-on .tab .tab-label { visibility: hidden; }
 
 <div class="rama rama-niz" aria-hidden="true"><div class="fill"></div><div class="cap"></div></div>
 <script src="news.js"></script>
-<script src="words.js?v=295"></script>
+<script src="words.js?v=302"></script>
 <script src="rugatelstva.js"></script>
 <script>
 // ---------- Данные: подключается words.js ----------
@@ -4941,6 +4866,12 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
     if (sT.blurTimer) { clearTimeout(sT.blurTimer); sT.blurTimer = null; }
     if (!msg.childNodes.length) { mode = 'idle'; setTarget(xIdle()); }
     else {
+      /* Сшивъ №302: на десктопѣ потѣря фокуса запросъ не стираетъ — кликъ мимо
+         карточекъ оставляетъ набранное и прокрутку на мѣстѣ. На сенсорѣ логика
+         прежняя: клавиатура сворачивается, стираніе идётъ по бронямъ №263. */
+      var isTouch = false;
+      try { isTouch = window.matchMedia('(hover: none)').matches; } catch (e) { isTouch = false; }
+      if (isTouch) {
       var dir = (msg.offsetWidth >= W() / 2) ? -1 : 1;
       /* отсрочка стиранія: кликъ по ссылкѣ изъ разысканій долженъ успѣть сработать */
       sT.blurTimer = setTimeout(function () {
@@ -4950,6 +4881,7 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
         if (mode === 'hidden' || mode === 'flow') return;
         startClear(dir);
       }, 180);
+      }   /* конецъ if (isTouch) */
     }
     tape.classList.remove('s-on');
   };
@@ -5664,7 +5596,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 295</div>
+<div class="build-info">Сшивъ № 302</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -6886,72 +6818,7 @@ body.light.telegraph-on .tab.active {
   }, { passive: true, capture: true });
 })();
 </script>
-<script>
-/* №286 — Свѣчъ запечёнъ: спрайты вмѣсто фильтровъ. Одинъ разъ при загрузкѣ
-   вычисляемъ на холстѣ точную копію того, что раньше рисовали фильтры
-   drop-shadow, и выдаёмъ готовые спрайты въ перемѣнныя --c-glow-spr и
-   --c-flame-spr; классъ glow-baked переводитъ уголки на спрайты, линіи —
-   на box-shadow. Въ рантаймѣ не остаётся ни одного фильтра свѣта. Если
-   картинка не загрузилась или холстъ непрочитываемъ (file://) — классъ
-   не ставится и работаетъ запасный фильтровый путь №285.
-   №287 — запечёнъ ОБРѢЗОКЪ узора: элементъ уголка (41,8×41,8) показываетъ
-   лишь левый-верхній кусокъ узора 760×760 исходника; прежній спрайт нёсъ
-   весь узоръ, и inset −24 открывалъ полосу за рамкой уголка — углы горѣли
-   ярче и длиннѣе линій. Теперъ печётся ровно видимая часть, с ореоломъ.
-   №289 — запасъ ореола 40px (хвостъ второй тени тянется до ~32px и прежде
-   обрѣзался краемъ холста — виньетки «не доходили» до конца), и overflow-x:
-   clip на html: спрайтъ живётъ въ рамкѣ псевдослоя и вылезалъ за экранъ
-   (запасъ 24px > отступа 16px), раздвигая горизонталь на телефоне. */
-(function () {
-  'use strict';
-  var U = 0.055, PAD = 40, EW = U * 760;   /* элементъ уголка 41.8×41.8; №287 */
-  var GW = 'rgba(212, 176, 106, 0.8)', GW2 = 'rgba(212, 176, 106, 0.35)';
-  var FL = 'rgba(240, 150, 60, 0.55)';
-  var test = document.createElement('canvas').getContext('2d');
-  if (typeof test.filter === 'undefined') return;   /* фильтровъ на холстѣ нетъ — запасъ №285 */
-  var img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = function () { try { apply(); } catch (e) { /* запасъ №285 */ } };
-  img.onerror = function () { /* запасъ №285 */ };
-  img.src = 'images/corner.png';
-  function apply() {
-    var dpr = Math.min(window.devicePixelRatio || 1, 3);
-    /* №287: элементъ видитъ только обрѣзокъ 760×760 исходника — пекёмъ его */
-    var padDev = Math.round(PAD * dpr);
-    var Wd = Math.ceil(EW * dpr) + padDev * 2;
-    var Hd = Wd;
-    /* золото: тень отъ тени — два прохода; пламя: одинъ */
-    var g1 = document.createElement('canvas');
-    g1.width = Wd; g1.height = Hd;
-    var x1 = g1.getContext('2d');
-    x1.imageSmoothingQuality = 'high';
-    x1.filter = 'drop-shadow(0 0 4px ' + GW + ')';
-    x1.drawImage(img, 0, 0, 760, 760, padDev, padDev, EW * dpr, EW * dpr);   /* №287: обрѣзокъ */
-    var g2 = document.createElement('canvas');
-    g2.width = Wd; g2.height = Hd;
-    var x2 = g2.getContext('2d');
-    x2.imageSmoothingQuality = 'high';
-    x2.filter = 'drop-shadow(0 0 14px ' + GW2 + ')';
-    x2.drawImage(g1, 0, 0);
-    var fl = document.createElement('canvas');
-    fl.width = Wd; fl.height = Hd;
-    var xf = fl.getContext('2d');
-    xf.imageSmoothingQuality = 'high';
-    xf.filter = 'drop-shadow(0 0 10px ' + FL + ')';
-    xf.drawImage(img, 0, 0, 760, 760, padDev, padDev, EW * dpr, EW * dpr);   /* №287: обрѣзокъ */
-    try {                                            /* холсты должны быть прочтаемы */
-      g2.getContext('2d').getImageData(0, 0, 1, 1);
-      fl.getContext('2d').getImageData(0, 0, 1, 1);
-    } catch (e) { return; }                          /* запасъ №285 */
-    var st = document.documentElement.style;
-    st.setProperty('--c-glow-spr', 'url("' + g2.toDataURL('image/png') + '")');
-    st.setProperty('--c-flame-spr', 'url("' + fl.toDataURL('image/png') + '")');
-    st.setProperty('--c-spr-size', (Wd / dpr).toFixed(2) + 'px ' + (Hd / dpr).toFixed(2) + 'px');
-    st.setProperty('--c-spr-pad', (padDev / dpr) + 'px');
-    document.documentElement.classList.add('glow-baked');
-  }
-})();
-</script>
+
 <script>
 /* №288: ловецъ ошибокъ — первая ошибка появляется на экранѣ, а не тонетъ въ консоли */
 window.addEventListener('error', function (e) {

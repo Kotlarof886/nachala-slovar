@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 99. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №292, устаревшие слова">
+    <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 101. Словарь устарѣвшихъ словъ.">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ №295, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №292: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №295: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -1721,10 +1721,31 @@ body.curtain-on .tab .tab-label { visibility: hidden; }
 
 <div class="rama rama-niz" aria-hidden="true"><div class="fill"></div><div class="cap"></div></div>
 <script src="news.js"></script>
-<script src="words.js"></script>
+<script src="words.js?v=295"></script>
 <script src="rugatelstva.js"></script>
 <script>
 // ---------- Данные: подключается words.js ----------
+/* №295: книжная полка — если карточек книг в words.js нет, сайт добавляет их сам, на своё мѣсто по алфавиту */
+(function () {
+  if (typeof ENTRIES === 'undefined' || !ENTRIES) return;
+  function normKey(s) {
+    return String(s).toLowerCase()
+      .replace(/\u0463/g, 'е').replace(/[\u044a\u044c]/g, '')
+      .replace(/\u0456/g, 'и').replace(/\u0461/g, 'ф').replace(/\u0475/g, 'у');
+  }
+  function addBook(card) {
+    for (var i = 0; i < ENTRIES.length; i++) {
+      if (String(ENTRIES[i].w || '').toLowerCase().indexOf(card.w.toLowerCase()) === 0) return;
+    }
+    var key = normKey(card.w), at = ENTRIES.length;
+    for (var j = 0; j < ENTRIES.length; j++) {
+      if (normKey(String(ENTRIES[j].w || '')) > key) { at = j; break; }
+    }
+    ENTRIES.splice(at, 0, card);
+  }
+  addBook({ w: 'Славное прошлое въ дымѣ папиросъ', d: 'Дебютный сборник рассказов молодого писателя М.Ю. Книга представляет собой удивительное собрание охотничьих небылиц и забавных курьезов. В книге собраны подлинные истории, записанные со слов очевидцев и участников событий, происходивших в собранных автором в окрестностях Завьяловского уезда и реки Кулунды. Автор, будучи сам страстным охотником, не только собрал эти рассказы, но и являлся непосредственным свидетелем описываемых происшествий. Сборник состоит из нескольких частей, каждая из которых повествует о забавных и поучительных случаях из охотничьей практики. Читателя ждут увлекательные истории о сражениях с шершнями, противостоянии с клещами, технических конфузах с новейшими изобретениями и прочих приключениях заядлых охотников. Особенность книги заключается в том, что за внешней комичностью описанных ситуаций скрывается глубокий смысл: истинная удача для охотника заключается не столько в богатой добыче, сколько в дружеском общении, умении находить выход из сложных ситуаций и способности сохранять присутствие духа в любых обстоятельствах. Издание будет интересно как опытным охотникам, так и всем любителям поучительных историй, рассказанных с юмором и теплотой. Книга воскрешает перед читателем атмосферу охотничьего братства, где каждый случай становится поводом для добрых шуток и воспоминаний.', cover: 'images/spvp-cover-card.jpg', pdf: 'books/slavnoe-proshloe.pdf' });
+  addBook({ w: 'Золото въ пыли', d: 'Новейшее сочинение почтенного литератора М.Ю., представленное в необычном для отечественной словесности жанре — рассказе-перевёртыше. Автор, известный своими предыдущими работами, на сей раз предлагает читателю оригинальное произведение, где повествование ведётся в двух направлениях одновременно. В центре сюжета — история простого человека, столкнувшегося с неожиданными обстоятельствами. Особенность произведения заключается в том, что события разворачиваются как в прямом, так и в обратном порядке, что создаёт необычный эффект восприятия. М.Ю. искусно сочетает элементы социальной драмы и философской притчи. Автор демонстрирует своё мастерство в описании характеров и ситуаций, не прибегая к излишней патетике. В рассказе поднимаются вопросы социального неравенства и человеческой судьбы, однако без навязчивой морализации. «Золото в пыли» представляет собой эксперимент в области литературной формы, который, несмотря на свою новизну, остаётся в рамках традиционного русского реализма. Произведение будет интересно как ценителям новаторских подходов в литературе, так и любителям классического повествования.', cover: 'images/zoloto-cover.jpg', pdf: 'books/zoloto-v-pyli.pdf' });
+})();
 const DICT = ENTRIES.map(function(e) {
   const nz = function(s) { return toModern(String(s).toLowerCase()); };
   const toks = function(txt, uniq) {
@@ -1735,7 +1756,7 @@ const DICT = ENTRIES.map(function(e) {
     return out;
   };
   const m = nz(e.w).match(/[а-яёa-z0-9]/);
-  return { w: e.w, d: e.d, wt: toks(e.w, false), dt: toks(e.d, true), l: m ? m[0].toUpperCase() : '?' };
+  return { w: e.w, d: e.d, cv: e.cover || null, pdf: e.pdf || null, wt: toks(e.w, false), dt: toks(e.d, true), l: m ? m[0].toUpperCase() : '?' };
 });
 
 
@@ -2008,7 +2029,7 @@ function preloadPdfCover() {
   pdfCoverPreloaded = true;
   var im = new Image();
   im.decoding = 'async';
-  im.src = 'cover.jpg';
+  im.src = 'images/nachala-cover.jpg';
 }
 if (window.addEventListener) {
   var idleTimer = setTimeout(preloadPdfCover, 2500);
@@ -2030,8 +2051,8 @@ function showPdf() {
   resultsEl.innerHTML =
     '<div class="pdf-frame">' +
       '<div class="pdf-title">— Записка адъютанта —</div>' +
-      '<a href="nachala.pdf" target="_blank" rel="noopener">' +
-        '<img class="pdf-cover" src="cover.jpg" alt="Обложка книги «Начала»" decoding="async">' +
+      '<a href="books/nachala.pdf" target="_blank" rel="noopener">' +
+        '<img class="pdf-cover" src="images/nachala-cover.jpg" alt="Обложка книги «Начала»" decoding="async">' +
       '</a>' +
       '<button class="wiktionary-btn" onclick="closePdf()">Скрыть документъ</button>' +
     '</div>';
@@ -4340,7 +4361,8 @@ function cardHtml(e, q, idx) {
     '<div class="card-body"><div class="entry">' +
     '<div class="entry-word">' + highlight(e.w, q) + '</div>' +
     '<div class="entry-def">' + defParts(e, q) + '</div>' +
-    '<button class="wiktionary-btn" data-w="' + escapeHtml(e.w) + '">Уточнить у адъютантовъ</button>' +
+    (e.cv ? '<a class="book-link" href="' + e.pdf + '" target="_blank" rel="noopener"><img class="book-cover" src="' + e.cv + '" alt="Обложка: ' + escapeHtml(e.w) + '" loading="lazy"></a>' : '') +
+    (e.cv ? '' : '<button class="wiktionary-btn" data-w="' + escapeHtml(e.w) + '">Уточнить у адъютантовъ</button>') +
     '<div class="online-results" data-w="' + escapeHtml(e.w) + '" id="onl-' + idx + '">' + slotInner(e.w) + '</div>' +
     '</div></div></div>';
 }
@@ -5642,7 +5664,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 292</div>
+<div class="build-info">Сшивъ № 295</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -6987,7 +7009,7 @@ window.addEventListener('error', function (e) {
           if (!clipped) { out.push(el.tagName + '+' + Math.round(r.right - vw)); n++; }
         }
       }
-      var msg = '[№292] сшивъ №292; прокрутка въправо: ЕСТЬ; за краемъ (безъ рѣжущихъ предковъ): ' + (out.join(' | ') || 'нѣтъ') + '; overflowX html: ' + getComputedStyle(h).overflowX + ', body: ' + getComputedStyle(b).overflowX;
+      var msg = '[№295] сшивъ №295; прокрутка въправо: ЕСТЬ; за краемъ (безъ рѣжущихъ предковъ): ' + (out.join(' | ') || 'нѣтъ') + '; overflowX html: ' + getComputedStyle(h).overflowX + ', body: ' + getComputedStyle(b).overflowX;
       var bar = document.createElement('div');
       bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:2147483647;background:#3d3416;color:#f0dfae;font:12px/1.5 monospace;padding:10px 12px;white-space:pre-wrap;word-break:break-all;box-shadow:0 -2px 8px rgba(0,0,0,.6)';
       bar.textContent = msg;
@@ -7001,6 +7023,15 @@ window.addEventListener('error', function (e) {
   if (document.readyState === 'complete') setTimeout(run, 800);
   else window.addEventListener('load', function(){ setTimeout(run, 800); });
 })();
+</script>
+
+<style>
+/* №294: книжная полка — обложка въ карточкѣ, рамка и тень въ духѣ сайта */
+.book-link{display:block;max-width:320px;margin:14px auto 2px;}
+.book-cover{display:block;width:100%;height:auto;border:1px solid #8a6d3b;border-radius:6px;box-shadow:0 4px 18px rgba(0,0,0,.45);}
+</style>
+<script>
+/* №294: книжная карточка «Славное прошлое въ дымѣ папиросъ» — обложка внутри карточки, тапъ открываетъ PDF въ новой вкладкѣ (books/slavnoe-proshloe.pdf); у книжныхъ карточекъ кнопка «Уточнить у адъютантовъ» не выводится; поля cover и pdf теперь доходятъ отъ words.js до карточки — ранѣше маппингъ ихъ отбрасывалъ; слова подключаются съ меткой words.js?v=294, дабы кэшъ не держалъ старый словарь; поставлена страховка: если карточки въ words.js нѣтъ, сайтъ добавляетъ ея самъ; пасхалка «НАЧАЛА» жива, файлы ея перекочевали въ books/ и images/. */
 </script>
 </body>
 </html>

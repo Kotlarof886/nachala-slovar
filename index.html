@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 108. Словарь устарѣвшихъ словъ.">
-    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ № 316, устаревшие слова">
+    <meta name="keywords" content="Начала, словарь, лексикон, Сшивъ № 322, устаревшие слова">
     <meta charset="UTF-8">
     
     <!-- ФАВИКОН ИЗ ПАПКИ IMAGES -->
@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №316: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №322: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -630,22 +630,33 @@ html.tg-sliding { overflow: hidden !important; }   /* на время сколь
  .env-name, .env-word {
    font-family: 'Kalissa', 'Elizabeth Unicode', cursive; color: #1d1d6b;
    text-align: center; line-height: 1.15; padding: 0 8%;
-   text-shadow: 0 0 6px rgba(238,226,196,0.65);
+   text-shadow: 0 0 3px rgba(238,226,196,0.65);
  }
- .env-name { font-size: 1.6rem; filter: blur(0.25px); text-shadow: 0 0 1.2px rgba(29,29,107,0.35); }
- .env-word { font-size: 2.1rem; filter: blur(0.25px); text-shadow: 0 0 1.2px rgba(29,29,107,0.35); }
+ .env-name { font-size: clamp(1rem, 4.2vw, 1.6rem); filter: blur(0.125px); text-shadow: 0 0 0.6px rgba(29,29,107,0.35); overflow-wrap: break-word; word-break: break-word; max-width: 100%; }
+ .env-word { font-size: clamp(1.2rem, 5.2vw, 2.1rem); filter: blur(0.125px); text-shadow: 0 0 0.6px rgba(29,29,107,0.35); overflow-wrap: break-word; word-break: break-word; max-width: 100%; }
  /* Сшивъ № 316 — лёгкій эффектъ чернилъ на конвертахъ: мягкое размытіе письма и мелкіе капли подъ текстомъ */
  .env-blot { position: absolute; pointer-events: none; z-index: 1; }
- .env-blot.droplet { background: radial-gradient(circle at 40% 35%, rgba(29,29,107,0.3) 0%, rgba(29,29,107,0.16) 55%, rgba(29,29,107,0) 78%); filter: blur(0.6px); }
- .env-blot.smudge { background: radial-gradient(ellipse at center, rgba(29,29,107,0.05) 0%, rgba(29,29,107,0.02) 50%, rgba(29,29,107,0) 75%); filter: blur(2.4px); }
+ .env-blot.droplet { background: radial-gradient(circle at 40% 35%, rgba(29,29,107,0.3) 0%, rgba(29,29,107,0.16) 55%, rgba(29,29,107,0) 78%); filter: blur(0.3px); }
+ .env-blot.smudge { background: radial-gradient(ellipse at center, rgba(29,29,107,0.05) 0%, rgba(29,29,107,0.02) 50%, rgba(29,29,107,0) 75%); filter: blur(1.2px); }
  .env-name, .env-word { position: relative; z-index: 2; }
  /* Сшивъ № 316 — живые детали письма: кое-гдѣ попала вода и чернила чуть растеклись, буквы слегка кривятъ перо */
  .env-ch { display: inline-block; }
  .env-wd { white-space: nowrap; display: inline-block; }   /* №316: слово не рвётся по буквамъ — целикомъ на новую строку */
- .env-ch.wet { filter: blur(0.5px); opacity: 0.92; transform: scaleY(1.035); }
- .env-blot.drop { background: radial-gradient(circle at 42% 36%, rgba(29,29,107,0.62) 0%, rgba(29,29,107,0.34) 48%, rgba(29,29,107,0) 76%); filter: blur(0.35px); }
- .env-blot.stain { background: radial-gradient(ellipse at center, rgba(29,29,107,0.035) 0%, rgba(29,29,107,0.018) 55%, rgba(29,29,107,0) 78%); filter: blur(4px); }
+ .env-ch.wet { filter: blur(0.25px); opacity: 0.92; transform: scaleY(1.035); }
+ .env-blot.drop { background: radial-gradient(circle at 42% 36%, rgba(29,29,107,0.62) 0%, rgba(29,29,107,0.34) 48%, rgba(29,29,107,0) 76%); filter: blur(0.175px); }
+ .env-blot.stain { background: radial-gradient(ellipse at center, rgba(29,29,107,0.035) 0%, rgba(29,29,107,0.018) 55%, rgba(29,29,107,0) 78%); filter: blur(2px); }
  @media (max-width: 768px) { .cornet-envs { grid-template-columns: 1fr; } }
+  /* №322: переносъ длинныхъ словъ — текстъ карточекъ больше не выходитъ за рамку */
+  .entry-word, .entry-region, .entry-def, .primer,
+  .src-block, .src-block h4, .src-block p, .src-block li,
+  .online-results, .online-results p {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: normal;
+    hyphens: auto;
+    max-width: 100%;
+    min-width: 0;
+  }
 .loading, .empty { color: var(--text-dim); font-style: italic; }
 .error { color: #e8a5a5; }
 .count-note { text-align: center; color: var(--text-dim); font-size: 0.85rem; margin-top: 0.5rem; }
@@ -658,6 +669,10 @@ html.tg-sliding { overflow: hidden !important; }   /* на время сколь
   font-display: block;
 }
 .online-results { margin-top: 10px; }
+/* №322: открытое окно — собственный слой композитора: при прокруткѣ буквы
+   внутри не перерисовываются мерцаніемъ. Массовой продвиженія слоёвъ нѣтъ —
+   открыто одно окно (№316), прочіе карточки остаются безъ promotion (№292). */
+.online-results .src-block { transform: translateZ(0); backface-visibility: hidden; }
 .online-results .src-block { margin-bottom: 10px; }
 .loading { color: #d4b06a; font-style: italic; }
 .online-results .empty, .src-block .empty { color: #9a8fb8; font-style: italic; }
@@ -1685,6 +1700,14 @@ body.curtain-on .tab .tab-label { visibility: hidden; }
 
 <div class="rama rama-niz" aria-hidden="true"><div class="fill"></div><div class="cap"></div></div>
 <script src="news.js"></script>
+<!-- Сшивъ №322: по замѣчаніямъ съ телефона. 1) Рамка карточекъ больше не сжимается
+на узкихъ экранахъ — толщина прежняя (какъ на скриншотѣ). 2) Размытіе письма и водяныя
+слѣды на текстѣ конвертовъ уменьшены вдвое; телеграфная лента не тронута. 3) Текстъ
+карточекъ переносится по словамъ — больше не выходитъ за рамку. 4) Окно разысканій,
+ушедшее за крайъ экрана, сворачивается мгновенно и всегда одинаково — безъ кадрныхъ
+компенсацій прокрутки; это сняло рывки «внизъ/вверхъ» и мѣрцаніе буквъ при сворачиваніи
+и при скроллѣ съ открытымъ окномъ. 5) Открытое окно получило собственный слой композитора.
+Остальное не тронуто: №321 и всѣ ранѣе.
 <!-- Сшивъ №316: корнеты изъ разысканій адъютантовъ переодеты въ конверты (images/bg-01…08), фонъ случаенъ и въ парѣ не повторяется; рукописный шрифтъ Kalissa вшитъ въ файлъ. Блокъ «Разысканія въ эфирѣ» не тронутъ.
 -->
 <!-- Сшивъ №309: чинится порядокъ въ ярусѣ «Найдено по формѣ слова». Причина (скриншотъ «портеру»):
@@ -4681,6 +4704,19 @@ function closeSlotSmooth(slot, down) {
     slot._closing = false;
   }, 275);
 }
+/* №322: мгновенное сворачиваніе окна, ушедшаго за крайъ экрана. Безъ анімаціи
+   и безъ компенсацій прокрутки: никакихъ покадровыхъ scrollBy — нѣтъ ни рывковъ
+   «внизъ/вверхъ», ни мѣрцанія буквъ. Видимое содержимое не задѣевается вовсе. */
+function closeSlotInstant(slot) {
+  if (!slot || !slot.innerHTML.trim()) return;
+  if (slot._closeTimer) { clearTimeout(slot._closeTimer); slot._closeTimer = null; }
+  slot._closing = false; slot._closingDown = false;
+  var w = slot.getAttribute('data-w');
+  slot.innerHTML = '';
+  slot.style.height = ''; slot.style.overflow = ''; slot.style.transition = '';
+  if (w) _slotCache.delete(w);
+  if (_openSlotKey === w) _openSlotKey = null;
+}
 function cancelSlotClose(slot) {
   if (slot._closeTimer) { clearTimeout(slot._closeTimer); slot._closeTimer = null; slot._closing = false; slot._closingDown = false;
     slot.style.height = ''; slot.style.overflow = ''; slot.style.transition = ''; }
@@ -4710,12 +4746,11 @@ function slotVisibilityTick() {
     if (!slot.innerHTML.trim() || slot._closing) return;
     var r = slot.getBoundingClientRect();
     if (r.bottom < -40 || r.top > vh + 40) {   /* цѣликомъ за краемъ экрана */
-      var w = slot.getAttribute('data-w');
-      if (w) _slotCache.delete(w);
-      /* №317: уходъ за верхъ при прокруткѣ внизъ — сворачиваніе «внизъ» съ компенсацией;
-         уходъ за низъ или прокрутка вверхъ — прежнее сворачиваніе */
-      closeSlotSmooth(slot, r.bottom < -40 && dirDown);
-      if (_openSlotKey === w) _openSlotKey = null;
+      /* №322: заэкранное окно сворачивается мгновенно и всегда одинаково.
+         Прежняя кадрная компенсація прокрутки (№317–№320) дёргала видимое
+         «то внизъ, то вверхъ» и перерисовывала страницу покадрово —
+         это было мѣсто рывковъ и мѣрцанія буквъ при скроллѣ. */
+      closeSlotInstant(slot);
     }
   });
 }
@@ -5998,7 +6033,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 316</div>
+<div class="build-info">Сшивъ № 322</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -7306,12 +7341,14 @@ window.addEventListener('error', function (e) {
 /* №321: живой масштабъ рамки карточекъ. Десктопъ (колонка 900px и шире) — прежніе 0.055;
    узкіе экраны — пропорціональное сжатіе: уголки, лініи и отступы тѣла уменьшаются
    соразмерно ширинѣ, карточка больше не рѣжется по краямъ. Пересчётъ — при загрузкѣ,
-   поворотѣ и измѣненіи окна. */
+   поворотѣ и измѣненіи окна.
+   №322: сжатіе снято по замѣчанію — рамка на телефонахъ вышла тоньше прежней.
+   Толщина возвращена къ неизменнымъ 0.055 на всѣхъ экранахъ. */
 (function () {
   function frameU() {
     var vw = window.innerWidth || document.documentElement.clientWidth || 900;
     var w = Math.max(280, vw - 32);          /* 32px — отступы .wrap по бокамъ */
-    var u = Math.min(0.055, 0.055 * w / 900);
+    var u = 0.055;   /* №322: толщина рамки прежняя на всѣхъ экранахъ — сжатіе сънято */
     document.documentElement.style.setProperty('--frame-u', u.toFixed(5));
   }
   frameU();

@@ -493,13 +493,13 @@ body.telegraph-on #s-tape { display: none; }
 .card-frame:hover .fr-corner::before,
 .card-frame:hover .fr-line::before {
   --c-glow: 1;
-  transition: --c-glow 2.7s ease;
+  transition: --c-glow 2.7s ease, filter 1.1s ease, box-shadow 1.1s ease;
 }
 
 .card-frame:hover .fr-corner::after,
 .card-frame:hover .fr-line::after {
   --c-flame: 1;
-  transition: --c-flame 2.7s cubic-bezier(0.75, 0, 0.25, 1);
+  transition: --c-flame 2.7s cubic-bezier(0.75, 0, 0.25, 1), filter 1.1s ease, box-shadow 1.1s ease;
 }
 
 /* ===== №330 — вспышка при активности: один цикл пульса и замираніе ===== */
@@ -528,6 +528,37 @@ body.telegraph-on #s-tape { display: none; }
 }
 .fr-corner::before,
 .fr-corner::after { transform: translateZ(0); }
+
+/* ===== №334 — яркая вспышка по целенаправленному тапу:
+   свѣченіе удваивается ореоломъ, разгорається и таетъ плавно ===== */
+.card-frame.fr-burst .fr-corner::before {
+  filter: drop-shadow(0 0 4px rgba(212, 176, 106, 0.8))
+          drop-shadow(0 0 14px rgba(212, 176, 106, 0.35))
+          drop-shadow(0 0 26px rgba(255, 205, 120, 0.5));
+  transition: --c-glow 3s ease, filter 1.1s ease, box-shadow 1.1s ease;
+}
+.card-frame.fr-burst .fr-line::before {
+  box-shadow: 0 0 4px rgba(212, 176, 106, 0.8), 0 0 14px rgba(212, 176, 106, 0.35), 0 0 26px rgba(255, 205, 120, 0.5);
+  transition: --c-glow 3s ease, filter 1.1s ease, box-shadow 1.1s ease;
+}
+.card-frame.fr-burst .fr-corner::after {
+  filter: drop-shadow(0 0 10px rgba(240, 150, 60, 0.55))
+          drop-shadow(0 0 20px rgba(255, 170, 80, 0.45));
+  transition: --c-flame 1.5s ease, filter 1.1s ease, box-shadow 1.1s ease;
+}
+.card-frame.fr-burst .fr-line::after {
+  box-shadow: 0 0 10px rgba(240, 150, 60, 0.55), 0 0 20px rgba(255, 170, 80, 0.45);
+  transition: --c-flame 1.5s ease, filter 1.1s ease, box-shadow 1.1s ease;
+}
+/* базовые переходы для тушенія: работаютъ въ обѣ стороны */
+.fr-corner::before,
+.fr-line::before {
+  transition: --c-glow 3s ease, filter 1.1s ease, box-shadow 1.1s ease;
+}
+.fr-corner::after,
+.fr-line::after {
+  transition: --c-flame 1.5s ease, filter 1.1s ease, box-shadow 1.1s ease;
+}
 
 @keyframes flicker {
   0%, 100% { --c-flick: 1; }
@@ -6164,7 +6195,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 332</div>
+<div class="build-info">Сшивъ № 334</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -7487,19 +7518,33 @@ window.addEventListener('error', function (e) {
   window.addEventListener('orientationchange', function () { setTimeout(frameU, 120); }, { passive: true });
 })();
 
-/* №330 — вспышка пламени: один цикл по касанію/наведенію, затѣмъ замираніе */
+/* №334 — двѣ вспышки: скромная по наведенію, яркая по целенаправленному тапу;
+   разгорається и таетъ плавно, по окончаніи цикла — покой */
 (function () {
-  var last = null;
+  var last = null, burstTimer = null;
   function flash(f) {
     if (!f) return;
     f.classList.remove('flick-run');
     void f.offsetWidth;
     f.classList.add('flick-run');
   }
+  function ignite(f) {
+    if (!f) return;
+    if (burstTimer) clearTimeout(burstTimer);
+    f.classList.remove('flick-run');
+    f.classList.remove('fr-burst');
+    void f.offsetWidth;
+    f.classList.add('fr-burst');
+    f.classList.add('flick-run');
+    burstTimer = setTimeout(function () {
+      f.classList.remove('fr-burst');
+      burstTimer = null;
+    }, 3700);
+  }
   document.addEventListener('click', function (e) {
     var t = e.target;
     var f = t && t.closest ? t.closest('.card-frame') : null;
-    if (f) flash(f);
+    if (f) ignite(f);
   }, true);
   document.addEventListener('mouseover', function (e) {
     var t = e.target;

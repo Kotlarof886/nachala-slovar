@@ -4657,6 +4657,8 @@ var _glyphProbe = null;
 function envGlyphOk(ch) {
   if (ch === ' ') return true;
   if (ch === '\u2116') return false;   /* № въ шрифтѣ нѣтъ — перо его никогда не пишетъ, ничто не ставится */
+  var cc = ch.charCodeAt(0);
+  if (cc >= 0x0400 && cc <= 0x04FF) return true;   /* №335: буквы кириллицы перо не прячетъ — даже если проба глифовъ сомнѣвается */
   if (!_kalissaChecked) return true;
   if (_glyphCache[ch] !== undefined) return _glyphCache[ch];
   var ok = true;
@@ -4690,7 +4692,7 @@ if (document.fonts && document.fonts.load) {
       var chips = document.querySelectorAll('.env-ch');
       for (var i = 0; i < chips.length; i++) {
         var t = chips[i].textContent;
-        if (t && t !== ' ' && !envGlyphOk(t)) chips[i].style.display = 'none';
+        if (t && t !== ' ' && !envGlyphOk(t)) { chips[i].style.display = 'none'; } else if (t && t !== ' ') { chips[i].style.display = ''; }   /* №335: спрятанное прежде — возвращаемъ */
       }
     }
   }).catch(function () { _kalissaChecked = false; });
@@ -6195,7 +6197,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 334</div>
+<div class="build-info">Сшивъ № 335</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {

@@ -503,6 +503,22 @@ body.telegraph-on #s-tape { display: none; }
   animation-play-state: running;
 }
 
+/* №327: у карточки съ открытымъ окномъ разысканій слои свѣчения угловъ и линій
+   изолируются въ слои композитора. Мобільный GPU кэшируетъ растеризованные
+   фильтры drop-shadow — смена высоты карточки (открытіе/закрытіе окна) больше
+   не переразрезаетъ ихъ, вспышки угловъ исчезаютъ. Учёрокъ №292 соблюдёнъ:
+   правило дѣйствуетъ только пока окно открыто (:has), то есть всегда
+   не более чемъ у одной карточки — GPU не перегружается. Визуалъ не мѣняется:
+   слои opacity и фильтры тѣ же. */
+.card-frame:has(.online-results:not(:empty)) .fr-corner::before,
+.card-frame:has(.online-results:not(:empty)) .fr-line::before,
+.card-frame:has(.online-results:not(:empty)) .fr-corner::after,
+.card-frame:has(.online-results:not(:empty)) .fr-line::after {
+  will-change: opacity, filter;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
 @keyframes flicker {
   0%, 100% { --c-flick: 1; }
   8%  { --c-flick: 0.70; }
@@ -6138,7 +6154,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 326</div>
+<div class="build-info">Сшивъ № 327</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {

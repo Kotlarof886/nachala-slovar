@@ -371,7 +371,9 @@ body.telegraph-on #s-tape { display: none; }
 
 /* ---------- Декоративная рамка статьи ---------- */
 .card-frame {
-  --u: 0.055;
+  /* №321: живой масштабъ рамки — на узкихъ экранахъ сжимается пропорционально,
+     потолокъ 0.055 держитъ десктопъ прежнимъ (перьевой скриптъ читаетъ --u какъ прежде) */
+  --u: var(--frame-u, 0.055);
   position: relative;
   background: var(--card, #1a1520);
   width: 100%;
@@ -382,7 +384,7 @@ body.telegraph-on #s-tape { display: none; }
 .card-frame::before {
   content: '';
   position: absolute;
-  inset: 14px;
+  inset: calc(var(--u) * 255px);
   z-index: 0;
   pointer-events: none;
   background-image: url('images/diamond_tile2.png');
@@ -434,7 +436,7 @@ body.telegraph-on #s-tape { display: none; }
 .card-body {
   position: relative;
   z-index: 4;
-  padding: 44px 60px;;
+  padding: calc(var(--u) * 800px) calc(var(--u) * 1091px);
 }
 /* ===== Сборка №301 — свѣчъ карточекъ тождествененъ №55 дословно:
    база разгоранія 3s (было 2.7s), content-visibility съ карточекъ снятъ
@@ -4744,6 +4746,31 @@ function bindButtons(out, list) {
       wikiBlock.className = 'src-block wiki-block';
       wikiBlock.innerHTML = '<h4>Краткая справка</h4><p class="loading">Ищу…</p>';
       slot.appendChild(wikiBlock);
+      /* №321: открытіе всегда движением вниз — окно вырастаетъ плавно, содержимое скользитъ
+         сверху внизъ; всё, что выше кнопки, стоитъ на мѣстѣ — рывка нѣтъ и на телефонахъ */
+      (function (sl) {
+        var full = sl.scrollHeight;
+        sl.style.height = '0px';
+        sl.style.overflow = 'hidden';
+        sl.style.marginTop = '0px';
+        void sl.offsetHeight;
+        sl.style.transition = 'height 0.28s ease-out, margin-top 0.28s ease-out';
+        sl.style.height = full + 'px';
+        sl.style.marginTop = '';
+        var inn = sl.firstElementChild;
+        if (inn) {
+          inn.style.transform = 'translateY(-12px)';
+          inn.style.opacity = '0';
+          void inn.offsetHeight;
+          inn.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+          inn.style.transform = '';
+          inn.style.opacity = '';
+        }
+        sl._openTimer = setTimeout(function () {
+          sl._openTimer = null;
+          if (!sl._closing) { sl.style.height = ''; sl.style.overflow = ''; sl.style.transition = ''; }
+        }, 330);
+      })(slot);
       const cache = window._wikiCache || (window._wikiCache = new Map());
       try {
         let rec = cache.get(wm);
@@ -7274,6 +7301,23 @@ window.addEventListener('error', function (e) {
 </style>
 <script>
 /* №294: книжная карточка «Славное прошлое въ дымѣ папиросъ» — обложка внутри карточки, тапъ открываетъ PDF въ новой вкладкѣ (books/slavnoe-proshloe.pdf); у книжныхъ карточекъ кнопка «Уточнить у адъютантовъ» не выводится; поля cover и pdf теперь доходятъ отъ words.js до карточки — ранѣше маппингъ ихъ отбрасывалъ; слова подключаются съ меткой words.js?v=294, дабы кэшъ не держалъ старый словарь; поставлена страховка: если карточки въ words.js нѣтъ, сайтъ добавляетъ ея самъ; пасхалка «НАЧАЛА» жива, файлы ея перекочевали въ books/ и images/. */
+</script>
+<script>
+/* №321: живой масштабъ рамки карточекъ. Десктопъ (колонка 900px и шире) — прежніе 0.055;
+   узкіе экраны — пропорціональное сжатіе: уголки, лініи и отступы тѣла уменьшаются
+   соразмерно ширинѣ, карточка больше не рѣжется по краямъ. Пересчётъ — при загрузкѣ,
+   поворотѣ и измѣненіи окна. */
+(function () {
+  function frameU() {
+    var vw = window.innerWidth || document.documentElement.clientWidth || 900;
+    var w = Math.max(280, vw - 32);          /* 32px — отступы .wrap по бокамъ */
+    var u = Math.min(0.055, 0.055 * w / 900);
+    document.documentElement.style.setProperty('--frame-u', u.toFixed(5));
+  }
+  frameU();
+  window.addEventListener('resize', frameU, { passive: true });
+  window.addEventListener('orientationchange', function () { setTimeout(frameU, 120); }, { passive: true });
+})();
 </script>
 </body>
 </html>

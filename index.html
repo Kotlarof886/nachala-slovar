@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №322: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №326: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -4520,9 +4520,10 @@ function envShorten(s) {
   }
   return out + '...';
 }
-/* Сшивъ №317: капель и мелкихъ помарокъ гуще; разводы и водяное пятно — почти точечные */
+/* Сшивъ №323: пятенъ вдвое менѣше — 15 капель на конвертъ; добавки, капля-письмо
+   и водяное пятно остаются, но и ихъ вероятности пополамъ */
 function envBlotsHtml() {
-  var n = 30 + (Math.random() < 0.8 ? 1 : 0) + (Math.random() < 0.6 ? 1 : 0) + (Math.random() < 0.4 ? 1 : 0) + (Math.random() < 0.2 ? 1 : 0), html = '';
+  var n = 15 + (Math.random() < 0.4 ? 1 : 0) + (Math.random() < 0.3 ? 1 : 0) + (Math.random() < 0.2 ? 1 : 0) + (Math.random() < 0.1 ? 1 : 0), html = '';
   for (var i = 0; i < n; i++) {
     var kind = Math.random();
     var pos = 'left:' + (4 + Math.random() * 86).toFixed(1) + '%;top:' + (8 + Math.random() * 78).toFixed(1) + '%;transform:rotate(' + Math.floor(Math.random() * 360) + 'deg);';
@@ -4533,13 +4534,13 @@ function envBlotsHtml() {
       html += '<i class="env-blot smudge" style="' + pos + 'width:' + (2.5 + Math.random() * 2).toFixed(1) + 'px;height:' + (1 + Math.random() * 1).toFixed(1) + 'px;"></i>';
     }
   }
-  /* капелька чернилъ цветомъ письма — почти всегда */
-  if (Math.random() < 0.9) {
+  /* капелька чернилъ цветомъ письма — №323: вдвое рѣже */
+  if (Math.random() < 0.45) {
     var ds = 1.2 + Math.random() * 2.0;
     html += '<i class="env-blot drop" style="left:' + (6 + Math.random() * 84).toFixed(1) + '%;top:' + (36 + Math.random() * 28).toFixed(1) + '%;width:' + ds.toFixed(1) + 'px;height:' + (ds * (0.8 + Math.random() * 0.5)).toFixed(1) + 'px;"></i>';
   }
-  /* слабое водяное пятно на бумагѣ — изредка, очень малое */
-  if (Math.random() < 0.12) {
+  /* слабое водяное пятно на бумагѣ — №323: вдвое рѣже */
+  if (Math.random() < 0.06) {
     html += '<i class="env-blot stain" style="left:' + (10 + Math.random() * 68).toFixed(1) + '%;top:' + (12 + Math.random() * 58).toFixed(1) + '%;width:' + (2.6 + Math.random() * 1.6).toFixed(1) + 'px;height:' + (1.2 + Math.random() * 1.0).toFixed(1) + 'px;"></i>';
   }
   return html;
@@ -4704,18 +4705,46 @@ function closeSlotSmooth(slot, down) {
     slot._closing = false;
   }, 275);
 }
-/* №322: мгновенное сворачиваніе окна, ушедшаго за крайъ экрана. Безъ анімаціи
-   и безъ компенсацій прокрутки: никакихъ покадровыхъ scrollBy — нѣтъ ни рывковъ
-   «внизъ/вверхъ», ни мѣрцанія буквъ. Видимое содержимое не задѣевается вовсе. */
+/* №323: мгновенное сворачиваніе окна, ушедшаго за крайъ экрана — съ одношаговой
+   компенсаціей прокрутки. Окно, лежащее надъ экраномъ, при исчезновеніи тянетъ
+   всё нижнѣе вверхъ на свою высоту; потому высота мѣряется до очистки, а прокрутка
+   докручивается ровно на нея въ томъ же кадре: видимое стоитъ на мѣстѣ, рывка
+   и мѣрцанія буквъ нѣтъ — раскладка сдвигается одинъ разъ, однимъ кадромъ. */
 function closeSlotInstant(slot) {
   if (!slot || !slot.innerHTML.trim()) return;
   if (slot._closeTimer) { clearTimeout(slot._closeTimer); slot._closeTimer = null; }
   slot._closing = false; slot._closingDown = false;
   var w = slot.getAttribute('data-w');
+  var h = slot.offsetHeight;
+  var above = slot.getBoundingClientRect().bottom < 0;   /* окно цѣликомъ надъ экраномъ */
   slot.innerHTML = '';
   slot.style.height = ''; slot.style.overflow = ''; slot.style.transition = '';
   if (w) _slotCache.delete(w);
   if (_openSlotKey === w) _openSlotKey = null;
+  if (above && h > 0) {
+    var y = window.pageYOffset || 0;
+    if (y > 0) window.scrollTo(0, Math.max(0, y - h));   /* одинъ шагъ — безъ анімаціи */
+  }
+}
+/* №326: якорь верха новаго окна — пока прежнее окно схлопывается на экранѣ,
+   прокрутка каждый кадръ удерживаетъ верхъ якорнаго элемента на его мѣстѣ:
+   новая карточка въ любомъ случаѣ разворачивается только внизъ, страницу
+   вверхъ и внизъ не толкаетъ; рулитъ одинъ регуляторъ — дрожанія нѣтъ. */
+function anchorSlotTop(slot, closer) {
+  if (!slot) return;
+  var top0 = slot.getBoundingClientRect().top;
+  var t0 = Date.now();
+  var step = function () {
+    var d = top0 - slot.getBoundingClientRect().top;
+    /* №326: знак исправленъ — усадка прежняго окна усыхаетъ, и верхъ якорнаго
+       элемента поднимается на d; удержать его на мѣстѣ можно только прокруткой
+       вверхъ на тотъ же шагъ. Прежній знак крутилъ внизъ, и ошибка удваивалась
+       каждый кадръ: у нижняго края страницы прокрутка убегала въ конецъ документа.
+       Теперь экранъ стоитъ на мѣстѣ — карточка разворачивается только внизъ. */
+    if (d > 0.5 || d < -0.5) window.scrollBy(0, -d);
+    if (closer && closer._closing && Date.now() - t0 < 600) requestAnimationFrame(step);
+  };
+  requestAnimationFrame(step);
 }
 function cancelSlotClose(slot) {
   if (slot._closeTimer) { clearTimeout(slot._closeTimer); slot._closeTimer = null; slot._closing = false; slot._closingDown = false;
@@ -4727,7 +4756,10 @@ function closeAllSlots() {
     if (slot.innerHTML.trim() && !slot._closing) {
       var w = slot.getAttribute('data-w');
       if (w) _slotCache.delete(w);
-      closeSlotSmooth(slot);
+      var _r = slot.getBoundingClientRect();
+      if (_r.bottom <= 0) closeSlotInstant(slot);          /* №324: за экраномъ — мгновенно съ компенсаціей */
+      else if (_r.top < 0) closeSlotSmooth(slot, true);    /* №324: наполовину за верхомъ — «внизъ» съ компенсаціей */
+      else closeSlotSmooth(slot);
     }
   });
   _openSlotKey = null;
@@ -4771,7 +4803,20 @@ function bindButtons(out, list) {
       /* Сшивъ №316: открытъ можетъ быть только одно окно — прежнее плавно сворачивается, и карточки остаются на своихъ мѣстахъ */
       if (_openSlotKey != null && _openSlotKey !== w) {
         const other = liveSlotByWord(_openSlotKey);
-        if (other && other !== slot && other.innerHTML.trim() && !other._closing) { closeSlotSmooth(other); _slotCache.delete(_openSlotKey); }
+        if (other && other !== slot && other.innerHTML.trim() && !other._closing) {
+          /* №323: прежнее окно за верхнимъ краемъ — сворачивается мгновенно съ компенсаціей,
+             а не плавной усадкой: раскладка сдвигается однимъ кадромъ, слои свѣта уголковъ
+             не перерастеризуются покадрово — мѣрцанія угловъ при открытіи нового окна нѣтъ */
+          /* №324: прежнее окно за верхнимъ краемъ — сворачивается мгновенно съ компенсаціей.
+             Если же оно лишь высунулось за верхъ (наполовину на экранѣ) — сворачиваніе «внизъ»
+             съ компенсаціей: усадка безъ компенсаціи тянула видимыя карточки вверхъ покадрово
+             всё время анимации — страница «толкалась вверхъ» при открытіи нового окна. */
+          var _or = other.getBoundingClientRect();
+          if (_or.bottom <= 0) closeSlotInstant(other);          /* цѣликомъ надъ экраномъ — мгновенно */
+          else if (_or.top < 0) closeSlotSmooth(other, true);    /* наполовину за верхомъ — «внизъ» съ компенсаціей */
+          else { /* №325: прежнее окно цѣликомъ на экранѣ — верхъ новаго якорится къ экрану на всё время усадки */ anchorSlotTop(slot, other); closeSlotSmooth(other); }
+          _slotCache.delete(_openSlotKey);
+        }
       }
       _openSlotKey = w;
       /* Сшивъ №316: корнеты — конверты; фонъ тасуется при каждомъ разысканіи, въ парѣ всегда разныя */
@@ -4783,15 +4828,16 @@ function bindButtons(out, list) {
       slot.appendChild(wikiBlock);
       /* №321: открытіе всегда движением вниз — окно вырастаетъ плавно, содержимое скользитъ
          сверху внизъ; всё, что выше кнопки, стоитъ на мѣстѣ — рывка нѣтъ и на телефонахъ */
+      /* №323: открытіе большѣ не трогаетъ margin-top — мгновенное обнуленіе верхняго
+         отступа стягивало 10px надъ окномъ въ первый кадръ, и содержимое дёргалось вверхъ.
+         Окно растётъ только высотой: всѣ карточки выше и ниже стоятъ на своихъ мѣстахъ. */
       (function (sl) {
         var full = sl.scrollHeight;
         sl.style.height = '0px';
         sl.style.overflow = 'hidden';
-        sl.style.marginTop = '0px';
         void sl.offsetHeight;
-        sl.style.transition = 'height 0.28s ease-out, margin-top 0.28s ease-out';
+        sl.style.transition = 'height 0.28s ease-out';
         sl.style.height = full + 'px';
-        sl.style.marginTop = '';
         var inn = sl.firstElementChild;
         if (inn) {
           inn.style.transform = 'translateY(-12px)';
@@ -4828,8 +4874,32 @@ function bindButtons(out, list) {
         const live = liveSlotByWord(w);
         if (live) {
           const blk = live.querySelector('.wiki-block');
-          if (blk) blk.outerHTML = wikiBlockHtml(entry.wiki);   /* Сшивъ №282: справка встаётъ точечно — слотъ не пересобирается */
-          else live.innerHTML = slotInner(w);   /* запасная ветка — слотъ пересобрали, покуда шла справка */
+          if (blk) {
+            /* №324: справка встаётъ точечно, но если окно уже ушло за верхъ экрана,
+               мѣна «Ищу…» на готовый текст мѣняетъ высоту и сдвигаетъ страницу.
+               Мѣряемъ блокъ до и послѣ, разницу тутъ же докручиваемъ — рывка нѣтъ. */
+            var _wr0 = blk.getBoundingClientRect();
+            var _wy0 = window.pageYOffset || 0;
+            var _wAbove = _wr0.bottom <= 0;
+            blk.outerHTML = wikiBlockHtml(entry.wiki);
+            if (_wAbove) {
+              var _nb = live.querySelector('.wiki-block');
+              if (_nb) {
+                var _dd = _nb.getBoundingClientRect().height - _wr0.height;
+                if (_dd) window.scrollTo(0, Math.max(0, _wy0 + _dd));
+              }
+            }
+          } else {
+            /* №324: пересборка цѣликомъ — если слотъ ушёл за верхъ экрана, докручиваемъ на разницу высоты */
+            var _fr0 = live.getBoundingClientRect();
+            var _fy0 = window.pageYOffset || 0;
+            var _fAbove = _fr0.bottom <= 0;
+            live.innerHTML = slotInner(w);   /* запасная ветка — слотъ пересобрали, покуда шла справка */
+            if (_fAbove) {
+              var _fd = live.getBoundingClientRect().height - _fr0.height;
+              if (_fd) window.scrollTo(0, Math.max(0, _fy0 + _fd));
+            }
+          }
         }
       } catch (e) {
         const entry = _slotCache.get(w);
@@ -4838,8 +4908,29 @@ function bindButtons(out, list) {
         const live = liveSlotByWord(w);
         if (live) {
           const blk = live.querySelector('.wiki-block');
-          if (blk) blk.outerHTML = wikiBlockHtml(entry.wiki);   /* Сшивъ №282: справка встаётъ точечно — слотъ не пересобирается */
-          else live.innerHTML = slotInner(w);
+          if (blk) {
+            /* №324: та же компенсація въ ошибочнѣ веткѣ — блокъ за верхомъ экрана не дёргаетъ страницу */
+            var _er0 = blk.getBoundingClientRect();
+            var _ey0 = window.pageYOffset || 0;
+            var _eAbove = _er0.bottom <= 0;
+            blk.outerHTML = wikiBlockHtml(entry.wiki);
+            if (_eAbove) {
+              var _enb = live.querySelector('.wiki-block');
+              if (_enb) {
+                var _edd = _enb.getBoundingClientRect().height - _er0.height;
+                if (_edd) window.scrollTo(0, Math.max(0, _ey0 + _edd));
+              }
+            }
+          } else {
+            var _gr0 = live.getBoundingClientRect();
+            var _gy0 = window.pageYOffset || 0;
+            var _gAbove = _gr0.bottom <= 0;
+            live.innerHTML = slotInner(w);
+            if (_gAbove) {
+              var _gd = live.getBoundingClientRect().height - _gr0.height;
+              if (_gd) window.scrollTo(0, Math.max(0, _gy0 + _gd));
+            }
+          }
         }
       }
     });
@@ -5999,7 +6090,21 @@ function tgOpenCard(w) {
   var oi = tgOpenList.indexOf(w);
   if (oi >= 0) tgOpenList.splice(oi, 1);
   tgOpenList.push(w);
-  while (tgOpenList.length > 1) tgCloseCard(tgOpenList[0]);   /* вторая закрываетъ первую: открытой остаётся только одна — лёгче кадрамъ */
+  if (tgOpenList.length > 1) {
+    /* №326: пока прежняя карточка эфира схлопывается, верхъ новой удерживается на мѣстѣ —
+       новая карточка въ любомъ случаѣ разворачивается только внизъ, страницу не толкаетъ */
+    var _aTop = w.getBoundingClientRect().top;
+    var _t0 = Date.now();
+    var _aStep = function () {
+      var d = _aTop - w.getBoundingClientRect().top;
+      /* №326: знак исправленъ, какъ въ словарѣ — удержаніе верха новой карточки
+         идётъ прокруткой вверхъ на шагъ усадки, безъ разгона ошибки */
+      if (d > 0.5 || d < -0.5) window.scrollBy(0, -d);
+      if (Date.now() - _t0 < 640) requestAnimationFrame(_aStep);
+    };
+    requestAnimationFrame(_aStep);
+    while (tgOpenList.length > 1) tgCloseCard(tgOpenList[0]);   /* вторая закрываетъ первую: открытой остаётся только одна — лёгче кадрамъ */
+  }
   requestAnimationFrame(function() {
     requestAnimationFrame(function() {
       w.classList.add('tg-open');          /* тень и рамки оживаютъ синхронно съ ростомъ */
@@ -6033,7 +6138,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 322</div>
+<div class="build-info">Сшивъ № 326</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {

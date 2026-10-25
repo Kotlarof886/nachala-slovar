@@ -486,8 +486,8 @@ body.telegraph-on #s-tape { display: none; }
   opacity: calc(var(--c-flame) * var(--c-flick));
   filter: drop-shadow(0 0 10px rgba(240, 150, 60, 0.55));
   transition: --c-flame 1.5s ease;
-  animation: flicker 2.6s ease-in-out infinite;
-  animation-play-state: paused;
+  animation: none;
+  --c-flick: 1;
 }
 
 .card-frame:hover .fr-corner::before,
@@ -500,7 +500,12 @@ body.telegraph-on #s-tape { display: none; }
 .card-frame:hover .fr-line::after {
   --c-flame: 1;
   transition: --c-flame 2.7s cubic-bezier(0.75, 0, 0.25, 1);
-  animation-play-state: running;
+}
+
+/* ===== №330 — вспышка при активности: один цикл пульса и замираніе ===== */
+.card-frame.flick-run .fr-corner::after,
+.card-frame.flick-run .fr-line::after {
+  animation: flicker 2.6s ease-in-out forwards;
 }
 
 /* ===== №329 — мѣрцаніе рамки на сенсорѣ: лѣчимъ причину, а не слой =====
@@ -6159,7 +6164,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 329</div>
+<div class="build-info">Сшивъ № 332</div>
 <style id="tg-strips">
 /* ===== Этапъ 3б: полосы разрѣзанной ленты въ тѣлѣ карточки ===== */
 .tg-strip {
@@ -7480,6 +7485,28 @@ window.addEventListener('error', function (e) {
   frameU();
   window.addEventListener('resize', frameU, { passive: true });
   window.addEventListener('orientationchange', function () { setTimeout(frameU, 120); }, { passive: true });
+})();
+
+/* №330 — вспышка пламени: один цикл по касанію/наведенію, затѣмъ замираніе */
+(function () {
+  var last = null;
+  function flash(f) {
+    if (!f) return;
+    f.classList.remove('flick-run');
+    void f.offsetWidth;
+    f.classList.add('flick-run');
+  }
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    var f = t && t.closest ? t.closest('.card-frame') : null;
+    if (f) flash(f);
+  }, true);
+  document.addEventListener('mouseover', function (e) {
+    var t = e.target;
+    var f = t && t.closest ? t.closest('.card-frame') : null;
+    if (f && f !== last) flash(f);
+    last = f;
+  }, true);
 })();
 </script>
 </body>

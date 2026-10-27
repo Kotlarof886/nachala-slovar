@@ -706,21 +706,12 @@ html.tg-sliding { overflow: hidden !important; }   /* на время сколь
    font-display: swap;
  }
  .cornet-envs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 0.6rem; }
- /* [patch-env] <img>-версия: конвертъ невидимъ, пока фонъ не пришёлъ */
  .cornet-env {
    position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 0.3rem;
-   aspect-ratio: 1183 / 481;
+   aspect-ratio: 1183 / 481; background-size: 100% 100%; background-repeat: no-repeat; background-position: center;
    border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.35); text-decoration: none; overflow: hidden;
-   opacity: 0;
-   transition: opacity 0.45s ease-out, transform 0.25s ease, box-shadow 0.25s ease; will-change: transform;
+   transition: transform 0.25s ease, box-shadow 0.25s ease; will-change: transform;
  }
- .cornet-env.env-loaded { opacity: 1; }
- .cornet-env .env-bg {
-   position: absolute; inset: 0; width: 100%; height: 100%;
-   object-fit: cover; display: block; pointer-events: none; z-index: 0;
- }
- .cornet-env .env-name, .cornet-env .env-word { position: relative; z-index: 2; }
- .cornet-env .env-blot { z-index: 1; }
  .cornet-env:hover { animation: env-wiggle 0.45s ease-in-out infinite alternate; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
  @keyframes env-wiggle {
    from { transform: scale(1.03) rotate(-1.1deg); }
@@ -4664,7 +4655,7 @@ var ENV_BG_LIST = ENV_BG_FALLBACK.slice();
     found.sort(function (a, b) { return a - b; });
     if (found.length) ENV_BG_LIST = found.map(bgName);   /* найденные карточки — по порядку */
   }
-  for (var i = 1; i <= 0; i++) {
+  for (var i = 1; i <= 40; i++) {
     (function (n) {
       var im = new Image();
       im.onload = function () { found.push(n); check(); };
@@ -4674,11 +4665,10 @@ var ENV_BG_LIST = ENV_BG_FALLBACK.slice();
   }
 })();
 function cornetEnvelopesHtml(wm, w) {
-  /* [patch-env] <img> вмѣсто background-image: у картинки есть onload,
-     конвертъ невидимъ, пока файлъ не пришёлъ, потомъ проявляется плавно */
+  var DEFAULT_BG = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
   var rawList = (window.__envBgCache && window.__envBgCache.length)
     ? window.__envBgCache
-    : [1, 2];
+    : DEFAULT_BG;
   var bgs = rawList.map(function (n) {
     return 'images/bg-' + (n < 10 ? '0' + n : n) + '.png';
   });
@@ -4955,7 +4945,6 @@ function bindButtons(out, list) {
       _openSlotKey = w;
       /* Сшивъ №316: корнеты — конверты; фонъ тасуется при каждомъ разысканіи, въ парѣ всегда разныя */
       slot.innerHTML = '<div class="src-block"><h4>Разысканія господъ адъютантовъ</h4>' + cornetEnvelopesHtml(wm, w) + '</div>';
-      if (window.envFadeIn) window.envFadeIn(slot);   /* [patch-env] плавное проявленіе */
       _slotCache.set(w, { links: slot.innerHTML, wiki: null, busy: true });   /* разысканія переживаютъ пересборку */
       /* Блок для справки Википедии создаётся только при её успешном получении */
       /* №321: открытіе всегда движением вниз — окно вырастаетъ плавно, содержимое скользитъ
@@ -7634,15 +7623,19 @@ window.addEventListener('error', function (e) {
   'use strict';
   if (window.__envPatchInstalled) return;
   window.__envPatchInstalled = true;
-  var ENV_BG_MAX = 60;
-  var ENV_BG_KEY = 'nachala-env-bg-v1';
+
+  var ENV_BG_MAX = 40;
+  var ENV_BG_KEY = 'nachala-env-bg-v3'; // Сброс старого кэша
   var ENV_BG_TTL = 7 * 24 * 60 * 60 * 1000;
-  var PARALLEL = 6;
-  var PER_TRY_TIMEOUT = 5000;
+  var PARALLEL = 10;
+  var PER_TRY_TIMEOUT = 4000;
+
   function name(n) { return 'images/bg-' + (n < 10 ? '0' + n : n) + '.png'; }
+
   var state = 'idle';
   var list = [];
   var waiters = [];
+
   function readCache() {
     try {
       var raw = localStorage.getItem(ENV_BG_KEY);
@@ -7655,15 +7648,18 @@ window.addEventListener('error', function (e) {
   function writeCache(l) {
     try { localStorage.setItem(ENV_BG_KEY, JSON.stringify({ ts: Date.now(), list: l, max: ENV_BG_MAX })); } catch (e) {}
   }
+
   function probe(cb) {
     if (state === 'done') { if (cb) { try { cb(list); } catch (e) {} } return; }
     if (state === 'probing') { if (cb) waiters.push(cb); return; }
     state = 'probing';
     if (cb) waiters.push(cb);
+
     var cached = readCache();
     var fresh = cached && (Date.now() - cached.ts < ENV_BG_TTL);
     var found = cached ? cached.list.slice() : [];
     var startAt = (fresh && cached.max) ? cached.max + 1 : 1;
+
     if (startAt > ENV_BG_MAX) {
       list = found.slice().sort(function (a, b) { return a - b; });
       state = 'done';
@@ -7672,7 +7668,10 @@ window.addEventListener('error', function (e) {
       w0.forEach(function (f) { try { f(list); } catch (e) {} });
       return;
     }
+
     var pending = 0, i = startAt, finished = false;
+    var consecutiveMisses = 0;
+
     function flush() {
       if (finished || pending > 0 || i <= ENV_BG_MAX) return;
       finished = true;
@@ -7683,15 +7682,28 @@ window.addEventListener('error', function (e) {
       var w = waiters.slice(); waiters.length = 0;
       w.forEach(function (f) { try { f(list); } catch (e) {} });
     }
+
     function next() {
+      if (consecutiveMisses >= 4) { flush(); return; }
+
       while (i <= ENV_BG_MAX && pending < PARALLEL) {
         (function (n) {
           pending++;
           var im = new Image();
           var done = false;
           var timer = setTimeout(function () { if (done) return; done = true; pending--; next(); flush(); }, PER_TRY_TIMEOUT);
-          im.onload = function () { if (done) return; done = true; clearTimeout(timer); found.push(n); pending--; next(); flush(); };
-          im.onerror = function () { if (done) return; done = true; clearTimeout(timer); pending--; next(); flush(); };
+          im.onload = function () { 
+            if (done) return; done = true; clearTimeout(timer); 
+            found.push(n); 
+            consecutiveMisses = 0;
+            window.__envBgCache = found.slice().sort(function(a,b){return a-b;});
+            pending--; next(); flush(); 
+          };
+          im.onerror = function () { 
+            if (done) return; done = true; clearTimeout(timer); 
+            consecutiveMisses++;
+            pending--; next(); flush(); 
+          };
           im.src = name(n);
         })(i);
         i++;
@@ -7700,12 +7712,14 @@ window.addEventListener('error', function (e) {
     }
     next();
   }
+
   var scheduled = false;
   function schedule() {
     if (scheduled || state === 'done') return;
     scheduled = true;
     probe(null);
   }
+
   function onIntent(e) {
     var t = e.target;
     if (t && t.closest && t.closest('.wiktionary-btn')) schedule();
@@ -7713,37 +7727,36 @@ window.addEventListener('error', function (e) {
   document.addEventListener('mouseover', onIntent, true);
   document.addEventListener('touchstart', onIntent, { passive: true, capture: true });
   document.addEventListener('focusin', onIntent, true);
+
   window.envFadeIn = function (root) {
     if (!root) return;
-    var imgs = root.querySelectorAll('.cornet-env .env-bg');
-    for (var k = 0; k < imgs.length; k++) {
-      (function (img) {
-        var link = img.closest ? img.closest('.cornet-env') : null;
-        if (!link) return;
-        if (img.complete && img.naturalWidth > 0) { link.classList.add('env-loaded'); return; }
-        img.addEventListener('load', function () { link.classList.add('env-loaded'); }, { once: true });
-        img.addEventListener('error', function () { link.remove(); }, { once: true });
-      })(imgs[k]);
+    var links = root.querySelectorAll('.cornet-env');
+    if (!links.length) return;
+    var pending = links.length;
+    
+    function check() {
+      pending--;
+      if (pending > 0) return;
+      for (var i = 0; i < links.length; i++) {
+        if (links[i].isConnected) links[i].classList.add('env-loaded');
+      }
+    }
+
+    for (var k = 0; k < links.length; k++) {
+      (function (link) {
+        var img = link.querySelector('.env-bg');
+        if (!img) { check(); return; }
+        if (img.complete && img.naturalWidth > 0) { check(); return; }
+        
+        img.addEventListener('load', check, { once: true });
+        img.addEventListener('error', function () {
+          link.remove(); 
+          check();
+        }, { once: true });
+      })(links[k]);
     }
   };
-  if ('MutationObserver' in window) {
-    var mo = new MutationObserver(function (muts) {
-      for (var i = 0; i < muts.length; i++) {
-        var nodes = muts[i].addedNodes;
-        for (var j = 0; j < nodes.length; j++) {
-          var node = nodes[j];
-          if (node.nodeType !== 1) continue;
-          if (node.classList && node.classList.contains('cornet-envs')) {
-            window.envFadeIn(node);
-          } else if (node.querySelectorAll) {
-            var inners = node.querySelectorAll('.cornet-envs');
-            for (var q = 0; q < inners.length; q++) window.envFadeIn(inners[q]);
-          }
-        }
-      }
-    });
-    mo.observe(document.body, { childList: true, subtree: true });
-  }
+
   if (document.readyState === 'complete') schedule();
   else window.addEventListener('load', schedule);
 })();

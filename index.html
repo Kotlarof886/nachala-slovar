@@ -7624,10 +7624,12 @@ window.addEventListener('error', function (e) {
   if (window.__envPatchInstalled) return;
   window.__envPatchInstalled = true;
 
+  var DEFAULT_BG = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
+  var ENV_BG_START = 19;
   var ENV_BG_MAX = 40;
-  var ENV_BG_KEY = 'nachala-env-bg-v3'; // Сброс старого кэша
+  var ENV_BG_KEY = 'nachala-env-bg-v4';
   var ENV_BG_TTL = 7 * 24 * 60 * 60 * 1000;
-  var PARALLEL = 10;
+  var PARALLEL = 2; // Строго 2 запроса, чтобы не забивать канал
   var PER_TRY_TIMEOUT = 4000;
 
   function name(n) { return 'images/bg-' + (n < 10 ? '0' + n : n) + '.png'; }
@@ -7657,8 +7659,15 @@ window.addEventListener('error', function (e) {
 
     var cached = readCache();
     var fresh = cached && (Date.now() - cached.ts < ENV_BG_TTL);
-    var found = cached ? cached.list.slice() : [];
-    var startAt = (fresh && cached.max) ? cached.max + 1 : 1;
+    var found = DEFAULT_BG.slice();
+    var startAt = ENV_BG_START;
+
+    if (cached && fresh) {
+      for (var k=0; k<cached.list.length; k++) {
+        if (found.indexOf(cached.list[k]) === -1) found.push(cached.list[k]);
+      }
+      if (cached.max) startAt = cached.max + 1;
+    }
 
     if (startAt > ENV_BG_MAX) {
       list = found.slice().sort(function (a, b) { return a - b; });
@@ -7717,7 +7726,10 @@ window.addEventListener('error', function (e) {
   function schedule() {
     if (scheduled || state === 'done') return;
     scheduled = true;
-    probe(null);
+    // Откладываем на 3 секунды, чтобы не мешать загрузке шапки и шрифтов
+    setTimeout(function() {
+      probe(null);
+    }, 3000);
   }
 
   function onIntent(e) {
@@ -7734,9 +7746,17 @@ window.addEventListener('error', function (e) {
     if (!links.length) return;
     var pending = links.length;
     
+    // Страховка: если интернет медленный, через 2.5 сек показываем что есть
+    var timeoutId = setTimeout(function() {
+      for (var i = 0; i < links.length; i++) {
+        if (links[i].isConnected) links[i].classList.add('env-loaded');
+      }
+    }, 2500);
+
     function check() {
       pending--;
       if (pending > 0) return;
+      clearTimeout(timeoutId);
       for (var i = 0; i < links.length; i++) {
         if (links[i].isConnected) links[i].classList.add('env-loaded');
       }
@@ -7757,9 +7777,11 @@ window.addEventListener('error', function (e) {
     }
   };
 
+  // Запуск только после полной загрузки страницы
   if (document.readyState === 'complete') schedule();
   else window.addEventListener('load', schedule);
 })();
 </script>
+
 </body>
 </html>

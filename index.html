@@ -4665,29 +4665,20 @@ var ENV_BG_LIST = ENV_BG_FALLBACK.slice();
   }
 })();
 function cornetEnvelopesHtml(wm, w) {
-  var DEFAULT_BG = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
-  var rawList = (window.__envBgCache && window.__envBgCache.length)
-    ? window.__envBgCache
-    : DEFAULT_BG;
-  var bgs = rawList.map(function (n) {
-    return 'images/bg-' + (n < 10 ? '0' + n : n) + '.png';
-  });
-  for (var i = bgs.length - 1; i > 0; i--) {
+  var bgs = ENV_BG_LIST.slice();
+  for (var i = bgs.length - 1; i > 0; i--) {   /* тасовка Фишера—Йетса */
     var j = Math.floor(Math.random() * (i + 1));
     var t = bgs[i]; bgs[i] = bgs[j]; bgs[j] = t;
   }
-  if (bgs.length === 1) bgs.push(bgs[0]);
   var disp = escapeHtml(envShorten(w || wm));
   var blots0 = envBlotsHtml(), blots1 = envBlotsHtml();
   return '<div class="cornet-envs">'
-    + '<a class="cornet-env" href="https://yandex.ru/search/?text=' + encodeURIComponent(wm) + '" target="_blank" rel="noopener">'
-    +   '<img class="env-bg" src="' + bgs[0] + '" alt="" decoding="async">'
+    + '<a class="cornet-env" style="background-image:url(\'' + bgs[0] + '\')" href="https://yandex.ru/search/?text=' + encodeURIComponent(wm) + '" target="_blank" rel="noopener">'
     +   '<span class="env-name">' + envHandwritingHtml('Корнетъ Яндексовскій') + '</span>'
     +   '<span class="env-word">' + envHandwritingHtml(disp) + '</span>'
     +   blots0
     + '</a>'
-    + '<a class="cornet-env env-gogol" href="https://www.google.com/search?q=' + encodeURIComponent(wm) + '" target="_blank" rel="noopener">'
-    +   '<img class="env-bg" src="' + bgs[1] + '" alt="" decoding="async">'
+    + '<a class="cornet-env env-gogol" style="background-image:url(\'' + bgs[1] + '\')" href="https://www.google.com/search?q=' + encodeURIComponent(wm) + '" target="_blank" rel="noopener">'
     +   '<span class="env-name">' + envHandwritingHtml('Корнетъ Гуголидзе') + '</span>'
     +   '<span class="env-word">' + envHandwritingHtml(disp) + '</span>'
     +   blots1
@@ -7618,170 +7609,5 @@ window.addEventListener('error', function (e) {
   }, true);
 })();
 </script>
-<script id="patch-env-block">
-(function () {
-  'use strict';
-  if (window.__envPatchInstalled) return;
-  window.__envPatchInstalled = true;
-
-  var DEFAULT_BG = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
-  var ENV_BG_START = 19;
-  var ENV_BG_MAX = 40;
-  var ENV_BG_KEY = 'nachala-env-bg-v4';
-  var ENV_BG_TTL = 7 * 24 * 60 * 60 * 1000;
-  var PARALLEL = 2; // Строго 2 запроса, чтобы не забивать канал
-  var PER_TRY_TIMEOUT = 4000;
-
-  function name(n) { return 'images/bg-' + (n < 10 ? '0' + n : n) + '.png'; }
-
-  var state = 'idle';
-  var list = [];
-  var waiters = [];
-
-  function readCache() {
-    try {
-      var raw = localStorage.getItem(ENV_BG_KEY);
-      if (!raw) return null;
-      var o = JSON.parse(raw);
-      if (!o || !Array.isArray(o.list) || typeof o.ts !== 'number' || typeof o.max !== 'number') return null;
-      return o;
-    } catch (e) { return null; }
-  }
-  function writeCache(l) {
-    try { localStorage.setItem(ENV_BG_KEY, JSON.stringify({ ts: Date.now(), list: l, max: ENV_BG_MAX })); } catch (e) {}
-  }
-
-  function probe(cb) {
-    if (state === 'done') { if (cb) { try { cb(list); } catch (e) {} } return; }
-    if (state === 'probing') { if (cb) waiters.push(cb); return; }
-    state = 'probing';
-    if (cb) waiters.push(cb);
-
-    var cached = readCache();
-    var fresh = cached && (Date.now() - cached.ts < ENV_BG_TTL);
-    var found = DEFAULT_BG.slice();
-    var startAt = ENV_BG_START;
-
-    if (cached && fresh) {
-      for (var k=0; k<cached.list.length; k++) {
-        if (found.indexOf(cached.list[k]) === -1) found.push(cached.list[k]);
-      }
-      if (cached.max) startAt = cached.max + 1;
-    }
-
-    if (startAt > ENV_BG_MAX) {
-      list = found.slice().sort(function (a, b) { return a - b; });
-      state = 'done';
-      window.__envBgCache = list;
-      var w0 = waiters.slice(); waiters.length = 0;
-      w0.forEach(function (f) { try { f(list); } catch (e) {} });
-      return;
-    }
-
-    var pending = 0, i = startAt, finished = false;
-    var consecutiveMisses = 0;
-
-    function flush() {
-      if (finished || pending > 0 || i <= ENV_BG_MAX) return;
-      finished = true;
-      list = found.slice().sort(function (a, b) { return a - b; });
-      writeCache(list);
-      window.__envBgCache = list;
-      state = 'done';
-      var w = waiters.slice(); waiters.length = 0;
-      w.forEach(function (f) { try { f(list); } catch (e) {} });
-    }
-
-    function next() {
-      if (consecutiveMisses >= 4) { flush(); return; }
-
-      while (i <= ENV_BG_MAX && pending < PARALLEL) {
-        (function (n) {
-          pending++;
-          var im = new Image();
-          var done = false;
-          var timer = setTimeout(function () { if (done) return; done = true; pending--; next(); flush(); }, PER_TRY_TIMEOUT);
-          im.onload = function () { 
-            if (done) return; done = true; clearTimeout(timer); 
-            found.push(n); 
-            consecutiveMisses = 0;
-            window.__envBgCache = found.slice().sort(function(a,b){return a-b;});
-            pending--; next(); flush(); 
-          };
-          im.onerror = function () { 
-            if (done) return; done = true; clearTimeout(timer); 
-            consecutiveMisses++;
-            pending--; next(); flush(); 
-          };
-          im.src = name(n);
-        })(i);
-        i++;
-      }
-      flush();
-    }
-    next();
-  }
-
-  var scheduled = false;
-  function schedule() {
-    if (scheduled || state === 'done') return;
-    scheduled = true;
-    // Откладываем на 3 секунды, чтобы не мешать загрузке шапки и шрифтов
-    setTimeout(function() {
-      probe(null);
-    }, 3000);
-  }
-
-  function onIntent(e) {
-    var t = e.target;
-    if (t && t.closest && t.closest('.wiktionary-btn')) schedule();
-  }
-  document.addEventListener('mouseover', onIntent, true);
-  document.addEventListener('touchstart', onIntent, { passive: true, capture: true });
-  document.addEventListener('focusin', onIntent, true);
-
-  window.envFadeIn = function (root) {
-    if (!root) return;
-    var links = root.querySelectorAll('.cornet-env');
-    if (!links.length) return;
-    var pending = links.length;
-    
-    // Страховка: если интернет медленный, через 2.5 сек показываем что есть
-    var timeoutId = setTimeout(function() {
-      for (var i = 0; i < links.length; i++) {
-        if (links[i].isConnected) links[i].classList.add('env-loaded');
-      }
-    }, 2500);
-
-    function check() {
-      pending--;
-      if (pending > 0) return;
-      clearTimeout(timeoutId);
-      for (var i = 0; i < links.length; i++) {
-        if (links[i].isConnected) links[i].classList.add('env-loaded');
-      }
-    }
-
-    for (var k = 0; k < links.length; k++) {
-      (function (link) {
-        var img = link.querySelector('.env-bg');
-        if (!img) { check(); return; }
-        if (img.complete && img.naturalWidth > 0) { check(); return; }
-        
-        img.addEventListener('load', check, { once: true });
-        img.addEventListener('error', function () {
-          link.remove(); 
-          check();
-        }, { once: true });
-      })(links[k]);
-    }
-  };
-
-  // Запуск только после полной загрузки страницы
-  if (document.readyState === 'complete') schedule();
-  else window.addEventListener('load', schedule);
-})();
-</script>
-
 </body>
 </html>

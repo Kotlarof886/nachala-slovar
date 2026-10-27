@@ -4571,7 +4571,7 @@ function slotInner(w) {
   if (!rec) return '';
   var wm = toModern(w);
   var html = rec.links || '';
-  if (rec.busy) html += '<div class="src-block wiki-block"><h4>Краткая справка</h4><p class="loading">Ищу…</p></div>';
+  if (rec.busy) html += '';
   else if (rec.wiki === 'miss') html += wikiBlockHtml('miss');
   else if (rec.wiki === 'err') html += wikiBlockHtml('err');
   else if (rec.wiki) html += wikiBlockHtml(rec.wiki);
@@ -4579,7 +4579,7 @@ function slotInner(w) {
 }
 /* Сшивъ №282: справка строится одним хелпером — у миниатюры явные мѣры, переливки при загрузкѣ нетъ */
 function wikiBlockHtml(rec) {
-  if (rec === 'miss') return '<div class="src-block wiki-block"><h4>Краткая справка</h4><p class="empty">Въ словарѣ Брокгауза и Ефрона такой статьи нѣтъ. Разысканія выше по-прежнему живы.</p></div>';
+  if (rec === 'miss') return '<div class="wiki-block" style="display:none" aria-hidden="true"></div>';
   if (rec === 'err') return '<div class="src-block wiki-block"><h4>Краткая справка</h4><p class="empty">Эфиръ глухъ — въ этотъ мигъ отвѣта не дождались. Повторите попытку; разысканія выше всегда живы.</p></div>';
   var r = rec, whtml = '';
   if (r.th) whtml += '<img src="' + r.th + '" style="float:right;width:120px;height:90px;object-fit:cover;margin:0 0 8px 12px;border-radius:6px;">';
@@ -4937,10 +4937,7 @@ function bindButtons(out, list) {
       /* Сшивъ №316: корнеты — конверты; фонъ тасуется при каждомъ разысканіи, въ парѣ всегда разныя */
       slot.innerHTML = '<div class="src-block"><h4>Разысканія господъ адъютантовъ</h4>' + cornetEnvelopesHtml(wm, w) + '</div>';
       _slotCache.set(w, { links: slot.innerHTML, wiki: null, busy: true });   /* разысканія переживаютъ пересборку */
-      const wikiBlock = document.createElement('div');
-      wikiBlock.className = 'src-block wiki-block';
-      wikiBlock.innerHTML = '<h4>Краткая справка</h4><p class="loading">Ищу…</p>';
-      slot.appendChild(wikiBlock);
+      /* Блок для справки Википедии создаётся только при её успешном получении */
       /* №321: открытіе всегда движением вниз — окно вырастаетъ плавно, содержимое скользитъ
          сверху внизъ; всё, что выше кнопки, стоитъ на мѣстѣ — рывка нѣтъ и на телефонахъ */
       /* №323: открытіе большѣ не трогаетъ margin-top — мгновенное обнуленіе верхняго

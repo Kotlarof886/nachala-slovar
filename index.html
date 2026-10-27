@@ -4674,20 +4674,30 @@ var ENV_BG_LIST = ENV_BG_FALLBACK.slice();
   }
 })();
 function cornetEnvelopesHtml(wm, w) {
-  var bgs = ENV_BG_LIST.slice();
-  for (var i = bgs.length - 1; i > 0; i--) {   /* тасовка Фишера—Йетса */
+  /* [patch-env] <img> вмѣсто background-image: у картинки есть onload,
+     конвертъ невидимъ, пока файлъ не пришёлъ, потомъ проявляется плавно */
+  var rawList = (window.__envBgCache && window.__envBgCache.length)
+    ? window.__envBgCache
+    : [1, 2];
+  var bgs = rawList.map(function (n) {
+    return 'images/bg-' + (n < 10 ? '0' + n : n) + '.png';
+  });
+  for (var i = bgs.length - 1; i > 0; i--) {
     var j = Math.floor(Math.random() * (i + 1));
     var t = bgs[i]; bgs[i] = bgs[j]; bgs[j] = t;
   }
+  if (bgs.length === 1) bgs.push(bgs[0]);
   var disp = escapeHtml(envShorten(w || wm));
   var blots0 = envBlotsHtml(), blots1 = envBlotsHtml();
   return '<div class="cornet-envs">'
-    + '<a class="cornet-env" style="background-image:url(\'' + bgs[0] + '\')" href="https://yandex.ru/search/?text=' + encodeURIComponent(wm) + '" target="_blank" rel="noopener">'
+    + '<a class="cornet-env" href="https://yandex.ru/search/?text=' + encodeURIComponent(wm) + '" target="_blank" rel="noopener">'
+    +   '<img class="env-bg" src="' + bgs[0] + '" alt="" decoding="async">'
     +   '<span class="env-name">' + envHandwritingHtml('Корнетъ Яндексовскій') + '</span>'
     +   '<span class="env-word">' + envHandwritingHtml(disp) + '</span>'
     +   blots0
     + '</a>'
-    + '<a class="cornet-env env-gogol" style="background-image:url(\'' + bgs[1] + '\')" href="https://www.google.com/search?q=' + encodeURIComponent(wm) + '" target="_blank" rel="noopener">'
+    + '<a class="cornet-env env-gogol" href="https://www.google.com/search?q=' + encodeURIComponent(wm) + '" target="_blank" rel="noopener">'
+    +   '<img class="env-bg" src="' + bgs[1] + '" alt="" decoding="async">'
     +   '<span class="env-name">' + envHandwritingHtml('Корнетъ Гуголидзе') + '</span>'
     +   '<span class="env-word">' + envHandwritingHtml(disp) + '</span>'
     +   blots1
@@ -7620,25 +7630,19 @@ window.addEventListener('error', function (e) {
 })();
 </script>
 <script id="patch-env-block">
-/* [patch-env] Блокъ быстрыхъ конвертовъ: проверка bg-01…bg-60 въ фонѣ (не при
-   загрузкѣ!), кэшъ въ localStorage на недѣлю, плавное проявленіе <img>-конвертовъ. */
 (function () {
   'use strict';
   if (window.__envPatchInstalled) return;
   window.__envPatchInstalled = true;
-
   var ENV_BG_MAX = 60;
   var ENV_BG_KEY = 'nachala-env-bg-v1';
   var ENV_BG_TTL = 7 * 24 * 60 * 60 * 1000;
   var PARALLEL = 6;
   var PER_TRY_TIMEOUT = 5000;
-
   function name(n) { return 'images/bg-' + (n < 10 ? '0' + n : n) + '.png'; }
-
   var state = 'idle';
   var list = [];
   var waiters = [];
-
   function readCache() {
     try {
       var raw = localStorage.getItem(ENV_BG_KEY);
@@ -7651,18 +7655,15 @@ window.addEventListener('error', function (e) {
   function writeCache(l) {
     try { localStorage.setItem(ENV_BG_KEY, JSON.stringify({ ts: Date.now(), list: l, max: ENV_BG_MAX })); } catch (e) {}
   }
-
   function probe(cb) {
     if (state === 'done') { if (cb) { try { cb(list); } catch (e) {} } return; }
     if (state === 'probing') { if (cb) waiters.push(cb); return; }
     state = 'probing';
     if (cb) waiters.push(cb);
-
     var cached = readCache();
     var fresh = cached && (Date.now() - cached.ts < ENV_BG_TTL);
     var found = cached ? cached.list.slice() : [];
     var startAt = (fresh && cached.max) ? cached.max + 1 : 1;
-
     if (startAt > ENV_BG_MAX) {
       list = found.slice().sort(function (a, b) { return a - b; });
       state = 'done';
@@ -7671,7 +7672,6 @@ window.addEventListener('error', function (e) {
       w0.forEach(function (f) { try { f(list); } catch (e) {} });
       return;
     }
-
     var pending = 0, i = startAt, finished = false;
     function flush() {
       if (finished || pending > 0 || i <= ENV_BG_MAX) return;
@@ -7700,14 +7700,12 @@ window.addEventListener('error', function (e) {
     }
     next();
   }
-
   var scheduled = false;
   function schedule() {
     if (scheduled || state === 'done') return;
     scheduled = true;
     probe(null);
   }
-
   function onIntent(e) {
     var t = e.target;
     if (t && t.closest && t.closest('.wiktionary-btn')) schedule();
@@ -7715,7 +7713,6 @@ window.addEventListener('error', function (e) {
   document.addEventListener('mouseover', onIntent, true);
   document.addEventListener('touchstart', onIntent, { passive: true, capture: true });
   document.addEventListener('focusin', onIntent, true);
-
   window.envFadeIn = function (root) {
     if (!root) return;
     var imgs = root.querySelectorAll('.cornet-env .env-bg');
@@ -7729,7 +7726,6 @@ window.addEventListener('error', function (e) {
       })(imgs[k]);
     }
   };
-
   if ('MutationObserver' in window) {
     var mo = new MutationObserver(function (muts) {
       for (var i = 0; i < muts.length; i++) {
@@ -7748,7 +7744,6 @@ window.addEventListener('error', function (e) {
     });
     mo.observe(document.body, { childList: true, subtree: true });
   }
-
   if (document.readyState === 'complete') schedule();
   else window.addEventListener('load', schedule);
 })();

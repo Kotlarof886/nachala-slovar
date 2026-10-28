@@ -7615,13 +7615,14 @@ window.addEventListener('error', function (e) {
 </script>
 
 <script>
-/* Погодныя сцены изъ буквъ «Начала» — №367.
-   • Звёздъ +50% (45–63).
-   • Крупнѣйшая (32) уменьшена вдвое — теперь [16, 24, 16]:
-     16 съ вѣроятностью 2/3, 24 съ 1/3.
-   • На телефонѣ — не больше 16px.
-   • Лёгкій режимъ — полный стопъ: циклъ молчитъ, полотно скрыто,
-     ноль перерисовокъ.  Переключеніе гирей — безъ перезагрузки. */
+/* Погодныя сцены изъ буквъ «Начала» — №369.
+   • Звёздъ +50% (45–63), размѣры [16, 24, 16], на телефонѣ ≤16.
+   • Лёгкій режимъ — полный стопъ.
+   • Жизнь ×2, медленное smoothstep-затуханіе, мерцаніе у 40%.
+   • Начальныя фазы разсѣяны на 38 с — неба не пустѣетъ залпомъ.
+   • Облака не усыпляютъ звёздъ — только гасятъ; при проясненіи
+     возвращаются мгновенно.
+   • Страховка: минимумъ 6 видимыхъ звёздъ. */
 (function () {
   'use strict';
 
@@ -7658,11 +7659,10 @@ window.addEventListener('error', function (e) {
   var WEIGHTS = [1,3,1,1];
   var WEIGHT_SUM = 6;
 
-  /* №367: категоріи размѣровъ.  Крупнѣйшая (32) уменьшена вдвое → 16.
-     На телефонѣ — только 16. */
   var STAR_SIZES_DESKTOP = [16, 24, 16];
   var STAR_SIZES_MOBILE  = [16];
-  var STAR_SPRITE_SIZES  = [16, 24];   /* для какихъ создаёмъ спрайты (уникальныя) */
+  var STAR_SPRITE_SIZES  = [16, 24];
+  var STAR_MIN_VISIBLE   = 6;
 
   var SPARKLE_DUR = 700, SPARKLE_MIN_GAP = 6000, SPARKLE_RANGE = 14000;
   var SPARKLE_D_ALPHA = 0.55, SPARKLE_D_SCALE = 0.20;
@@ -8070,12 +8070,12 @@ window.addEventListener('error', function (e) {
     s.visible = false;
     s.alpha = 0;
     s.env = 0;
+    s.flicker = null;
     s.nextAppearAt = now + 8000 + Math.random() * 22000;
   }
 
   function initStars() {
     stars = [];
-    /* №367: было 30–42, стало 45–63 (въ полтора раза больше) */
     var count = 45 + Math.floor(Math.random() * 18);
     var now = performance.now();
     for (var i = 0; i < count; i++) {
@@ -8084,7 +8084,8 @@ window.addEventListener('error', function (e) {
         tier: 4, peakAlpha: 0,
         x: 0, y: 0, letter: 'Н', sizeKey: 16,
         appearStart: 0, lifeDuration: 3000,
-        nextAppearAt: now + 400 + Math.random() * 10000
+        nextAppearAt: now + 200 + Math.random() * 38000,
+        flicker: null
       });
     }
   }
@@ -8104,10 +8105,18 @@ window.addEventListener('error', function (e) {
 
     var basePeak = [0, 0.95, 0.65, 0.40, 0.22][s.tier];
     s.peakAlpha = basePeak * (0.85 + Math.random() * 0.15);
-    s.lifeDuration = [0, 1400, 2000, 2800, 3500][s.tier] + Math.random() * 900;
+
+    s.lifeDuration = ([0, 1400, 2000, 2800, 3500][s.tier] + Math.random() * 900) * 2;
+
     s.appearStart = now;
     s.visible = true;
     s.env = 0;
+
+    s.flicker = (Math.random() < 0.40) ? {
+      freq: 0.3 + Math.random() * 0.8,
+      amp: 0.15 + Math.random() * 0.20,
+      phase: Math.random() * Math.PI * 2
+    } : null;
   }
 
   function starIntensity() {
@@ -8121,24 +8130,56 @@ window.addEventListener('error', function (e) {
 
   function updateStars(now, dt) {
     var inten = starIntensity();
+    var visibleCount = 0;
     for (var i = 0; i < stars.length; i++) {
       var s = stars[i];
       if (!s.visible) {
         if (inten > 0 && now >= s.nextAppearAt) startStarAppearance(s, now);
       } else {
         var t = (now - s.appearStart) / s.lifeDuration;
-        if (t >= 1 || inten <= 0.01) {
+        if (t >= 1) {
           scheduleNextAppearance(s, now);
+        } else if (inten <= 0.01) {
+          s.alpha = 0;
         } else {
           var riseFrac = (s.tier === 4) ? 0.30 : 0.15;
-          var fallFrac = (s.tier === 4) ? 0.30 : 0.22;
+          var fallFrac = (s.tier === 4) ? 0.40 : 0.35;
           var env;
-          if (t < riseFrac) env = t / riseFrac;
-          else if (t > 1 - fallFrac) env = (1 - t) / fallFrac;
-          else env = 1;
+
+          if (t < riseFrac) {
+            var k = t / riseFrac;
+            env = k * k * (3 - 2 * k);
+          } else if (t > 1 - fallFrac) {
+            var k2 = (1 - t) / fallFrac;
+            env = k2 * k2 * (3 - 2 * k2);
+          } else {
+            env = 1;
+          }
           s.env = env;
           s.alpha = s.peakAlpha * env * inten;
+
+          if (s.flicker) {
+            var fk = 1 + s.flicker.amp * Math.sin(
+              (now - s.appearStart) / 1000 * s.flicker.freq * Math.PI * 2 + s.flicker.phase
+            );
+            s.alpha *= fk;
+            if (s.alpha > 1) s.alpha = 1;
+          }
         }
+      }
+      if (s.visible && s.alpha > 0.02) visibleCount++;
+    }
+
+    if (inten > 0.5 && visibleCount < STAR_MIN_VISIBLE) {
+      var sleepers = [];
+      for (var j = 0; j < stars.length; j++) {
+        if (!stars[j].visible) sleepers.push(stars[j]);
+      }
+      sleepers.sort(function (a, b) { return a.nextAppearAt - b.nextAppearAt; });
+      var need = STAR_MIN_VISIBLE - visibleCount;
+      for (var m = 0; m < Math.min(need, sleepers.length); m++) {
+        startStarAppearance(sleepers[m], now);
+        sleepers[m].appearStart = now - Math.random() * sleepers[m].lifeDuration * 0.4;
       }
     }
   }
@@ -8345,7 +8386,7 @@ window.addEventListener('error', function (e) {
 
   function loop(now) {
     if (document.hidden) { animId = null; return; }
-    if (lightOn) { animId = null; return; }   /* лёгкій режимъ — циклъ молчитъ */
+    if (lightOn) { animId = null; return; }
     if (!lastTime) lastTime = now;
     var dt = (now - lastTime) / 1000;
     if (dt > 0.1) dt = 0.1;
@@ -8356,7 +8397,7 @@ window.addEventListener('error', function (e) {
     animId = requestAnimationFrame(loop);
   }
   function start() {
-    if (lightOn) return;   /* въ лёгкомъ режимѣ циклъ не запускается */
+    if (lightOn) return;
     if (!animId) { lastTime = 0; animId = requestAnimationFrame(loop); }
   }
   function stop() { if (animId) { cancelAnimationFrame(animId); animId = null; } }
@@ -8450,9 +8491,8 @@ window.addEventListener('error', function (e) {
     return null;
   }
 
-  /* ================ ЛЁГКАЯ ВЕРСІЯ ================
-     Полный стопъ: циклъ молчитъ, полотно скрыто, ноль перерисовокъ.
-     Переключеніе гирей — безъ перезагрузки. */
+  /* ================ ЛЁГКАЯ ВЕРСІЯ ================ */
+
   if (window.MutationObserver) {
     var mo = new MutationObserver(function () {
       var nowLight = document.body.classList.contains('light');
@@ -8475,7 +8515,7 @@ window.addEventListener('error', function (e) {
 
   function init() {
     resize();
-    if (lightOn) canvas.style.display = 'none';   /* если стартъ сразу въ лёгкомъ режимѣ */
+    if (lightOn) canvas.style.display = 'none';
 
     var ns = nightStatus();
     if (!nightForced && !dayForced) isNight = ns.night;
@@ -8524,12 +8564,13 @@ window.addEventListener('error', function (e) {
   });
 
   window.__precipStatus = function () {
-    var visible = 0, tiers = [0,0,0,0,0], sizes = {};
+    var visible = 0, tiers = [0,0,0,0,0], sizes = {}, flick = 0;
     for (var k = 0; k < stars.length; k++) {
       if (stars[k].visible) {
         visible++;
         tiers[stars[k].tier]++;
         sizes[stars[k].sizeKey] = (sizes[stars[k].sizeKey] || 0) + 1;
+        if (stars[k].flicker) flick++;
       }
     }
     var ns = nightStatus();
@@ -8544,7 +8585,8 @@ window.addEventListener('error', function (e) {
         count: stars.length,
         visible: visible,
         tiers: { bright: tiers[1], medium: tiers[2], weak: tiers[3], plain: tiers[4] },
-        visibleSizes: sizes
+        visibleSizes: sizes,
+        flickering: flick
       },
       mode: mode,
       level: level,

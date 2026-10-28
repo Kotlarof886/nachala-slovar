@@ -7988,22 +7988,23 @@ window.addEventListener('error', function (e) {
     canvas.style.height = H + 'px';
   }
 
-  function makeSnowSprite(ch, size, dprScale) {
-    var pad = Math.ceil(size * 0.6), d = size + pad * 2;
-    var c = document.createElement('canvas');
-    c.width = Math.ceil(d * dprScale); c.height = Math.ceil(d * dprScale);
-    var g = c.getContext('2d');
-    g.scale(dprScale, dprScale);
-    g.font = 'normal ' + size + 'px "Gardenia Decor", "Yeseva One", Georgia, serif';
-    g.fillStyle = '#e8cf8e';
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.shadowColor = 'rgba(232, 207, 142, 0.6)';
-    g.shadowBlur = Math.max(3, size * 0.3);
-    g.fillText(ch, d/2, d/2);
-    g.shadowBlur = Math.max(1.5, size * 0.12);
-    g.fillText(ch, d/2, d/2);
-    return c;
-  }
+ function makeSnowSprite(ch, size, dprScale) {
+  var pad = Math.ceil(size * 0.6), d = size + pad * 2;
+  var c = document.createElement('canvas');
+  c.width = Math.ceil(d * dprScale); c.height = Math.ceil(d * dprScale);
+  var g = c.getContext('2d');
+  g.scale(dprScale, dprScale);
+  g.font = 'normal ' + size + 'px "Gardenia Decor", "Yeseva One", Georgia, serif';
+  /* №360: снѣжинки бѣлыя — буква бѣлая, ореолъ прохладно-бѣлый */
+  g.fillStyle = '#ffffff';
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.shadowColor = 'rgba(240, 245, 255, 0.7)';
+  g.shadowBlur = Math.max(3, size * 0.3);
+  g.fillText(ch, d/2, d/2);
+  g.shadowBlur = Math.max(1.5, size * 0.12);
+  g.fillText(ch, d/2, d/2);
+  return c;
+}
 
   function makeRainSprite(ch, size, dprScale) {
     var pad = Math.ceil(size * 0.4), d = size + pad * 2;
@@ -8063,20 +8064,24 @@ window.addEventListener('error', function (e) {
   }
 
   function makeGlowSprite(size, dprScale) {
-    var d = size * 3.2;
-    var c = document.createElement('canvas');
-    c.width = Math.ceil(d * dprScale); c.height = Math.ceil(d * dprScale);
-    var g = c.getContext('2d');
-    g.scale(dprScale, dprScale);
-    var grd = g.createRadialGradient(d/2, d/2, 0, d/2, d/2, d/2);
-    grd.addColorStop(0, 'rgba(255, 238, 200, 0.90)');
-    grd.addColorStop(0.25, 'rgba(245, 210, 140, 0.55)');
-    grd.addColorStop(0.55, 'rgba(230, 180, 90, 0.22)');
-    grd.addColorStop(1, 'rgba(220, 170, 80, 0)');
-    g.fillStyle = grd;
-    g.beginPath(); g.arc(d/2, d/2, d/2, 0, Math.PI*2); g.fill();
-    return c;
-  }
+  /* было: var d = size * 3.2 — спрайтъ ореола въ 3,2 раза больше буквы
+     стало: size * 1.6 — ровно вдвое меньше */
+  var d = size * 1.6;
+  var c = document.createElement('canvas');
+  c.width = Math.ceil(d * dprScale); c.height = Math.ceil(d * dprScale);
+  var g = c.getContext('2d');
+  g.scale(dprScale, dprScale);
+  var grd = g.createRadialGradient(d/2, d/2, 0, d/2, d/2, d/2);
+  /* было: тёплое золото (#ff e e c8 и т.п.)
+     стало: холодный бѣлый — какъ у снѣжинки, только мягче */
+  grd.addColorStop(0, 'rgba(255, 255, 255, 0.90)');
+  grd.addColorStop(0.25, 'rgba(240, 248, 255, 0.55)');
+  grd.addColorStop(0.55, 'rgba(220, 235, 255, 0.22)');
+  grd.addColorStop(1, 'rgba(200, 220, 240, 0)');
+  g.fillStyle = grd;
+  g.beginPath(); g.arc(d/2, d/2, d/2, 0, Math.PI*2); g.fill();
+  return c;
+}
 
   /* №359: спрайты готовим сразу для всѣхъ возможныхъ размѣровъ —
      мобильныхъ (≤ 16) и десктопныхъ. Частица при рожденіи выбираетъ изъ

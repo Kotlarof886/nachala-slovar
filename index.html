@@ -8098,25 +8098,28 @@ window.addEventListener('error', function (e) {
   /* ======================= ЗВЁЗДЫ ======================= */
 
   function initStars() {
-    stars = [];
-    /* №357: втрое больше звёздъ на всѣхъ устройствахъ (было 10–15, стало 30–48) */
-    var count = 30 + Math.floor(Math.random() * 18);
-    var now = performance.now();
-    var yMax = Math.min(240, H * 0.32);
-    for (var i = 0; i < count; i++) {
-      var sz = [16,24,32][Math.floor(Math.random()*3)];
-      stars.push({
-        letter: pickLetter(), sizeKey: sz,
-        x: Math.random() * W,
-        y: 30 + Math.random() * yMax,
-        alpha: 0,
-        maxAlpha: 0.20 + Math.random() * 0.30,
-        flashStart: -1,
-        duration: 1500 + Math.random() * 2000,
-        nextFlashAt: now + 3000 + Math.random() * 35000
-      });
-    }
+  stars = [];
+  /* №357: втрое больше звёздъ на всѣхъ устройствахъ (было 10–15, стало 30–48) */
+  var count = 30 + Math.floor(Math.random() * 18);
+  var now = performance.now();
+  var yMax = Math.min(240, H * 0.32);
+  /* №358: на телефонѣ всѣ звёзды одного размѣра — самый мелкій (16);
+     на компьютерѣ — три размѣра въ перемѣшку, какъ было */
+  var isMobile = (window.innerWidth < 600);
+  for (var i = 0; i < count; i++) {
+    var sz = isMobile ? 16 : [16,24,32][Math.floor(Math.random()*3)];
+    stars.push({
+      letter: pickLetter(), sizeKey: sz,
+      x: Math.random() * W,
+      y: 30 + Math.random() * yMax,
+      alpha: 0,
+      maxAlpha: 0.20 + Math.random() * 0.30,
+      flashStart: -1,
+      duration: 1500 + Math.random() * 2000,
+      nextFlashAt: now + 3000 + Math.random() * 35000
+    });
   }
+}
 
   function starIntensity() {
     if (forceStars) return 1;

@@ -4481,8 +4481,10 @@ function render() {
     if (currentLetter === '\u0463') pool = pool.filter(e => String(e.w).indexOf('\u0463') >= 0);
     else if (currentLetter) pool = pool.filter(e => e.l === currentLetter);
     countNote.textContent = 'Статей: ' + pool.length;
-    const noteA = pool.length > 80 ? '<p class="count-note">Показаны первые 80 статей из ' + pool.length + '. Уточните поиск или выберите букву.</p>' : '';
-    startLazyRender(out, pool.slice(0, 80).map((e, i) => ({ h: cardHtml(e, '', i), c: 1 })).concat(noteA ? [{ h: noteA, c: 0 }] : []));
+    /* Сшивъ: буквенный списокъ больше не обрубается на 80-й статьѣ —
+       всѣ статьи выбранной буквы отдаются ленивой отрисовкѣ,
+       которая и такъ показываетъ по 28/14 шт. по мѣрѣ прокрутки */
+    startLazyRender(out, pool.map((e, i) => ({ h: cardHtml(e, '', i), c: 1 })));
     return;
   }
 
@@ -4513,12 +4515,16 @@ function render() {
     }
   }
 
-  const LIMIT = 80;
+  const LIMIT = 99;
   let chunks = [];
   if (hits1.length) chunks.push({ h: '<div class="block-title">Найдено в словах — начинается с запроса <span class="n">(' + hits1.length + ')</span></div>', c: 0 });
   if (hits2.length) chunks.push({ h: '<div class="block-title">Запрос в начале другого слова <span class="n">(' + hits2.length + ')</span></div>', c: 0 });
   chunks = chunks.concat(hits1.slice(0, LIMIT).map((e, i) => ({ h: cardHtml(e, raw, 'a' + i), c: 1 })));
-  if (hits1.length > LIMIT) chunks.push({ h: '<p class="count-note">Показаны первые ' + LIMIT + ' статей. Уточните запрос.</p>', c: 0 });
+ if (hits1.length > LIMIT) {
+  chunks.push({ h: '<p class="count-note">Показаны первые ' + LIMIT + ' статей из ' + hits1.length + '. Уточните запрос.</p>', c: 0 });
+} else if (hits1.length > 0) {
+  chunks.push({ h: '<p class="count-note">Показаны все ' + hits1.length + ' статей.</p>', c: 0 });
+}
   chunks = chunks.concat(hits2.slice(0, LIMIT).map((e, i) => ({ h: cardHtml(e, raw, 'b' + i), c: 1 })));
   if (hitsS.length) {
     chunks.push({ h: '<div class="block-title">Найдено по формѣ слова <span class="n">(' + hitsS.length + ')</span></div>', c: 0 });

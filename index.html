@@ -7615,8 +7615,10 @@ window.addEventListener('error', function (e) {
 </script>
 
 <script>
-/* Погодныя сцены изъ буквъ «Начала» — №369.
-   • Звёздъ +50% (45–63), размѣры [16, 24, 16], на телефонѣ ≤16.
+/* Погодныя сцены изъ буквъ «Начала» — №370.
+   • Звёзды мельче и по калибру капель дождя: [11, 15, 19] на компьютерѣ,
+     [11, 14, 16] на телефонѣ — тотъ же пулъ, что у дождя.
+   • Звёздъ по-прежнему +50% (45–63).
    • Лёгкій режимъ — полный стопъ.
    • Жизнь ×2, медленное smoothstep-затуханіе, мерцаніе у 40%.
    • Начальныя фазы разсѣяны на 38 с — неба не пустѣетъ залпомъ.
@@ -7659,11 +7661,11 @@ window.addEventListener('error', function (e) {
   var WEIGHTS = [1,3,1,1];
   var WEIGHT_SUM = 6;
 
-  var STAR_SIZES_DESKTOP = [16, 24, 16];
-  var STAR_SIZES_MOBILE  = [16];
-  var STAR_SPRITE_SIZES  = [16, 24];
+  /* №370: звёзды — по калибру капель дождя */
+  var STAR_SIZES_DESKTOP = [11, 15, 19];
+  var STAR_SIZES_MOBILE  = [11, 14, 16];
+  var STAR_SPRITE_SIZES  = [11, 14, 15, 16, 19];
   var STAR_MIN_VISIBLE   = 6;
-
   var SPARKLE_DUR = 700, SPARKLE_MIN_GAP = 6000, SPARKLE_RANGE = 14000;
   var SPARKLE_D_ALPHA = 0.55, SPARKLE_D_SCALE = 0.20;
   var FRAME_MS = 16;

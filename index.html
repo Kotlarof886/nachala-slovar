@@ -7615,23 +7615,21 @@ window.addEventListener('error', function (e) {
 </script>
 
 <script>
-/* Погодныя сцены изъ буквъ «Начала» — №373.
+/* Погодныя сцены изъ буквъ «Начала» — №374.
    • Звёзды мельче и по калибру капель дождя: [11, 15, 19] на компьютерѣ,
-     [11, 14, 16] на телефонѣ — тотъ же пулъ, что у дождя.
-   • Звёздъ вдвое больше: 90–126 (было 45–63); порогъ страховки поднятъ 6→12.
-   • Лёгкій режимъ — полный стопъ.
-   • Жизнь ×4 (вдвое длиннѣе прежней) — 5,6–17,6 с у яркихъ и 12,4–35,6 с у простыхъ.
-   • Пульсація — какъ у настоящихъ звёздъ: буква по размеру НЕ мѣняется.
-     Двѣ волны одной природы:
-       1) медленное дыханіе яркости (0,25–0,8 Гц, амплитуда 30–55%),
-       2) быстрое мерцаніе въ атмосферѣ (3–8 Гц, амплитуда 8–20%),
-       наложенныя другъ на друга — живая, неровная, никогда не повторяющаяся волна.
-     Ореолъ раздувается и ярчаетъ вмѣстѣ съ медленной волной — вспыхнувшая
-     звёзда на мигъ свѣтитъ шире и мягче, какъ настоящая.
-   • Медленное smoothstep-затуханіе.
-   • Начальныя фазы разсѣяны на 38 с — неба не пустѣетъ залпомъ.
-   • Облака не усыпляютъ звёздъ — только гасятъ; при проясненіи
-     возвращаются мгновенно. */
+     [11, 14, 16] на телефонѣ.
+   • Звёздъ вдвое больше: 90–126 (на телефонѣ — пропорціонально менѣе).
+   • Пульсація — какъ у настоящихъ звёздъ: буква по размеру НЕ мѣняется,
+     качаются яркость и ореолъ въ двухъ волнахъ (0,25–0,8 Гц дыханіе
+     и 3–8 Гц атмосферное мерцаніе).
+   • Жизнь ×4 отъ базовой, smoothstep-затуханіе.
+   • Разстановка: минимальное разстояніе между звёздами (адаптивно отъ
+     плотности поля), реджект-сэмплингъ. Случайныя «созвѣздія» — 3–5
+     сгущеній по 3–5 слотовъ; вокругъ каждаго — буферъ, куда обычныя
+     звёзды не заходятъ; 15% появленій идутъ въ свободные слоты
+     созвѣздій, остальныя — въ общее поле.
+   • Облака гасятъ звёзды, при проясненіи возвращаются мгновенно.
+   • Страховка: минимумъ 12 видимыхъ звёздъ. */
 (function () {
   'use strict';
 
@@ -7668,13 +7666,21 @@ window.addEventListener('error', function (e) {
   var WEIGHTS = [1,3,1,1];
   var WEIGHT_SUM = 6;
 
-  /* №373: звёзды — по калибру капель дождя; звёздъ вдвое больше */
+  /* №374: звёзды — калибр капель дождя; вдвое больше */
   var STAR_SIZES_DESKTOP = [11, 15, 19];
   var STAR_SIZES_MOBILE  = [11, 14, 16];
   var STAR_SPRITE_SIZES  = [11, 14, 15, 16, 19];
   var STAR_MIN_VISIBLE   = 12;
   var STAR_COUNT_BASE    = 90;
   var STAR_COUNT_RANGE   = 36;
+
+  /* №374: разстановка и «созвѣздія» */
+  var CONSTELLATION_CHANCE      = 0.15;   /* шансъ попасть въ скопленіе */
+  var CONSTELLATION_COUNT_MIN   = 3;
+  var CONSTELLATION_COUNT_MAX   = 5;
+  var CONSTELLATION_STARS_MIN   = 3;
+  var CONSTELLATION_STARS_MAX   = 5;
+  var constellations = [];
 
   var SPARKLE_DUR = 700, SPARKLE_MIN_GAP = 6000, SPARKLE_RANGE = 14000;
   var SPARKLE_D_ALPHA = 0.55, SPARKLE_D_SCALE = 0.20;
@@ -7700,6 +7706,135 @@ window.addEventListener('error', function (e) {
     + '?latitude=53.35&longitude=83.78'
     + '&current=weather_code,snowfall,rain,wind_speed_10m,wind_direction_10m,visibility,cloud_cover'
     + '&wind_speed_unit=ms';
+
+  /* ================ ПОЛЕ ЗВЁЗДЪ ================ */
+
+  function starFieldBounds() {
+    return {
+      xMin: 20,
+      xMax: Math.max(60, W - 40),
+      yMin: 30,
+      yMax: Math.max(80, Math.min(320, H * 0.35))
+    };
+  }
+
+  function currentMinDist() {
+    var b = starFieldBounds();
+    var area = Math.max(1, (b.xMax - b.xMin) * (b.yMax - b.yMin));
+    var count = (W < 600) ? (STAR_COUNT_BASE * 0.6) : STAR_COUNT_BASE;
+    var d = Math.sqrt(area / count) * 0.55;
+    return Math.max(16, Math.min(52, d));
+  }
+
+  function buildConstellations() {
+    constellations = [];
+    var b = starFieldBounds();
+    var fw = b.xMax - b.xMin;
+    var fh = b.yMax - b.yMin;
+    if (fw < 120 || fh < 80) return;
+
+    var nC = CONSTELLATION_COUNT_MIN + Math.floor(Math.random() *
+             (CONSTELLATION_COUNT_MAX - CONSTELLATION_COUNT_MIN + 1));
+    if (W < 600) nC = Math.max(2, nC - 1);
+
+    var cols = Math.ceil(Math.sqrt(nC));
+    var rows = Math.ceil(nC / cols);
+    var cellW = fw / cols;
+    var cellH = fh / rows;
+
+    var cells = [];
+    for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) cells.push({ r: r, c: c });
+    for (var i = cells.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = cells[i]; cells[i] = cells[j]; cells[j] = t;
+    }
+
+    var md = currentMinDist();
+    for (var k = 0; k < nC && k < cells.length; k++) {
+      var cell = cells[k];
+      var cxMin = b.xMin + cell.c * cellW;
+      var cyMin = b.yMin + cell.r * cellH;
+      var margin = Math.min(40, cellW * 0.25, cellH * 0.25);
+      var cx = cxMin + margin + Math.random() * Math.max(10, cellW - margin * 2);
+      var cy = cyMin + margin + Math.random() * Math.max(10, cellH - margin * 2);
+      if (cx < b.xMin || cx > b.xMax || cy < b.yMin || cy > b.yMax) continue;
+
+      var rad = md * 1.3 + Math.random() * 20;
+      var nS = CONSTELLATION_STARS_MIN + Math.floor(Math.random() *
+               (CONSTELLATION_STARS_MAX - CONSTELLATION_STARS_MIN + 1));
+      var innerMin = Math.max(10, md * 0.35);
+      var innerMin2 = innerMin * innerMin;
+
+      var slots = [];
+      var tries = 0;
+      while (slots.length < nS && tries < 90) {
+        tries++;
+        var ang = Math.random() * Math.PI * 2;
+        var dist = rad * Math.sqrt(Math.random());
+        var sx = cx + Math.cos(ang) * dist;
+        var sy = cy + Math.sin(ang) * dist;
+        if (sx < b.xMin + 10 || sx > b.xMax - 10) continue;
+        if (sy < b.yMin + 10 || sy > b.yMax - 10) continue;
+        var ok = true;
+        for (var q = 0; q < slots.length; q++) {
+          var dx = slots[q].x - sx, dy = slots[q].y - sy;
+          if (dx*dx + dy*dy < innerMin2) { ok = false; break; }
+        }
+        if (ok) slots.push({ x: sx, y: sy, taken: false });
+      }
+      if (slots.length) constellations.push({ cx: cx, cy: cy, r: rad, slots: slots });
+    }
+  }
+
+  function tryConstellationSlot() {
+    if (!constellations.length) return null;
+    var start = Math.floor(Math.random() * constellations.length);
+    for (var i = 0; i < constellations.length; i++) {
+      var co = constellations[(start + i) % constellations.length];
+      var free = [];
+      for (var q = 0; q < co.slots.length; q++) if (!co.slots[q].taken) free.push(co.slots[q]);
+      if (!free.length) continue;
+      var slot = free[Math.floor(Math.random() * free.length)];
+      var ok = true;
+      for (var j = 0; j < stars.length; j++) {
+        var o = stars[j];
+        if (!o.visible) continue;
+        var dx = o.x - slot.x, dy = o.y - slot.y;
+        if (dx*dx + dy*dy < 64) { ok = false; break; }
+      }
+      if (!ok) continue;
+      slot.taken = true;
+      return { x: slot.x, y: slot.y, _slot: slot };
+    }
+    return null;
+  }
+
+  function tryFreeSpot() {
+    var b = starFieldBounds();
+    var md = currentMinDist();
+    var md2 = md * md;
+    for (var a = 0; a < 40; a++) {
+      var x = b.xMin + Math.random() * (b.xMax - b.xMin);
+      var y = b.yMin + Math.random() * (b.yMax - b.yMin);
+      var inC = false;
+      for (var c = 0; c < constellations.length; c++) {
+        var co = constellations[c];
+        var dx = x - co.cx, dy = y - co.cy;
+        var rr = co.r + md * 0.7;
+        if (dx*dx + dy*dy < rr*rr) { inC = true; break; }
+      }
+      if (inC) continue;
+      var ok = true;
+      for (var i = 0; i < stars.length; i++) {
+        var o = stars[i];
+        if (!o.visible) continue;
+        var dx2 = o.x - x, dy2 = o.y - y;
+        if (dx2*dx2 + dy2*dy2 < md2) { ok = false; break; }
+      }
+      if (ok) return { x: x, y: y };
+    }
+    return null;
+  }
 
   /* ================ ПОДСКАЗКА ================ */
   var hintEl = null;
@@ -8079,6 +8214,7 @@ window.addEventListener('error', function (e) {
   }
 
   function scheduleNextAppearance(s, now) {
+    if (s._slot) { s._slot.taken = false; s._slot = null; }
     s.visible = false;
     s.alpha = 0;
     s.env = 0;
@@ -8089,8 +8225,9 @@ window.addEventListener('error', function (e) {
 
   function initStars() {
     stars = [];
-    /* №373: звёздъ вдвое больше — 90–126 */
+    buildConstellations();
     var count = STAR_COUNT_BASE + Math.floor(Math.random() * STAR_COUNT_RANGE);
+    if (W < 600) count = Math.round(count * 0.6);
     var now = performance.now();
     for (var i = 0; i < count; i++) {
       stars.push({
@@ -8099,15 +8236,27 @@ window.addEventListener('error', function (e) {
         x: 0, y: 0, letter: 'Н', sizeKey: 16,
         appearStart: 0, lifeDuration: 3000,
         nextAppearAt: now + 200 + Math.random() * 38000,
-        flicker: null
+        flicker: null,
+        _slot: null
       });
     }
   }
 
   function startStarAppearance(s, now) {
-    var yMax = Math.min(320, H * 0.35);
-    s.x = 20 + Math.random() * Math.max(20, W - 40);
-    s.y = 30 + Math.random() * yMax;
+    var pos = null;
+    if (constellations.length && Math.random() < CONSTELLATION_CHANCE) {
+      pos = tryConstellationSlot();
+    }
+    if (!pos) pos = tryFreeSpot();
+    if (!pos) {
+      /* поле забито — попробуемъ чуть позже */
+      s.nextAppearAt = now + 500 + Math.random() * 1500;
+      return;
+    }
+    s.x = pos.x;
+    s.y = pos.y;
+    s._slot = pos._slot || null;
+
     s.letter = pickLetter();
     s.sizeKey = pickStarSize();
 
@@ -8120,7 +8269,6 @@ window.addEventListener('error', function (e) {
     var basePeak = [0, 0.95, 0.65, 0.40, 0.22][s.tier];
     s.peakAlpha = basePeak * (0.85 + Math.random() * 0.15);
 
-    /* №372: жизнь ×4 отъ базовой (вдвое длиннѣе прежней) */
     s.lifeDuration = ([0, 1400, 2000, 2800, 3500][s.tier] + Math.random() * 900) * 4;
 
     s.appearStart = now;
@@ -8128,7 +8276,6 @@ window.addEventListener('error', function (e) {
     s.env = 0;
     s.glowBoost = 1;
 
-    /* №372: двѣ волны одной природы — медленное дыханіе + быстрое мерцаніе */
     var haveSlow = Math.random() < 0.70;
     s.flicker = {
       slowFreq: haveSlow ? (0.25 + Math.random() * 0.55) : 0,
@@ -8223,7 +8370,6 @@ window.addEventListener('error', function (e) {
       var sprite = starSprites[s.sizeKey + ':' + s.letter];
       if (!sprite) continue;
 
-      /* №372: геометрія буквы — только отъ env, пульсація — въ яркости и ореолѣ */
       var scale = 1, glowAlpha = 0;
       var gb = s.glowBoost || 1;
       if (s.tier === 1) { scale = 1 + 0.25 * s.env; glowAlpha = 0.85 * s.env * gb; }
@@ -8619,7 +8765,9 @@ window.addEventListener('error', function (e) {
         visible: visible,
         tiers: { bright: tiers[1], medium: tiers[2], weak: tiers[3], plain: tiers[4] },
         visibleSizes: sizes,
-        flickering: flick
+        flickering: flick,
+        constellations: constellations.length,
+        minDist: Math.round(currentMinDist() * 10) / 10
       },
       mode: mode,
       level: level,

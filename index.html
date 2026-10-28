@@ -7615,39 +7615,13 @@ window.addEventListener('error', function (e) {
 </script>
 
 <script>
-/* Погодныя сцены изъ буквъ «Начала» — №359.
-   Одинъ скриптъ на всё. Пять явленій + вѣтеръ + ночь + звёзды.
-   Сцена привязана къ Барнаулу (53.35, 83.78) — и погода, и ночь считаются
-   для него, а не для часового пояса зрителя.
-
-   ПЛОТНОСТЬ (№357):
-     Телефонъ (ширина < 600): какъ было — снѣгъ 17/22, дождь 22/38, туманъ 14/22,
-     звёзды — втрое больше прежняго (30–48).
-     Компьютеръ (≥ 600): снѣгъ/дождь/туманъ — втрое гуще, звёзды — втрое больше.
-
-   РАЗМѢРЪ БУКВЪ (№358 + №359):
-     Звёзды: на телефонѣ — всѣ 16 px; на компьютерѣ — 16/24/32 вперемѣшку.
-     Снѣгъ: на телефонѣ — 12/14/16 px; на компьютерѣ — 14/20/26 px.
-     Дождь: на телефонѣ — 11/14/16 px; на компьютерѣ — 11/15/19 px.
-     Туманъ: на обоихъ — 18/24/30 px.
-
-   ИСТОЧНИКИ НОЧИ (три независимыхъ, съ приоритетомъ):
-     1. is_day изъ Open-Meteo     — сѣть, 4 зеркала, точно
-     2. NOAA-расчётъ солнца       — локально, безъ сѣти, для Барнаула
-     3. Часъ Барнаула (UTC+7)     — послѣдній рубежъ, грубо 22:00–06:00
-
-   ЛЁГКАЯ ВЕРСІЯ (body.light):
-     Вся сцена отключается — анимація стопъ, canvas очищается.
-     Слушается MutationObserver на body.class — переключеніе кнопкой-гирей
-     работаетъ на лету. Запросъ погоды при этомъ идётъ только одинъ разъ
-     (при загрузкѣ) для кэша; при выходѣ изъ лёгкой версіи — сцена сразу
-     оживаетъ изъ кэша.
-
-   ФОРСАЖЪ (для тестовъ):
-     ?snow=N, ?rain=N, ?fog, ?thunder, ?blizzard, ?wind=N
-     ?night, ?day, ?star, ?cloud=N (0–100)
-     ?noprecip — тишина
-   Отладка изъ консоли: __precipStatus() */
+/* Погодныя сцены изъ буквъ «Начала» — №367.
+   • Звёздъ +50% (45–63).
+   • Крупнѣйшая (32) уменьшена вдвое — теперь [16, 24, 16]:
+     16 съ вѣроятностью 2/3, 24 съ 1/3.
+   • На телефонѣ — не больше 16px.
+   • Лёгкій режимъ — полный стопъ: циклъ молчитъ, полотно скрыто,
+     ноль перерисовокъ.  Переключеніе гирей — безъ перезагрузки. */
 (function () {
   'use strict';
 
@@ -7676,12 +7650,19 @@ window.addEventListener('error', function (e) {
 
   var W = 0, H = 0, dpr = 1;
   var particles = [], stars = [];
-  var sprites = {}, glows = {}, starSprites = {};
+  var sprites = {}, glows = {}, starSprites = {}, starGlows = {};
+
   var lastTime = 0, animId = null, lastDraw = 0;
 
   var LETTERS = ['Н','А','ч','л'];
   var WEIGHTS = [1,3,1,1];
   var WEIGHT_SUM = 6;
+
+  /* №367: категоріи размѣровъ.  Крупнѣйшая (32) уменьшена вдвое → 16.
+     На телефонѣ — только 16. */
+  var STAR_SIZES_DESKTOP = [16, 24, 16];
+  var STAR_SIZES_MOBILE  = [16];
+  var STAR_SPRITE_SIZES  = [16, 24];   /* для какихъ создаёмъ спрайты (уникальныя) */
 
   var SPARKLE_DUR = 700, SPARKLE_MIN_GAP = 6000, SPARKLE_RANGE = 14000;
   var SPARKLE_D_ALPHA = 0.55, SPARKLE_D_SCALE = 0.20;
@@ -7700,15 +7681,30 @@ window.addEventListener('error', function (e) {
   var lastDecision = null;
 
   var wCode = null, wFall = null, wRain = null;
-  var wWind = null, wWDir = null, wVis = null, wIsDay = null, wCloud = null;
+  var wWind = null, wWDir = null, wVis = null, wCloud = null;
   var TTL = 10 * 60 * 1000, busy = false;
 
   var PRECIP_URL = 'https://api.open-meteo.com/v1/forecast'
     + '?latitude=53.35&longitude=83.78'
-    + '&current=weather_code,snowfall,rain,wind_speed_10m,wind_direction_10m,visibility,is_day,cloud_cover'
+    + '&current=weather_code,snowfall,rain,wind_speed_10m,wind_direction_10m,visibility,cloud_cover'
     + '&wind_speed_unit=ms';
 
-  /* ======================= ПОГОДА ИЗЪ СѢТИ ======================= */
+  /* ================ ПОДСКАЗКА ================ */
+  var hintEl = null;
+  function showHint(text) {
+    if (!hintEl) {
+      hintEl = document.createElement('div');
+      hintEl.id = 'precip-hint';
+      hintEl.style.cssText = 'position:fixed;right:12px;bottom:48px;z-index:999;background:rgba(26,21,53,0.94);color:#c7b179;border:1px solid #8a6d3b;border-radius:6px;padding:10px 14px;font:12px/1.5 Georgia,serif;max-width:280px;cursor:pointer;box-shadow:0 6px 22px rgba(0,0,0,0.55);';
+      hintEl.addEventListener('click', function () { if (hintEl) hintEl.style.display = 'none'; });
+      document.body.appendChild(hintEl);
+    }
+    hintEl.style.display = '';
+    hintEl.textContent = text;
+  }
+  function hideHint() { if (hintEl) hintEl.style.display = 'none'; }
+
+  /* ================ ПОГОДА ================ */
 
   function loadCache() {
     try {
@@ -7722,7 +7718,6 @@ window.addEventListener('error', function (e) {
         wWind = (typeof o.wind === 'number') ? o.wind : null;
         wWDir = (typeof o.wdir === 'number') ? o.wdir : null;
         wVis  = (typeof o.vis  === 'number') ? o.vis  : null;
-        wIsDay = (typeof o.isday === 'number') ? o.isday : null;
         wCloud = (typeof o.cloud === 'number') ? o.cloud : null;
       }
     } catch (e) {}
@@ -7733,7 +7728,7 @@ window.addEventListener('error', function (e) {
       localStorage.setItem('barnaul-precip-v2', JSON.stringify({
         code: wCode, fall: wFall, rain: wRain,
         wind: wWind, wdir: wWDir, vis: wVis,
-        isday: wIsDay, cloud: wCloud, ts: Date.now()
+        cloud: wCloud, ts: Date.now()
       }));
     } catch (e) {}
   }
@@ -7746,9 +7741,8 @@ window.addEventListener('error', function (e) {
     var wM = /"wind_speed_10m"\s*:\s*(-?\d+(?:\.\d+)?)/.exec(text);
     var dM = /"wind_direction_10m"\s*:\s*(-?\d+(?:\.\d+)?)/.exec(text);
     var vM = /"visibility"\s*:\s*(-?\d+(?:\.\d+)?)/.exec(text);
-    var iM = /"is_day"\s*:\s*(\d+)/.exec(text);
     var clM = /"cloud_cover"\s*:\s*(\d+)/.exec(text);
-    if (cM || fM || rM || wM || vM || iM || clM) {
+    if (cM || fM || rM || wM || vM || clM) {
       return {
         code: cM ? parseInt(cM[1], 10) : null,
         fall: fM ? parseFloat(fM[1]) : null,
@@ -7756,7 +7750,6 @@ window.addEventListener('error', function (e) {
         wind: wM ? parseFloat(wM[1]) : null,
         wdir: dM ? parseFloat(dM[1]) : null,
         vis:  vM ? parseFloat(vM[1]) : null,
-        isday: iM ? parseInt(iM[1], 10) : null,
         cloud: clM ? parseInt(clM[1], 10) : null
       };
     }
@@ -7794,35 +7787,10 @@ window.addEventListener('error', function (e) {
       var v = res.val;
       wCode = v.code; wFall = v.fall; wRain = v.rain;
       wWind = v.wind; wWDir = v.wdir; wVis = v.vis;
-      wIsDay = v.isday; wCloud = v.cloud;
-
-      if (!nightForced && !dayForced) {
-        var ns = nightStatus();
-        isNight = ns.night;
-        if (window.console && console.log) {
-          console.log('[ночь] ' + ns.src
-            + ' | API: ' + ns.report.api
-            + ' | NOAA: ' + ns.report.sun + ' (высота ' + ns.report.altitude + ')'
-            + ' | часъ Барнаула: ' + ns.report.local
-            + ' → ночь: ' + (isNight ? 'да' : 'нѣтъ'));
-        }
-      }
+      wCloud = v.cloud;
       if (forceCloud === null && wCloud !== null) cloudCover = wCloud;
-
       saveCache();
       var dec = decideWeather();
-      if (window.console && console.log) {
-        console.log('[осадки] ' + res.name
-          + ' | code=' + v.code + ' snowfall=' + v.fall + ' rain=' + v.rain
-          + ' wind=' + v.wind + 'm/s dir=' + v.wdir + '° vis=' + v.vis
-          + ' is_day=' + v.isday + ' cloud=' + v.cloud + '%'
-          + ' → ' + dec.mode
-          + (dec.thunder ? ' ⚡' : '')
-          + (dec.blizzard ? ' ❄метель' : '')
-          + ' уровень ' + dec.level
-          + ' | ночь: ' + (isNight ? 'да' : 'нѣтъ')
-          + ' звёзды: ' + Math.round(starIntensity() * 100) + '%');
-      }
       applyWeather(dec);
     }
 
@@ -7834,27 +7802,22 @@ window.addEventListener('error', function (e) {
     ];
     tries.forEach(function (p) { p.then(finish); });
     Promise.all(tries).then(function () {
-      if (!settled && window.console && console.log) {
-        console.log('[осадки] Всѣ зеркала молчатъ — повторка черезъ 10 минутъ.');
-      }
       busy = false;
       setTimeout(fetchWeather, TTL);
     });
   }
 
-  /* ======================= ТРИ ИСТОЧНИКА НОЧИ ======================= */
+  /* ================ НОЧЬ ================ */
 
   function sunAltitude(lat, lon, date) {
     var start = new Date(Date.UTC(date.getUTCFullYear(), 0, 0));
     var dayOfYear = Math.floor((date - start) / 86400000);
     var gamma = 2 * Math.PI / 365 * (dayOfYear - 1 + (date.getUTCHours() - 12) / 24);
-
     var eqtime = 229.18 * (0.000075
       + 0.001868 * Math.cos(gamma)
       - 0.032077 * Math.sin(gamma)
       - 0.014615 * Math.cos(2 * gamma)
       - 0.040849 * Math.sin(2 * gamma));
-
     var decl = 0.006918
       - 0.399912 * Math.cos(gamma)
       + 0.070257 * Math.sin(gamma)
@@ -7862,52 +7825,23 @@ window.addEventListener('error', function (e) {
       + 0.000907 * Math.sin(2 * gamma)
       - 0.002697 * Math.cos(3 * gamma)
       + 0.001480 * Math.sin(3 * gamma);
-
     var utcMin = date.getUTCHours() * 60 + date.getUTCMinutes() + date.getUTCSeconds() / 60;
     var tst = utcMin + eqtime + 4 * lon;
     tst = ((tst % 1440) + 1440) % 1440;
-
     var ha = ((tst / 4) - 180) * Math.PI / 180;
     var latRad = lat * Math.PI / 180;
-
     var cosZen = Math.sin(latRad) * Math.sin(decl)
                + Math.cos(latRad) * Math.cos(decl) * Math.cos(ha);
     var zen = Math.acos(Math.max(-1, Math.min(1, cosZen)));
     return 90 - zen * 180 / Math.PI;
   }
 
-  function isNightBySun() {
-    return sunAltitude(53.35, 83.78, new Date()) < -0.833;
-  }
-
-  function barnaulHour() {
-    var now = new Date();
-    var tz = now.getTimezoneOffset() / 60;
-    var b = new Date(now.getTime() + (7 + tz) * 3600000);
-    return b.getHours() + b.getMinutes() / 60;
-  }
-
-  function fallbackNight() {
-    var h = barnaulHour();
-    return (h >= 22 || h < 6);
-  }
-
   function nightStatus() {
-    var apiDay = (wIsDay !== null) ? (wIsDay === 1) : null;
-    var sunDay = !isNightBySun();
-    var localNight = fallbackNight();
-    var altitude = Math.round(sunAltitude(53.35, 83.78, new Date()) * 10) / 10 + '°';
-    var report = {
-      api:  apiDay === null ? 'нѣтъ данныхъ' : (apiDay ? 'день' : 'ночь'),
-      sun:  sunDay ? 'день' : 'ночь',
-      local: localNight ? 'ночь' : 'день',
-      altitude: altitude
-    };
-    if (apiDay !== null) return { night: !apiDay, src: 'api',  report: report };
-    return { night: !sunDay,     src: 'sun',  report: report };
+    var alt = sunAltitude(53.35, 83.78, new Date());
+    return { night: alt < -6, sunAlt: alt };
   }
 
-  /* ======================= РѢШЕНІЕ О ПОГОДѢ ======================= */
+  /* ================ РѢШЕНІЕ ================ */
 
   var SNOW_CODES = [71,73,75,77,85,86];
   var RAIN_CODES = [51,53,55,61,63,65,80,81,82];
@@ -7977,7 +7911,7 @@ window.addEventListener('error', function (e) {
     } else { windRatio = 0; windMul = 1; windX = 0; }
   }
 
-  /* ======================= СПРАЙТЫ ======================= */
+  /* ================ СПРАЙТЫ ================ */
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -7988,23 +7922,22 @@ window.addEventListener('error', function (e) {
     canvas.style.height = H + 'px';
   }
 
- function makeSnowSprite(ch, size, dprScale) {
-  var pad = Math.ceil(size * 0.6), d = size + pad * 2;
-  var c = document.createElement('canvas');
-  c.width = Math.ceil(d * dprScale); c.height = Math.ceil(d * dprScale);
-  var g = c.getContext('2d');
-  g.scale(dprScale, dprScale);
-  g.font = 'normal ' + size + 'px "Gardenia Decor", "Yeseva One", Georgia, serif';
-  /* №360: снѣжинки бѣлыя — буква бѣлая, ореолъ прохладно-бѣлый */
-  g.fillStyle = '#ffffff';
-  g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.shadowColor = 'rgba(240, 245, 255, 0.7)';
-  g.shadowBlur = Math.max(3, size * 0.3);
-  g.fillText(ch, d/2, d/2);
-  g.shadowBlur = Math.max(1.5, size * 0.12);
-  g.fillText(ch, d/2, d/2);
-  return c;
-}
+  function makeSnowSprite(ch, size, dprScale) {
+    var pad = Math.ceil(size * 0.6), d = size + pad * 2;
+    var c = document.createElement('canvas');
+    c.width = Math.ceil(d * dprScale); c.height = Math.ceil(d * dprScale);
+    var g = c.getContext('2d');
+    g.scale(dprScale, dprScale);
+    g.font = 'normal ' + size + 'px "Gardenia Decor", "Yeseva One", Georgia, serif';
+    g.fillStyle = '#ffffff';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.shadowColor = 'rgba(240, 245, 255, 0.7)';
+    g.shadowBlur = Math.max(3, size * 0.3);
+    g.fillText(ch, d/2, d/2);
+    g.shadowBlur = Math.max(1.5, size * 0.12);
+    g.fillText(ch, d/2, d/2);
+    return c;
+  }
 
   function makeRainSprite(ch, size, dprScale) {
     var pad = Math.ceil(size * 0.4), d = size + pad * 2;
@@ -8064,29 +7997,21 @@ window.addEventListener('error', function (e) {
   }
 
   function makeGlowSprite(size, dprScale) {
-  /* было: var d = size * 3.2 — спрайтъ ореола въ 3,2 раза больше буквы
-     стало: size * 1.6 — ровно вдвое меньше */
-  var d = size * 1.6;
-  var c = document.createElement('canvas');
-  c.width = Math.ceil(d * dprScale); c.height = Math.ceil(d * dprScale);
-  var g = c.getContext('2d');
-  g.scale(dprScale, dprScale);
-  var grd = g.createRadialGradient(d/2, d/2, 0, d/2, d/2, d/2);
-  /* было: тёплое золото (#ff e e c8 и т.п.)
-     стало: холодный бѣлый — какъ у снѣжинки, только мягче */
-  grd.addColorStop(0, 'rgba(255, 255, 255, 0.90)');
-  grd.addColorStop(0.25, 'rgba(240, 248, 255, 0.55)');
-  grd.addColorStop(0.55, 'rgba(220, 235, 255, 0.22)');
-  grd.addColorStop(1, 'rgba(200, 220, 240, 0)');
-  g.fillStyle = grd;
-  g.beginPath(); g.arc(d/2, d/2, d/2, 0, Math.PI*2); g.fill();
-  return c;
-}
+    var d = size * 1.6;
+    var c = document.createElement('canvas');
+    c.width = Math.ceil(d * dprScale); c.height = Math.ceil(d * dprScale);
+    var g = c.getContext('2d');
+    g.scale(dprScale, dprScale);
+    var grd = g.createRadialGradient(d/2, d/2, 0, d/2, d/2, d/2);
+    grd.addColorStop(0, 'rgba(255, 255, 255, 0.90)');
+    grd.addColorStop(0.25, 'rgba(240, 248, 255, 0.55)');
+    grd.addColorStop(0.55, 'rgba(220, 235, 255, 0.22)');
+    grd.addColorStop(1, 'rgba(200, 220, 240, 0)');
+    g.fillStyle = grd;
+    g.beginPath(); g.arc(d/2, d/2, d/2, 0, Math.PI*2); g.fill();
+    return c;
+  }
 
-  /* №359: спрайты готовим сразу для всѣхъ возможныхъ размѣровъ —
-     мобильныхъ (≤ 16) и десктопныхъ. Частица при рожденіи выбираетъ изъ
-     подходящаго набора по текущей ширинѣ окна. Такъ поворотъ телефона
-     и измѣненіе ширины не ломаютъ картинку. */
   var SNOW_SIZE_POOL = [12, 14, 15, 16, 20, 26];
   var RAIN_SIZE_POOL = [11, 14, 15, 16, 19];
 
@@ -8118,85 +8043,17 @@ window.addEventListener('error', function (e) {
 
   function prepareStarSprites() {
     starSprites = {};
-    var sz = [16, 24, 32];
-    for (var s = 0; s < sz.length; s++) for (var l = 0; l < LETTERS.length; l++) starSprites[sz[s]+':'+LETTERS[l]] = makeStarLetterSprite(LETTERS[l], sz[s], dpr);
-  }
-
-  /* ======================= ЗВЁЗДЫ ======================= */
-
-  function initStars() {
-    stars = [];
-    /* №357: втрое больше звёздъ на всѣхъ устройствахъ (было 10–15, стало 30–48) */
-    var count = 30 + Math.floor(Math.random() * 18);
-    var now = performance.now();
-    var yMax = Math.min(240, H * 0.32);
-    /* №358: на телефонѣ всѣ звёзды одного размѣра — самый мелкій (16);
-       на компьютерѣ — три размѣра въ перемѣшку, какъ было */
-    var isMobile = (window.innerWidth < 600);
-    for (var i = 0; i < count; i++) {
-      var sz = isMobile ? 16 : [16,24,32][Math.floor(Math.random()*3)];
-      stars.push({
-        letter: pickLetter(), sizeKey: sz,
-        x: Math.random() * W,
-        y: 30 + Math.random() * yMax,
-        alpha: 0,
-        maxAlpha: 0.20 + Math.random() * 0.30,
-        flashStart: -1,
-        duration: 1500 + Math.random() * 2000,
-        nextFlashAt: now + 3000 + Math.random() * 35000
-      });
-    }
-  }
-
-  function starIntensity() {
-    if (forceStars) return 1;
-    if (!isNight) return 0;
-    var cc = cloudCover || 0;
-    if (cc <= 30) return 1;
-    if (cc >= 80) return 0;
-    return 1 - (cc - 30) / 50;
-  }
-
-  function updateStars(now, dt) {
-    var inten = starIntensity();
-    for (var i = 0; i < stars.length; i++) {
-      var s = stars[i];
-      if (s.flashStart < 0) {
-        if (s.alpha > 0) s.alpha = Math.max(0, s.alpha - dt * 2);
-        if (now >= s.nextFlashAt) {
-          if (inten > 0 && Math.random() < 0.8) { s.flashStart = now; s.duration = 1500 + Math.random() * 2000; }
-          else s.nextFlashAt = now + 5000 + Math.random() * 30000;
-        }
-      } else {
-        var elapsed = now - s.flashStart;
-        if (elapsed > s.duration) {
-          s.flashStart = -1; s.alpha = 0;
-          s.nextFlashAt = now + 8000 + Math.random() * 40000;
-        } else {
-          var t = elapsed / s.duration;
-          var env = t < 0.3 ? t / 0.3 : (t > 0.7 ? (1 - t) / 0.3 : 1);
-          s.alpha = s.maxAlpha * env * inten;
-        }
+    starGlows = {};
+    for (var s = 0; s < STAR_SPRITE_SIZES.length; s++) {
+      var sz = STAR_SPRITE_SIZES[s];
+      for (var l = 0; l < LETTERS.length; l++) {
+        starSprites[sz+':'+LETTERS[l]] = makeStarLetterSprite(LETTERS[l], sz, dpr);
       }
+      starGlows[sz] = makeGlowSprite(sz, dpr);
     }
   }
 
-  function drawStars() {
-    if (!stars.length || starIntensity() <= 0) return;
-    for (var i = 0; i < stars.length; i++) {
-      var s = stars[i];
-      if (s.alpha <= 0.01) continue;
-      var sprite = starSprites[s.sizeKey + ':' + s.letter];
-      if (!sprite) continue;
-      ctx.setTransform(1,0,0,1, s.x * dpr, s.y * dpr);
-      ctx.globalAlpha = s.alpha;
-      ctx.drawImage(sprite, -sprite.width/2, -sprite.height/2);
-    }
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.globalAlpha = 1;
-  }
-
-  /* ======================= ЧАСТИЦЫ ======================= */
+  /* ================ ЗВЁЗДЫ ================ */
 
   function pickLetter() {
     var r = Math.random() * WEIGHT_SUM, acc = 0;
@@ -8204,8 +8061,122 @@ window.addEventListener('error', function (e) {
     return LETTERS[0];
   }
 
+  function pickStarSize() {
+    var sizes = (window.innerWidth < 600) ? STAR_SIZES_MOBILE : STAR_SIZES_DESKTOP;
+    return sizes[Math.floor(Math.random() * sizes.length)];
+  }
+
+  function scheduleNextAppearance(s, now) {
+    s.visible = false;
+    s.alpha = 0;
+    s.env = 0;
+    s.nextAppearAt = now + 8000 + Math.random() * 22000;
+  }
+
+  function initStars() {
+    stars = [];
+    /* №367: было 30–42, стало 45–63 (въ полтора раза больше) */
+    var count = 45 + Math.floor(Math.random() * 18);
+    var now = performance.now();
+    for (var i = 0; i < count; i++) {
+      stars.push({
+        visible: false, alpha: 0, env: 0,
+        tier: 4, peakAlpha: 0,
+        x: 0, y: 0, letter: 'Н', sizeKey: 16,
+        appearStart: 0, lifeDuration: 3000,
+        nextAppearAt: now + 400 + Math.random() * 10000
+      });
+    }
+  }
+
+  function startStarAppearance(s, now) {
+    var yMax = Math.min(320, H * 0.35);
+    s.x = 20 + Math.random() * Math.max(20, W - 40);
+    s.y = 30 + Math.random() * yMax;
+    s.letter = pickLetter();
+    s.sizeKey = pickStarSize();
+
+    var r = Math.random();
+    if (r < 0.15) s.tier = 1;
+    else if (r < 0.40) s.tier = 2;
+    else if (r < 0.70) s.tier = 3;
+    else s.tier = 4;
+
+    var basePeak = [0, 0.95, 0.65, 0.40, 0.22][s.tier];
+    s.peakAlpha = basePeak * (0.85 + Math.random() * 0.15);
+    s.lifeDuration = [0, 1400, 2000, 2800, 3500][s.tier] + Math.random() * 900;
+    s.appearStart = now;
+    s.visible = true;
+    s.env = 0;
+  }
+
+  function starIntensity() {
+    if (forceStars) return 1;
+    if (!isNight) return 0;
+    var cc = cloudCover || 0;
+    if (cc <= 30) return 1;
+    if (cc >= 90) return 0;
+    return 1 - (cc - 30) / 60;
+  }
+
+  function updateStars(now, dt) {
+    var inten = starIntensity();
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      if (!s.visible) {
+        if (inten > 0 && now >= s.nextAppearAt) startStarAppearance(s, now);
+      } else {
+        var t = (now - s.appearStart) / s.lifeDuration;
+        if (t >= 1 || inten <= 0.01) {
+          scheduleNextAppearance(s, now);
+        } else {
+          var riseFrac = (s.tier === 4) ? 0.30 : 0.15;
+          var fallFrac = (s.tier === 4) ? 0.30 : 0.22;
+          var env;
+          if (t < riseFrac) env = t / riseFrac;
+          else if (t > 1 - fallFrac) env = (1 - t) / fallFrac;
+          else env = 1;
+          s.env = env;
+          s.alpha = s.peakAlpha * env * inten;
+        }
+      }
+    }
+  }
+
+  function drawStars(now) {
+    if (!stars.length || starIntensity() <= 0) return;
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      if (!s.visible || s.alpha <= 0.01) continue;
+      var sprite = starSprites[s.sizeKey + ':' + s.letter];
+      if (!sprite) continue;
+
+      var scale = 1, glowAlpha = 0;
+      if (s.tier === 1) { scale = 1 + 0.25 * s.env; glowAlpha = 0.85 * s.env; }
+      else if (s.tier === 2) { scale = 1 + 0.12 * s.env; glowAlpha = 0.40 * s.env; }
+      else if (s.tier === 3) { scale = 1 + 0.04 * s.env; }
+
+      if (glowAlpha > 0.02) {
+        var glow = starGlows[s.sizeKey];
+        if (glow) {
+          var gScale = 1 + 0.6 * glowAlpha;
+          ctx.setTransform(gScale, 0, 0, gScale, s.x * dpr, s.y * dpr);
+          ctx.globalAlpha = glowAlpha;
+          ctx.drawImage(glow, -glow.width / 2, -glow.height / 2);
+        }
+      }
+
+      ctx.setTransform(scale, 0, 0, scale, s.x * dpr, s.y * dpr);
+      ctx.globalAlpha = s.alpha;
+      ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+  }
+
+  /* ================ ЧАСТИЦЫ ================ */
+
   function makeSnowParticle(fromTop) {
-    /* №359: на телефонѣ — до 16 px, на компьютерѣ — прежнія 14/20/26 */
     var pool = snowSizesForWidth();
     var sz = pool[Math.floor(Math.random() * pool.length)];
     var now0 = performance.now();
@@ -8221,7 +8192,6 @@ window.addEventListener('error', function (e) {
   }
 
   function makeRainParticle(fromTop) {
-    /* №359: на телефонѣ — до 16 px, на компьютерѣ — прежнія 11/15/19 */
     var pool = rainSizesForWidth();
     var sz = pool[Math.floor(Math.random() * pool.length)];
     return {
@@ -8253,7 +8223,6 @@ window.addEventListener('error', function (e) {
     return makeRainParticle(fromTop);
   }
 
-  /* №357: на компьютерѣ втрое гуще, на телефонѣ — какъ было */
   function particleCountForLevel(lvl) {
     if (lvl <= 0) return 0;
     var isMobile = (window.innerWidth < 600);
@@ -8302,14 +8271,14 @@ window.addEventListener('error', function (e) {
     return 0.5 - 0.5*Math.cos(2*Math.PI*e/SPARKLE_DUR);
   }
 
-  /* ======================= РИСОВАНІЕ ======================= */
+  /* ================ РИСОВАНІЕ ================ */
 
   function draw(now) {
     ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.globalCompositeOperation = 'source-over';
 
-    drawStars();
+    drawStars(now);
 
     for (var i = 0; i < particles.length; i++) {
       var p = particles[i];
@@ -8372,10 +8341,11 @@ window.addEventListener('error', function (e) {
     ctx.globalCompositeOperation = 'source-over';
   }
 
-  /* ======================= ЦИКЛЪ ======================= */
+  /* ================ ЦИКЛЪ ================ */
 
   function loop(now) {
-    if (document.hidden || lightOn) { animId = null; return; }
+    if (document.hidden) { animId = null; return; }
+    if (lightOn) { animId = null; return; }   /* лёгкій режимъ — циклъ молчитъ */
     if (!lastTime) lastTime = now;
     var dt = (now - lastTime) / 1000;
     if (dt > 0.1) dt = 0.1;
@@ -8386,10 +8356,8 @@ window.addEventListener('error', function (e) {
     animId = requestAnimationFrame(loop);
   }
   function start() {
-    if (lightOn) return;
-    if (!animId && (particles.length > 0 || starIntensity() > 0)) {
-      lastTime = 0; animId = requestAnimationFrame(loop);
-    }
+    if (lightOn) return;   /* въ лёгкомъ режимѣ циклъ не запускается */
+    if (!animId) { lastTime = 0; animId = requestAnimationFrame(loop); }
   }
   function stop() { if (animId) { cancelAnimationFrame(animId); animId = null; } }
   function clearCanvas() {
@@ -8397,17 +8365,10 @@ window.addEventListener('error', function (e) {
     ctx.clearRect(0,0,canvas.width,canvas.height);
   }
 
-  /* ======================= ПРИМѢНИТЬ ПОГОДУ ======================= */
+  /* ================ ПРИМѢНИТЬ ================ */
 
   function applyWeather(dec) {
     lastDecision = dec;
-
-    if (lightOn) {
-      stop();
-      clearCanvas();
-      return;
-    }
-
     var newMode = dec.mode;
     var newLevel = Math.max(0, Math.min(3, dec.level|0));
     var newThunder = !!dec.thunder;
@@ -8418,7 +8379,6 @@ window.addEventListener('error', function (e) {
       particles = [];
       prepareSprites(newMode);
       mode = newMode;
-      clearCanvas();
     }
     if (newThunder !== isThunder) {
       lightningFlashStart = -1; lightningSecondaryAt = -1;
@@ -8429,33 +8389,42 @@ window.addEventListener('error', function (e) {
 
     if (mode === MODE_NONE || level === 0) {
       particles = []; isThunder = false;
-      if (starIntensity() <= 0) {
-        stop();
-        clearCanvas();
-      } else if (!animId) start();
-      return;
+    } else {
+      var target = particleCountForLevel(level);
+      if (particles.length > target) particles.splice(target);
+      else while (particles.length < target) {
+        var p = makeParticle(true);
+        if (p.type !== MODE_FOG) p.y = Math.random()*H*2 - H;
+        particles.push(p);
+      }
     }
-
-    var target = particleCountForLevel(level);
-    if (particles.length > target) particles.splice(target);
-    else while (particles.length < target) {
-      var p = makeParticle(true);
-      if (p.type !== MODE_FOG) p.y = Math.random()*H*2 - H;
-      particles.push(p);
-    }
-    if (!animId) start();
+    start();
+    updateHint();
   }
 
-  /* ======================= ФОРСАЖЪ ПО URL ======================= */
+  function updateHint() {
+    if (lightOn) { hideHint(); return; }
+    if (!isNight && !forceStars) { hideHint(); return; }
+    if (starIntensity() > 0) { hideHint(); return; }
+    var reason;
+    if (cloudCover >= 90) reason = 'Ночь, но небо облачное (' + cloudCover + '%). Звёзды за тучами.';
+    else if (!isNight) reason = 'Ещё день — звёзды придутъ ночью.';
+    else reason = 'Ночь, но звёзды не видны (cloudCover=' + cloudCover + '%).';
+    showHint(reason);
+  }
+
+  /* ================ ФОРСАЖЪ ================ */
 
   function forcedDecision() {
     if (loc.match(/[?&]night/)) { nightForced = true; isNight = true; }
     if (loc.match(/[?&]day/))   { dayForced = true; isNight = false; }
-    if (loc.match(/[?&]star/))  { forceStars = true; nightForced = true; isNight = true; }
-
+    if (loc.match(/[?&]star/))  {
+      forceStars = true; nightForced = true; isNight = true;
+      forceCloud = 0; cloudCover = 0;
+    }
     var mC = loc.match(/[?&]cloud=(\d+)/);
     if (mC) { forceCloud = parseInt(mC[1], 10); cloudCover = forceCloud; }
-    else if (nightForced) { forceCloud = 0; cloudCover = 0; }
+    else if (nightForced && forceCloud === null) { forceCloud = 0; cloudCover = 0; }
 
     var mW = loc.match(/[?&]wind=(\d+(?:\.\d+)?)/);
     if (mW) wWind = parseFloat(mW[1]);
@@ -8481,66 +8450,55 @@ window.addEventListener('error', function (e) {
     return null;
   }
 
-  /* ======================= ЛЁГКАЯ ВЕРСІЯ — ПЕРЕКЛЮЧЕНІЕ ======================= */
-
+  /* ================ ЛЁГКАЯ ВЕРСІЯ ================
+     Полный стопъ: циклъ молчитъ, полотно скрыто, ноль перерисовокъ.
+     Переключеніе гирей — безъ перезагрузки. */
   if (window.MutationObserver) {
     var mo = new MutationObserver(function () {
       var nowLight = document.body.classList.contains('light');
       if (nowLight === lightOn) return;
       lightOn = nowLight;
-
       if (lightOn) {
         stop();
         clearCanvas();
-        if (window.console && console.log) console.log('[погода] лёгкая версія — сцена погашена');
+        canvas.style.display = 'none';
       } else {
-        if (lastDecision) {
-          applyWeather(lastDecision);
-        } else if (starIntensity() > 0) {
-          if (!animId) start();
-        }
-        if (window.console && console.log) console.log('[погода] лёгкая версія выключена — сцена оживаетъ');
+        canvas.style.display = '';
+        start();
       }
+      updateHint();
     });
     mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
   }
 
-  /* ======================= СТАРТЪ ======================= */
+  /* ================ СТАРТЪ ================ */
 
   function init() {
     resize();
+    if (lightOn) canvas.style.display = 'none';   /* если стартъ сразу въ лёгкомъ режимѣ */
+
+    var ns = nightStatus();
+    if (!nightForced && !dayForced) isNight = ns.night;
+
+    if (window.console && console.log) {
+      console.log('[погода] init: солнце=' + ns.sunAlt.toFixed(1) + '° ночь=' + isNight
+        + ' лёгкій=' + lightOn + ' облака=' + cloudCover + '%');
+    }
 
     var waitFonts = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
-    waitFonts.then(function () {
+    var fontFallback = new Promise(function (resolve) { setTimeout(resolve, 1500); });
+    Promise.race([waitFonts, fontFallback]).then(function () {
       prepareStarSprites();
       initStars();
 
       var forced = forcedDecision();
-      if (forced) {
-        if (window.console && console.log) {
-          console.log('[погода] форсажъ → ' + forced.mode
-            + (forced.thunder ? ' ⚡' : '')
-            + (forced.blizzard ? ' ❄метель' : '')
-            + ' уровень ' + forced.level
-            + (wWind !== null ? ' | вѣтеръ ' + wWind + ' м/с' : '')
-            + ' | ночь: ' + (isNight ? 'да' : 'нѣтъ')
-            + (forceStars ? ' | звёзды принудительно' : '')
-            + (forceCloud !== null ? ' | облачность ' + forceCloud + '%' : '')
-            + (lightOn ? ' | лёгкая версія — сцена погашена' : ''));
-        }
-        applyWeather(forced);
-        return;
-      }
+      if (forced) { applyWeather(forced); return; }
 
       loadCache();
-      if (!nightForced && !dayForced) {
-        isNight = nightStatus().night;
-      }
       if (forceCloud === null && wCloud !== null) cloudCover = wCloud;
 
       var dec = decideWeather();
       applyWeather(dec);
-
       fetchWeather();
     });
   }
@@ -8557,43 +8515,39 @@ window.addEventListener('error', function (e) {
         particles[i].y = particles[i].y / oldH * H;
       }
       initStars();
-      if (lightOn) clearCanvas();
     }, 150);
   });
 
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) stop();
-    else if (!lightOn) start();
+    else start();
   });
 
-  /* отладка изъ консоли */
   window.__precipStatus = function () {
+    var visible = 0, tiers = [0,0,0,0,0], sizes = {};
+    for (var k = 0; k < stars.length; k++) {
+      if (stars[k].visible) {
+        visible++;
+        tiers[stars[k].tier]++;
+        sizes[stars[k].sizeKey] = (sizes[stars[k].sizeKey] || 0) + 1;
+      }
+    }
     var ns = nightStatus();
     return {
       lightMode: lightOn,
-      mode: mode,
-      level: level,
-      thunder: isThunder,
-      blizzard: isBlizzard,
-      wind: { speed: wWind, direction: wWDir, ratio: windRatio, mul: windMul, sign: windSign },
-      night: {
-        isNight: isNight,
-        source: ns.src,
-        api: ns.report.api,
-        noaa: ns.report.sun,
-        altitude: ns.report.altitude,
-        barnaulLocal: ns.report.local
-      },
-      cloud: cloudCover,
+      canvasDisplay: canvas.style.display || 'block',
+      sunAlt: Math.round(ns.sunAlt * 10) / 10 + '°',
+      isNight: ns.night,
+      cloudCover: cloudCover,
+      starIntensity: Math.round(starIntensity() * 100) + '%',
       stars: {
         count: stars.length,
-        intensity: Math.round(starIntensity() * 100) + '%',
-        sizes: (function () {
-          var uniq = {};
-          for (var k = 0; k < stars.length; k++) uniq[stars[k].sizeKey] = 1;
-          return Object.keys(uniq).map(Number);
-        })()
+        visible: visible,
+        tiers: { bright: tiers[1], medium: tiers[2], weak: tiers[3], plain: tiers[4] },
+        visibleSizes: sizes
       },
+      mode: mode,
+      level: level,
       particles: particles.length,
       animId: animId ? 'running' : 'stopped'
     };

@@ -7615,7 +7615,7 @@ window.addEventListener('error', function (e) {
 </script>
 
 <script>
-/* Погодныя сцены изъ буквъ «Начала» — №357.
+/* Погодныя сцены изъ буквъ «Начала» — №359.
    Одинъ скриптъ на всё. Пять явленій + вѣтеръ + ночь + звёзды.
    Сцена привязана къ Барнаулу (53.35, 83.78) — и погода, и ночь считаются
    для него, а не для часового пояса зрителя.
@@ -7624,6 +7624,12 @@ window.addEventListener('error', function (e) {
      Телефонъ (ширина < 600): какъ было — снѣгъ 17/22, дождь 22/38, туманъ 14/22,
      звёзды — втрое больше прежняго (30–48).
      Компьютеръ (≥ 600): снѣгъ/дождь/туманъ — втрое гуще, звёзды — втрое больше.
+
+   РАЗМѢРЪ БУКВЪ (№358 + №359):
+     Звёзды: на телефонѣ — всѣ 16 px; на компьютерѣ — 16/24/32 вперемѣшку.
+     Снѣгъ: на телефонѣ — 12/14/16 px; на компьютерѣ — 14/20/26 px.
+     Дождь: на телефонѣ — 11/14/16 px; на компьютерѣ — 11/15/19 px.
+     Туманъ: на обоихъ — 18/24/30 px.
 
    ИСТОЧНИКИ НОЧИ (три независимыхъ, съ приоритетомъ):
      1. is_day изъ Open-Meteo     — сѣть, 4 зеркала, точно
@@ -8072,17 +8078,33 @@ window.addEventListener('error', function (e) {
     return c;
   }
 
+  /* №359: спрайты готовим сразу для всѣхъ возможныхъ размѣровъ —
+     мобильныхъ (≤ 16) и десктопныхъ. Частица при рожденіи выбираетъ изъ
+     подходящаго набора по текущей ширинѣ окна. Такъ поворотъ телефона
+     и измѣненіе ширины не ломаютъ картинку. */
+  var SNOW_SIZE_POOL = [12, 14, 15, 16, 20, 26];
+  var RAIN_SIZE_POOL = [11, 14, 15, 16, 19];
+
+  function snowSizesForWidth() {
+    return (window.innerWidth < 600) ? [12, 14, 16] : [14, 20, 26];
+  }
+  function rainSizesForWidth() {
+    return (window.innerWidth < 600) ? [11, 14, 16] : [11, 15, 19];
+  }
+
   function prepareSprites(m) {
     sprites = {}; glows = {};
     if (m === MODE_SNOW) {
-      var sz = [14,20,26];
-      for (var s = 0; s < sz.length; s++) {
-        for (var l = 0; l < LETTERS.length; l++) sprites[sz[s]+':'+LETTERS[l]] = makeSnowSprite(LETTERS[l], sz[s], dpr);
-        glows[sz[s]] = makeGlowSprite(sz[s], dpr);
+      for (var s = 0; s < SNOW_SIZE_POOL.length; s++) {
+        var size = SNOW_SIZE_POOL[s];
+        for (var l = 0; l < LETTERS.length; l++) sprites[size+':'+LETTERS[l]] = makeSnowSprite(LETTERS[l], size, dpr);
+        glows[size] = makeGlowSprite(size, dpr);
       }
     } else if (m === MODE_RAIN) {
-      var sR = [11,15,19];
-      for (var s2 = 0; s2 < sR.length; s2++) for (var l2 = 0; l2 < LETTERS.length; l2++) sprites[sR[s2]+':'+LETTERS[l2]] = makeRainSprite(LETTERS[l2], sR[s2], dpr);
+      for (var s2 = 0; s2 < RAIN_SIZE_POOL.length; s2++) {
+        var sizeR = RAIN_SIZE_POOL[s2];
+        for (var l2 = 0; l2 < LETTERS.length; l2++) sprites[sizeR+':'+LETTERS[l2]] = makeRainSprite(LETTERS[l2], sizeR, dpr);
+      }
     } else if (m === MODE_FOG) {
       var sF = [18,24,30];
       for (var s3 = 0; s3 < sF.length; s3++) for (var l3 = 0; l3 < LETTERS.length; l3++) sprites[sF[s3]+':'+LETTERS[l3]] = makeFogSprite(LETTERS[l3], sF[s3], dpr);
@@ -8098,28 +8120,28 @@ window.addEventListener('error', function (e) {
   /* ======================= ЗВЁЗДЫ ======================= */
 
   function initStars() {
-  stars = [];
-  /* №357: втрое больше звёздъ на всѣхъ устройствахъ (было 10–15, стало 30–48) */
-  var count = 30 + Math.floor(Math.random() * 18);
-  var now = performance.now();
-  var yMax = Math.min(240, H * 0.32);
-  /* №358: на телефонѣ всѣ звёзды одного размѣра — самый мелкій (16);
-     на компьютерѣ — три размѣра въ перемѣшку, какъ было */
-  var isMobile = (window.innerWidth < 600);
-  for (var i = 0; i < count; i++) {
-    var sz = isMobile ? 16 : [16,24,32][Math.floor(Math.random()*3)];
-    stars.push({
-      letter: pickLetter(), sizeKey: sz,
-      x: Math.random() * W,
-      y: 30 + Math.random() * yMax,
-      alpha: 0,
-      maxAlpha: 0.20 + Math.random() * 0.30,
-      flashStart: -1,
-      duration: 1500 + Math.random() * 2000,
-      nextFlashAt: now + 3000 + Math.random() * 35000
-    });
+    stars = [];
+    /* №357: втрое больше звёздъ на всѣхъ устройствахъ (было 10–15, стало 30–48) */
+    var count = 30 + Math.floor(Math.random() * 18);
+    var now = performance.now();
+    var yMax = Math.min(240, H * 0.32);
+    /* №358: на телефонѣ всѣ звёзды одного размѣра — самый мелкій (16);
+       на компьютерѣ — три размѣра въ перемѣшку, какъ было */
+    var isMobile = (window.innerWidth < 600);
+    for (var i = 0; i < count; i++) {
+      var sz = isMobile ? 16 : [16,24,32][Math.floor(Math.random()*3)];
+      stars.push({
+        letter: pickLetter(), sizeKey: sz,
+        x: Math.random() * W,
+        y: 30 + Math.random() * yMax,
+        alpha: 0,
+        maxAlpha: 0.20 + Math.random() * 0.30,
+        flashStart: -1,
+        duration: 1500 + Math.random() * 2000,
+        nextFlashAt: now + 3000 + Math.random() * 35000
+      });
+    }
   }
-}
 
   function starIntensity() {
     if (forceStars) return 1;
@@ -8178,7 +8200,9 @@ window.addEventListener('error', function (e) {
   }
 
   function makeSnowParticle(fromTop) {
-    var sz = [14,20,26][Math.floor(Math.random()*3)];
+    /* №359: на телефонѣ — до 16 px, на компьютерѣ — прежнія 14/20/26 */
+    var pool = snowSizesForWidth();
+    var sz = pool[Math.floor(Math.random() * pool.length)];
     var now0 = performance.now();
     return {
       type: MODE_SNOW, letter: pickLetter(), sizeKey: sz,
@@ -8192,7 +8216,9 @@ window.addEventListener('error', function (e) {
   }
 
   function makeRainParticle(fromTop) {
-    var sz = [11,15,19][Math.floor(Math.random()*3)];
+    /* №359: на телефонѣ — до 16 px, на компьютерѣ — прежнія 11/15/19 */
+    var pool = rainSizesForWidth();
+    var sz = pool[Math.floor(Math.random() * pool.length)];
     return {
       type: MODE_RAIN, letter: pickLetter(), sizeKey: sz,
       x: Math.random()*W, y: fromTop ? -40 - Math.random()*100 : Math.random()*H,
@@ -8554,7 +8580,15 @@ window.addEventListener('error', function (e) {
         barnaulLocal: ns.report.local
       },
       cloud: cloudCover,
-      stars: { count: stars.length, intensity: Math.round(starIntensity() * 100) + '%' },
+      stars: {
+        count: stars.length,
+        intensity: Math.round(starIntensity() * 100) + '%',
+        sizes: (function () {
+          var uniq = {};
+          for (var k = 0; k < stars.length; k++) uniq[stars[k].sizeKey] = 1;
+          return Object.keys(uniq).map(Number);
+        })()
+      },
       particles: particles.length,
       animId: animId ? 'running' : 'stopped'
     };

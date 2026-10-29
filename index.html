@@ -7615,23 +7615,15 @@ window.addEventListener('error', function (e) {
 </script>
 
 <script>
-/* Погодныя сцены изъ букв «Начала» — №382.
-   • Звёзды: [11, 15, 19] десктопъ, [7.2, 9.1, 10.4] телефонъ.
-   • Жизнь ×8, smoothstep, пульсація, буквы звёздъ повёрнуты влево на 45°.
-   • Метеоры: 1-5 мин. послѣ открытія, 3-5 мин. далѣе; ?meteor — 3 сек./8-12 сек.
-   • Тучи/осадки тускнятъ ТОЛЬКО яркія звёзды (peakAlpha≥0.5) вдвое.
-   • Ночь: звёзды видны всегда; ночные снѣгъ/дождь вдвое тускнѣе; туманъ/гроза — безъ измѣненій.
-   • №382: 39 реальныхъ позицій надъ Барнауломъ изъ образцовъ 1.html/2.html
-     (s1-s4 = яркія и среднія; s5/s6/noise = фоновый шумъ, замѣняются случайными).
-     Яркость → tier: s1/s2→1, s3→2, s4→3. Эти звёзды появляются вдвое чаще
-     (пауза 4-15с вмѣсто 8-30с), живутъ вдвое дольше (×16 вмѣсто ×8) и никогда
-     не падаютъ метеорами. Ихъ позиціи «забронированы» — случайныя звёзды
-     на нихъ не садятся. Размѣры не тронуты — берутся текущіе для устройства.
-   • Правка (заказчикъ): предустановленная звезда не загорается под буквой или въ
-     GLYPH_PAD-окрестности (та же провѣрка, что у случайныхъ). Если надпись
-     ушла — можетъ зажечься (быстрая пересправка 1.2–3.2 с). Если горитъ,
-     а надпись наехала — тухнетъ за ~0.25 с; ушла — разгорается обратно.
-   • Кэшъ буквъ — грязный флагъ съ троттлингомъ 80 мс (вмѣсто обнуленія на scroll). */
+/* Погодныя сцены изъ букв «Начала» + Луна — сшивъ №393
+   Измѣненія:
+   (1) палитра перелива — 6 цвѣтовъ: бѣлый, ледяной, синѣе, золотистый, кремовый, свѣтло сѣрый;
+   (2) скорость переливовъ (и сопутствующихъ пульсацій) уменьшена вдвое;
+   (3) подъ каждой буквой луны — непрозрачная подложка въ цвѣтъ фона страницы
+       (--ink #1a1535), обрѣзанная строго по силуэту буквы: фонъ страницы больше
+       не проступаетъ сквозь полупрозрачныя буквы, и между буквами больше нѣтъ
+       неоднородной заливки — но и за предѣлы буквъ по внѣшнему периметру
+       подложка не выходитъ. */
 (function () {
   'use strict';
 
@@ -7685,12 +7677,8 @@ window.addEventListener('error', function (e) {
   var STAR_COUNT_RANGE   = 36;
   var BRIGHT_PEAK        = 0.5;
 
-  /* №382: позиціи реальныхъ звёздъ надъ Барнауломъ — [x, y, tier] въ координатахъ образца.
-     Desktop: viewBox 600×100 (файлъ 1.html). Mobile: viewBox 700×500 (файлъ 2.html).
-     Взяты только s1-s4: s1/s2 → tier 1 (яркія), s3 → tier 2 (среднія), s4 → tier 3. */
   var PRESET_DESKTOP_RAW = [
-    [340, 70, 1],
-    [80, 50, 1], [120, 50, 1], [520, 80, 1], [160, 30, 1], [180, 15, 1],
+    [340, 70, 1], [80, 50, 1], [120, 50, 1], [520, 80, 1], [160, 30, 1], [180, 15, 1],
     [220, 60, 2], [280, 65, 2], [400, 75, 2], [95, 42, 2], [250, 35, 2],
     [480, 68, 2], [140, 28, 2], [200, 25, 2], [300, 55, 2], [450, 72, 2],
     [60, 48, 3], [110, 45, 3], [190, 22, 3], [240, 32, 3], [290, 45, 3],
@@ -7710,12 +7698,8 @@ window.addEventListener('error', function (e) {
     [430, 350, 3], [500, 380, 3], [570, 370, 3], [620, 330, 3], [125, 285, 3],
     [300, 250, 3], [380, 320, 3], [510, 375, 3]
   ];
-  var PRESET_DESKTOP = PRESET_DESKTOP_RAW.map(function (p) {
-    return { nx: p[0] / 600, ny: p[1] / 100, tier: p[2] };
-  });
-  var PRESET_MOBILE = PRESET_MOBILE_RAW.map(function (p) {
-    return { nx: p[0] / 700, ny: p[1] / 500, tier: p[2] };
-  });
+  var PRESET_DESKTOP = PRESET_DESKTOP_RAW.map(function (p) { return { nx: p[0] / 600, ny: p[1] / 100, tier: p[2] }; });
+  var PRESET_MOBILE = PRESET_MOBILE_RAW.map(function (p) { return { nx: p[0] / 700, ny: p[1] / 500, tier: p[2] }; });
 
   var CONSTELLATION_CHANCE      = 0.15;
   var CONSTELLATION_COUNT_MIN   = 3;
@@ -7752,12 +7736,101 @@ window.addEventListener('error', function (e) {
   var wWind = null, wWDir = null, wVis = null, wCloud = null;
   var TTL = 10 * 60 * 1000, busy = false;
 
-  var PRECIP_URL = 'https://api.open-meteo.com/v1/forecast'
-    + '?latitude=53.35&longitude=83.78'
-    + '&current=weather_code,snowfall,rain,wind_speed_10m,wind_direction_10m,visibility,cloud_cover'
-    + '&wind_speed_unit=ms';
+  var PRECIP_URL = 'https://api.open-meteo.com/v1/forecast?latitude=53.35&longitude=83.78&current=weather_code,snowfall,rain,wind_speed_10m,wind_direction_10m,visibility,cloud_cover&wind_speed_unit=ms';
 
-  /* ================ ГЛИФЫ (Range) ================ */
+  var MOON_D_BASE = 65;
+
+  var moonOffsetMs = 0;
+  var moonDemoActive = false;
+  var moonDemoWasLight = false;
+  function moonNow() { return new Date(Date.now() + moonOffsetMs); }
+
+  var MOON_ROWS = [
+    'НАЧАЛА',
+    'АЛАНАЧАЛАНАЧА',
+    'ЧАЛАНАЧАЛАНАЧАЛАН',
+    'НАЧАЛАНАЧАЛАНАЧАЛАН',
+    'ЧАЛАНАЧАЛАНАЧАЛАН',
+    'АЛАНАЧАЛАНАЧА',
+    'НАЧАЛА'
+  ];
+
+  var PHASE_DATA = [
+    ['000000','0000000000001','00000000000000011','0000000000000000111','00000000000000011','0000000000001','000000'],
+    ['000111','0000000000111','00000000000001111','0000000000000011111','00000000000001111','0000000000111','000111'],
+    ['011111','0000000111111','00000000011111111','0000000000111111111','00000000011111111','0000000111111','011111'],
+    ['011111','0000011111111','00000001111111111','0000000011111111111','00000001111111111','0000011111111','011111'],
+    ['011111','0001111111111','00001111111111111','0000011111111111111','00001111111111111','0001111111111','011111'],
+    ['111111','0111111111111','00111111111111111','0001111111111111111','00111111111111111','0111111111111','111111'],
+    ['111111','1111111111111','11111111111111111','1111111111111111111','11111111111111111','1111111111111','111111'],
+    ['111111','1111111111110','11111111111111100','1111111111111111000','11111111111111100','1111111111110','111111'],
+    ['111000','1111111111000','11111111111110000','1111111111111100000','11111111111110000','1111111111000','111000'],
+    ['100000','1111110000000','11111111000000000','1111111110000000000','11111111000000000','1111110000000','100000'],
+    ['100000','1111100000000','11111110000000000','1111111100000000000','11111110000000000','1111100000000','100000'],
+    ['100000','1110000000000','11110000000000000','1111100000000000000','11110000000000000','1110000000000','100000'],
+    ['000000','1000000000000','11000000000000000','1110000000000000000','11000000000000000','1000000000000','000000']
+  ];
+
+  var moonPos = { alt: -90, az: 0, phase: 0, sunAlt: -90 };
+  var moonScreenX = 0, moonScreenY = 0, moonRadius = 0;
+
+  function getMoonData(date) {
+    var jd = date.getTime() / 86400000 + 2440587.5;
+    var T = (jd - 2451545.0) / 36525;
+    var daysSinceNew = (jd - 2451550.1) % 29.530588853;
+    if (daysSinceNew < 0) daysSinceNew += 29.530588853;
+    var phase = daysSinceNew / 29.530588853;
+    var lat = 53.35 * Math.PI / 180;
+    var lon = 83.78;
+    var Lp = 218.316 + 481267.881 * T;
+    var Mp = 134.963 + 477198.867 * T;
+    var F = 93.272 + 483202.017 * T;
+    var lambda = Lp + 6.289 * Math.sin(Mp * Math.PI / 180);
+    var beta = 5.128 * Math.sin(F * Math.PI / 180);
+    var eps = 23.439 - 0.013 * T;
+    var sinLambda = Math.sin(lambda * Math.PI / 180);
+    var cosLambda = Math.cos(lambda * Math.PI / 180);
+    var sinBeta = Math.sin(beta * Math.PI / 180);
+    var cosBeta = Math.cos(beta * Math.PI / 180);
+    var sinEps = Math.sin(eps * Math.PI / 180);
+    var cosEps = Math.cos(eps * Math.PI / 180);
+    var alpha = Math.atan2(sinLambda * cosEps - Math.tan(beta) * sinEps, cosLambda) * 180 / Math.PI;
+    var delta = Math.asin(sinBeta * cosEps + cosBeta * sinEps * sinLambda) * 180 / Math.PI;
+    var gmst = 280.46061837 + 360.98564736629 * (jd - 2451545.0) + 0.000387933 * T * T - T * T * T / 38710000;
+    var lst = (gmst + lon) % 360;
+    var ha = (lst - alpha) * Math.PI / 180;
+    var deltaRad = delta * Math.PI / 180;
+    var sinAlt = Math.sin(lat) * Math.sin(deltaRad) + Math.cos(lat) * Math.cos(deltaRad) * Math.cos(ha);
+    var alt = Math.asin(sinAlt) * 180 / Math.PI;
+    var az = Math.atan2(-Math.cos(deltaRad) * Math.sin(ha), Math.sin(deltaRad) * Math.cos(lat) - Math.cos(deltaRad) * Math.sin(lat) * Math.cos(ha)) * 180 / Math.PI;
+    az = (az + 360) % 360;
+    var sunAlt = sunAltitude(53.35, 83.78, date);
+    return { alt: alt, az: az, phase: phase, sunAlt: sunAlt };
+  }
+
+  function updateMoonPos() {
+    moonPos = getMoonData(moonNow());
+    if (moonPos.sunAlt < -6 || loc.indexOf('forceMoon') >= 0 || moonDemoActive) {
+      moonRadius = MOON_D_BASE / 2;
+      var x_ratio = moonPos.phase;
+      moonScreenX = W * 0.1 + x_ratio * W * 0.8;
+      var t = (moonScreenX - W/2) / (W/2);
+      var baselineY = Math.min(H * 0.4, 310);
+      var peakY = Math.min(H * 0.15, 130);
+      moonScreenY = peakY + (baselineY - peakY) * t * t;
+    } else {
+      moonScreenX = -9999;
+      moonScreenY = -9999;
+      moonRadius = 0;
+    }
+  }
+
+  function isUnderMoon(x, y) {
+    if (moonRadius <= 0) return false;
+    var dx = x - moonScreenX;
+    var dy = y - moonScreenY;
+    return (dx * dx + dy * dy) < (moonRadius + 50) * (moonRadius + 50);
+  }
 
   function buildGlyphEls() {
     glyphEls = [];
@@ -7780,7 +7853,6 @@ window.addEventListener('error', function (e) {
       var elRect = el.getBoundingClientRect();
       if (elRect.width === 0 || elRect.height === 0) continue;
       if (elRect.bottom < -60 || elRect.top > H + 60) continue;
-
       var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
       var node;
       while ((node = walker.nextNode())) {
@@ -7789,10 +7861,7 @@ window.addEventListener('error', function (e) {
           var ch = nv.charAt(i);
           if (ch === ' ' || ch === '\u00A0' || ch === '\t' || ch === '\n' || ch === '\r') continue;
           var range = document.createRange();
-          try {
-            range.setStart(node, i);
-            range.setEnd(node, i + 1);
-          } catch (e) { continue; }
+          try { range.setStart(node, i); range.setEnd(node, i + 1); } catch (e) { continue; }
           var r = range.getBoundingClientRect();
           if (r.width < 0.1 || r.height < 0.1) continue;
           if (!isFinite(r.left) || !isFinite(r.top)) continue;
@@ -7818,15 +7887,8 @@ window.addEventListener('error', function (e) {
     return false;
   }
 
-  /* ================ ПОЛЕ ЗВЁЗДЪ ================ */
-
   function starFieldBounds() {
-    return {
-      xMin: 20,
-      xMax: Math.max(60, W - 40),
-      yMin: 30,
-      yMax: Math.max(80, Math.min(320, H * 0.35))
-    };
+    return { xMin: 20, xMax: Math.max(60, W - 40), yMin: 30, yMax: Math.max(80, Math.min(320, H * 0.35)) };
   }
 
   function currentMinDist() {
@@ -7839,10 +7901,7 @@ window.addEventListener('error', function (e) {
 
   function presetPixelPos(nx, ny) {
     var b = starFieldBounds();
-    return {
-      x: b.xMin + nx * (b.xMax - b.xMin),
-      y: b.yMin + ny * (b.yMax - b.yMin)
-    };
+    return { x: b.xMin + nx * (b.xMax - b.xMin), y: b.yMin + ny * (b.yMax - b.yMin) };
   }
 
   function buildConstellations() {
@@ -7851,23 +7910,18 @@ window.addEventListener('error', function (e) {
     var fw = b.xMax - b.xMin;
     var fh = b.yMax - b.yMin;
     if (fw < 120 || fh < 80) return;
-
-    var nC = CONSTELLATION_COUNT_MIN + Math.floor(Math.random() *
-             (CONSTELLATION_COUNT_MAX - CONSTELLATION_COUNT_MIN + 1));
+    var nC = CONSTELLATION_COUNT_MIN + Math.floor(Math.random() * (CONSTELLATION_COUNT_MAX - CONSTELLATION_COUNT_MIN + 1));
     if (W < 600) nC = Math.max(2, nC - 1);
-
     var cols = Math.ceil(Math.sqrt(nC));
     var rows = Math.ceil(nC / cols);
     var cellW = fw / cols;
     var cellH = fh / rows;
-
     var cells = [];
     for (var r = 0; r < rows; r++) for (var c = 0; c < cols; c++) cells.push({ r: r, c: c });
     for (var i = cells.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1));
       var t = cells[i]; cells[i] = cells[j]; cells[j] = t;
     }
-
     var md = currentMinDist();
     for (var k = 0; k < nC && k < cells.length; k++) {
       var cell = cells[k];
@@ -7877,14 +7931,11 @@ window.addEventListener('error', function (e) {
       var cx = cxMin + margin + Math.random() * Math.max(10, cellW - margin * 2);
       var cy = cyMin + margin + Math.random() * Math.max(10, cellH - margin * 2);
       if (cx < b.xMin || cx > b.xMax || cy < b.yMin || cy > b.yMax) continue;
-      if (isUnderGlyph(cx, cy)) continue;
-
+      if (isUnderGlyph(cx, cy) || isUnderMoon(cx, cy)) continue;
       var rad = md * 1.3 + Math.random() * 20;
-      var nS = CONSTELLATION_STARS_MIN + Math.floor(Math.random() *
-               (CONSTELLATION_STARS_MAX - CONSTELLATION_STARS_MIN + 1));
+      var nS = CONSTELLATION_STARS_MIN + Math.floor(Math.random() * (CONSTELLATION_STARS_MAX - CONSTELLATION_STARS_MIN + 1));
       var innerMin = Math.max(10, md * 0.35);
       var innerMin2 = innerMin * innerMin;
-
       var slots = [];
       var tries = 0;
       while (slots.length < nS && tries < 90) {
@@ -7893,8 +7944,7 @@ window.addEventListener('error', function (e) {
         var dist = rad * Math.sqrt(Math.random());
         var sx = cx + Math.cos(ang) * dist;
         var sy = cy + Math.sin(ang) * dist;
-        if (sx < b.xMin + 10 || sx > b.xMax - 10) continue;
-        if (sy < b.yMin + 10 || sy > b.yMax - 10) continue;
+        if (sx < b.xMin + 10 || sx > b.xMax - 10 || sy < b.yMin + 10 || sy > b.yMax - 10) continue;
         var ok = true;
         for (var q = 0; q < slots.length; q++) {
           var dx = slots[q].x - sx, dy = slots[q].y - sy;
@@ -7915,7 +7965,7 @@ window.addEventListener('error', function (e) {
       for (var q = 0; q < co.slots.length; q++) if (!co.slots[q].taken) free.push(co.slots[q]);
       if (!free.length) continue;
       var slot = free[Math.floor(Math.random() * free.length)];
-      if (isUnderGlyph(slot.x, slot.y)) continue;
+      if (isUnderGlyph(slot.x, slot.y) || isUnderMoon(slot.x, slot.y)) continue;
       var ok = true;
       for (var j = 0; j < stars.length; j++) {
         var o = stars[j];
@@ -7953,7 +8003,7 @@ window.addEventListener('error', function (e) {
         if (dx*dx + dy*dy < rr*rr) { inC = true; break; }
       }
       if (inC) continue;
-      if (isUnderGlyph(x, y)) continue;
+      if (isUnderGlyph(x, y) || isUnderMoon(x, y)) continue;
       var nearPreset = false;
       for (var pj = 0; pj < presetPts.length; pj++) {
         var dp = presetPts[pj];
@@ -7972,8 +8022,6 @@ window.addEventListener('error', function (e) {
     }
     return null;
   }
-
-  /* ================ ПОГОДА ================ */
 
   function loadCache() {
     try {
@@ -7995,9 +8043,7 @@ window.addEventListener('error', function (e) {
   function saveCache() {
     try {
       localStorage.setItem('barnaul-precip-v2', JSON.stringify({
-        code: wCode, fall: wFall, rain: wRain,
-        wind: wWind, wdir: wWDir, vis: wVis,
-        cloud: wCloud, ts: Date.now()
+        code: wCode, fall: wFall, rain: wRain, wind: wWind, wdir: wWDir, vis: wVis, cloud: wCloud, ts: Date.now()
       }));
     } catch (e) {}
   }
@@ -8013,12 +8059,9 @@ window.addEventListener('error', function (e) {
     var clM = /"cloud_cover"\s*:\s*(\d+)/.exec(text);
     if (cM || fM || rM || wM || vM || clM) {
       return {
-        code: cM ? parseInt(cM[1], 10) : null,
-        fall: fM ? parseFloat(fM[1]) : null,
-        rain: rM ? parseFloat(rM[1]) : null,
-        wind: wM ? parseFloat(wM[1]) : null,
-        wdir: dM ? parseFloat(dM[1]) : null,
-        vis:  vM ? parseFloat(vM[1]) : null,
+        code: cM ? parseInt(cM[1], 10) : null, fall: fM ? parseFloat(fM[1]) : null,
+        rain: rM ? parseFloat(rM[1]) : null, wind: wM ? parseFloat(wM[1]) : null,
+        wdir: dM ? parseFloat(dM[1]) : null, vis:  vM ? parseFloat(vM[1]) : null,
         cloud: clM ? parseInt(clM[1], 10) : null
       };
     }
@@ -8049,20 +8092,17 @@ window.addEventListener('error', function (e) {
     var OM = PRECIP_URL + '&_cb=' + Date.now();
     var enc = encodeURIComponent(OM);
     var settled = false;
-
     function finish(res) {
       if (settled || !res || res.val === null) return;
       settled = true;
       var v = res.val;
       wCode = v.code; wFall = v.fall; wRain = v.rain;
-      wWind = v.wind; wWDir = v.wdir; wVis = v.vis;
-      wCloud = v.cloud;
+      wWind = v.wind; wWDir = v.wdir; wVis = v.vis; wCloud = v.cloud;
       if (forceCloud === null && wCloud !== null) cloudCover = wCloud;
       saveCache();
       var dec = decideWeather();
       applyWeather(dec);
     }
-
     var tries = [
       tryMirror(OM, 6000, 'Open-Meteo (прямой)'),
       tryMirror('https://corsproxy.io/?url=' + enc, 8000, 'Open-Meteo (corsproxy)'),
@@ -8076,31 +8116,18 @@ window.addEventListener('error', function (e) {
     });
   }
 
-  /* ================ НОЧЬ ================ */
-
   function sunAltitude(lat, lon, date) {
     var start = new Date(Date.UTC(date.getUTCFullYear(), 0, 0));
     var dayOfYear = Math.floor((date - start) / 86400000);
     var gamma = 2 * Math.PI / 365 * (dayOfYear - 1 + (date.getUTCHours() - 12) / 24);
-    var eqtime = 229.18 * (0.000075
-      + 0.001868 * Math.cos(gamma)
-      - 0.032077 * Math.sin(gamma)
-      - 0.014615 * Math.cos(2 * gamma)
-      - 0.040849 * Math.sin(2 * gamma));
-    var decl = 0.006918
-      - 0.399912 * Math.cos(gamma)
-      + 0.070257 * Math.sin(gamma)
-      - 0.006758 * Math.cos(2 * gamma)
-      + 0.000907 * Math.sin(2 * gamma)
-      - 0.002697 * Math.cos(3 * gamma)
-      + 0.001480 * Math.sin(3 * gamma);
+    var eqtime = 229.18 * (0.000075 + 0.001868 * Math.cos(gamma) - 0.032077 * Math.sin(gamma) - 0.014615 * Math.cos(2 * gamma) - 0.040849 * Math.sin(2 * gamma));
+    var decl = 0.006918 - 0.399912 * Math.cos(gamma) + 0.070257 * Math.sin(gamma) - 0.006758 * Math.cos(2 * gamma) + 0.000907 * Math.sin(2 * gamma) - 0.002697 * Math.cos(3 * gamma) + 0.001480 * Math.sin(3 * gamma);
     var utcMin = date.getUTCHours() * 60 + date.getUTCMinutes() + date.getUTCSeconds() / 60;
     var tst = utcMin + eqtime + 4 * lon;
     tst = ((tst % 1440) + 1440) % 1440;
     var ha = ((tst / 4) - 180) * Math.PI / 180;
     var latRad = lat * Math.PI / 180;
-    var cosZen = Math.sin(latRad) * Math.sin(decl)
-               + Math.cos(latRad) * Math.cos(decl) * Math.cos(ha);
+    var cosZen = Math.sin(latRad) * Math.sin(decl) + Math.cos(latRad) * Math.cos(decl) * Math.cos(ha);
     var zen = Math.acos(Math.max(-1, Math.min(1, cosZen)));
     return 90 - zen * 180 / Math.PI;
   }
@@ -8117,8 +8144,6 @@ window.addEventListener('error', function (e) {
     isNight = ns.night;
   }
 
-  /* ================ РѢШЕНІЕ ================ */
-
   var SNOW_CODES = [71,73,75,77,85,86];
   var RAIN_CODES = [51,53,55,61,63,65,80,81,82];
   var THUNDER_CODES = [95,96,99];
@@ -8127,9 +8152,7 @@ window.addEventListener('error', function (e) {
   function snowLevel() {
     var lvl = 0;
     if (wCode !== null && SNOW_CODES.indexOf(wCode) >= 0) {
-      if (wCode === 75 || wCode === 86) lvl = 3;
-      else if (wCode === 73) lvl = 2;
-      else lvl = 1;
+      if (wCode === 75 || wCode === 86) lvl = 3; else if (wCode === 73) lvl = 2; else lvl = 1;
     }
     if (wFall !== null && wFall > 0) {
       var s = wFall > 2 ? 3 : (wFall > 0.5 ? 2 : 1);
@@ -8141,9 +8164,7 @@ window.addEventListener('error', function (e) {
   function rainLevel() {
     var lvl = 0;
     if (wCode !== null && RAIN_CODES.indexOf(wCode) >= 0) {
-      if (wCode === 65 || wCode === 82) lvl = 3;
-      else if (wCode === 55 || wCode === 63 || wCode === 81) lvl = 2;
-      else lvl = 1;
+      if (wCode === 65 || wCode === 82) lvl = 3; else if (wCode === 55 || wCode === 63 || wCode === 81) lvl = 2; else lvl = 1;
     }
     if (wRain !== null && wRain > 0) {
       var s = wRain > 4 ? 3 : (wRain > 1 ? 2 : 1);
@@ -8155,8 +8176,7 @@ window.addEventListener('error', function (e) {
   function decideWeather() {
     var sl = snowLevel(), rl = rainLevel();
     var thunder = (wCode !== null && THUNDER_CODES.indexOf(wCode) >= 0);
-    var fog = (wCode !== null && FOG_CODES.indexOf(wCode) >= 0)
-              || (wVis !== null && wVis < 1000);
+    var fog = (wCode !== null && FOG_CODES.indexOf(wCode) >= 0) || (wVis !== null && wVis < 1000);
     if (thunder) return { mode: MODE_RAIN, level: Math.max(2, rl), thunder: true, blizzard: false };
     if (fog && sl === 0 && rl === 0) return { mode: MODE_FOG, level: 2, thunder: false, blizzard: false };
     if (sl === 0 && rl === 0) return { mode: MODE_NONE, level: 0, thunder: false, blizzard: false };
@@ -8176,18 +8196,13 @@ window.addEventListener('error', function (e) {
     isBlizzard = false;
     if (sp < 3 || windSign === 0) { windRatio = 0; windMul = 1; windX = 0; return; }
     if (m === MODE_SNOW) {
-      windRatio = Math.min(1.8, sp / 15);
-      windMul = 1 + Math.min(0.7, (sp - 3) / 22);
-      isBlizzard = sp > 10;
+      windRatio = Math.min(1.8, sp / 15); windMul = 1 + Math.min(0.7, (sp - 3) / 22); isBlizzard = sp > 10;
     } else if (m === MODE_RAIN) {
-      windRatio = Math.min(0.55, sp / 25);
-      windMul = 1 + Math.min(0.35, (sp - 3) / 35);
+      windRatio = Math.min(0.55, sp / 25); windMul = 1 + Math.min(0.35, (sp - 3) / 35);
     } else if (m === MODE_FOG) {
       windRatio = 0; windMul = 1; windX = sp * 4;
     } else { windRatio = 0; windMul = 1; windX = 0; }
   }
-
-  /* ================ СПРАЙТЫ ================ */
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -8205,13 +8220,10 @@ window.addEventListener('error', function (e) {
     var g = c.getContext('2d');
     g.scale(dprScale, dprScale);
     g.font = 'normal ' + size + 'px "Gardenia Decor", "Yeseva One", Georgia, serif';
-    g.fillStyle = '#ffffff';
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.shadowColor = 'rgba(240, 245, 255, 0.7)';
-    g.shadowBlur = Math.max(3, size * 0.3);
+    g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.shadowColor = 'rgba(240, 245, 255, 0.7)'; g.shadowBlur = Math.max(3, size * 0.3);
     g.fillText(ch, d/2, d/2);
-    g.shadowBlur = Math.max(1.5, size * 0.12);
-    g.fillText(ch, d/2, d/2);
+    g.shadowBlur = Math.max(1.5, size * 0.12); g.fillText(ch, d/2, d/2);
     return c;
   }
 
@@ -8222,13 +8234,9 @@ window.addEventListener('error', function (e) {
     var g = c.getContext('2d');
     g.scale(dprScale, dprScale);
     g.font = 'normal ' + size + 'px "Gardenia Decor", "Yeseva One", Georgia, serif';
-    g.fillStyle = '#c8d4e8';
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.shadowColor = 'rgba(180, 200, 232, 0.55)';
-    g.shadowBlur = Math.max(2, size * 0.18);
-    g.fillText(ch, d/2, d/2);
-    g.shadowBlur = Math.max(1, size * 0.08);
-    g.fillText(ch, d/2, d/2);
+    g.fillStyle = '#c8d4e8'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.shadowColor = 'rgba(180, 200, 232, 0.55)'; g.shadowBlur = Math.max(2, size * 0.18);
+    g.fillText(ch, d/2, d/2); g.shadowBlur = Math.max(1, size * 0.08); g.fillText(ch, d/2, d/2);
     return c;
   }
 
@@ -8239,14 +8247,10 @@ window.addEventListener('error', function (e) {
     var g = c.getContext('2d');
     g.scale(dprScale, dprScale);
     g.font = 'normal ' + size + 'px "Gardenia Decor", "Yeseva One", Georgia, serif';
-    g.fillStyle = '#cfd4d8';
-    g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.shadowColor = 'rgba(210, 215, 220, 0.85)';
-    g.shadowBlur = size * 0.85;
-    g.fillText(ch, d/2, d/2);
-    g.fillText(ch, d/2, d/2);
-    g.shadowBlur = size * 0.35;
-    g.fillText(ch, d/2, d/2);
+    g.fillStyle = '#cfd4d8'; g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.shadowColor = 'rgba(210, 215, 220, 0.85)'; g.shadowBlur = size * 0.85;
+    g.fillText(ch, d/2, d/2); g.fillText(ch, d/2, d/2);
+    g.shadowBlur = size * 0.35; g.fillText(ch, d/2, d/2);
     return c;
   }
 
@@ -8258,20 +8262,11 @@ window.addEventListener('error', function (e) {
     g.scale(dprScale, dprScale);
     g.font = 'normal ' + size + 'px "Gardenia Decor", "Yeseva One", Georgia, serif';
     g.textAlign = 'center'; g.textBaseline = 'middle';
-    g.translate(d / 2, d / 2);
-    g.rotate(-Math.PI / 4);
-    g.translate(-d / 2, -d / 2);
-    g.shadowColor = 'rgba(160, 195, 255, 0.9)';
-    g.shadowBlur = size * 0.7;
-    g.fillStyle = 'rgba(190, 215, 255, 0.55)';
-    g.fillText(ch, d/2, d/2);
-    g.fillText(ch, d/2, d/2);
-    g.shadowBlur = size * 0.35;
-    g.fillStyle = 'rgba(215, 230, 255, 0.85)';
-    g.fillText(ch, d/2, d/2);
-    g.shadowBlur = size * 0.15;
-    g.fillStyle = '#f0f6ff';
-    g.fillText(ch, d/2, d/2);
+    g.translate(d / 2, d / 2); g.rotate(-Math.PI / 4); g.translate(-d / 2, -d / 2);
+    g.shadowColor = 'rgba(160, 195, 255, 0.9)'; g.shadowBlur = size * 0.7;
+    g.fillStyle = 'rgba(190, 215, 255, 0.55)'; g.fillText(ch, d/2, d/2); g.fillText(ch, d/2, d/2);
+    g.shadowBlur = size * 0.35; g.fillStyle = 'rgba(215, 230, 255, 0.85)'; g.fillText(ch, d/2, d/2);
+    g.shadowBlur = size * 0.15; g.fillStyle = '#f0f6ff'; g.fillText(ch, d/2, d/2);
     return c;
   }
 
@@ -8286,20 +8281,15 @@ window.addEventListener('error', function (e) {
     grd.addColorStop(0.25, 'rgba(240, 248, 255, 0.55)');
     grd.addColorStop(0.55, 'rgba(220, 235, 255, 0.22)');
     grd.addColorStop(1, 'rgba(200, 220, 240, 0)');
-    g.fillStyle = grd;
-    g.beginPath(); g.arc(d/2, d/2, d/2, 0, Math.PI*2); g.fill();
+    g.fillStyle = grd; g.beginPath(); g.arc(d/2, d/2, d/2, 0, Math.PI*2); g.fill();
     return c;
   }
 
   var SNOW_SIZE_POOL = [12, 14, 15, 16, 20, 26];
   var RAIN_SIZE_POOL = [11, 14, 15, 16, 19];
 
-  function snowSizesForWidth() {
-    return (window.innerWidth < 600) ? [12, 14, 16] : [14, 20, 26];
-  }
-  function rainSizesForWidth() {
-    return (window.innerWidth < 600) ? [11, 14, 16] : [11, 15, 19];
-  }
+  function snowSizesForWidth() { return (window.innerWidth < 600) ? [12, 14, 16] : [14, 20, 26]; }
+  function rainSizesForWidth() { return (window.innerWidth < 600) ? [11, 14, 16] : [11, 15, 19]; }
 
   function prepareSprites(m) {
     sprites = {}; glows = {};
@@ -8321,18 +8311,13 @@ window.addEventListener('error', function (e) {
   }
 
   function prepareStarSprites() {
-    starSprites = {};
-    starGlows = {};
+    starSprites = {}; starGlows = {};
     for (var s = 0; s < STAR_SPRITE_SIZES.length; s++) {
       var sz = STAR_SPRITE_SIZES[s];
-      for (var l = 0; l < LETTERS.length; l++) {
-        starSprites[sz+':'+LETTERS[l]] = makeStarLetterSprite(LETTERS[l], sz, dpr);
-      }
+      for (var l = 0; l < LETTERS.length; l++) starSprites[sz+':'+LETTERS[l]] = makeStarLetterSprite(LETTERS[l], sz, dpr);
       starGlows[sz] = makeGlowSprite(sz, dpr);
     }
   }
-
-  /* ================ ЗВЁЗДЫ ================ */
 
   function pickLetter() {
     var r = Math.random() * WEIGHT_SUM, acc = 0;
@@ -8347,20 +8332,10 @@ window.addEventListener('error', function (e) {
 
   function scheduleNextAppearance(s, now) {
     if (s._slot) { s._slot.taken = false; s._slot = null; }
-    s.visible = false;
-    s.alpha = 0;
-    s.env = 0;
-    s.glowBoost = 1;
-    s.flicker = null;
-    s.meteor = null;
-    s.dimMul = 1;
-    s._blocked = false;
-    s._nextBlockCheck = 0;
-    if (s._preset) {
-      s.nextAppearAt = now + 4000 + Math.random() * 11000;
-    } else {
-      s.nextAppearAt = now + 8000 + Math.random() * 22000;
-    }
+    s.visible = false; s.alpha = 0; s.env = 0; s.glowBoost = 1;
+    s.flicker = null; s.meteor = null; s.dimMul = 1; s._blocked = false; s._nextBlockCheck = 0;
+    if (s._preset) s.nextAppearAt = now + 4000 + Math.random() * 11000;
+    else s.nextAppearAt = now + 8000 + Math.random() * 22000;
   }
 
   function initStars() {
@@ -8369,151 +8344,73 @@ window.addEventListener('error', function (e) {
     var now = performance.now();
     var isMobile = (W < 600);
     var presets = isMobile ? PRESET_MOBILE : PRESET_DESKTOP;
-
     for (var p = 0; p < presets.length; p++) {
       stars.push({
-        visible: false, alpha: 0, env: 0, glowBoost: 1,
-        tier: presets[p].tier, peakAlpha: 0,
-        x: 0, y: 0, letter: 'Н', sizeKey: 16,
-        appearStart: 0, lifeDuration: 3000,
-        nextAppearAt: now + 200 + Math.random() * 8000,
-        flicker: null,
-        _slot: null,
-        meteor: null,
-        dimMul: 1,
-        _blocked: false,
-        _nextBlockCheck: 0,
-        _preset: true,
-        _presetNX: presets[p].nx,
-        _presetNY: presets[p].ny,
-        _presetTier: presets[p].tier
+        visible: false, alpha: 0, env: 0, glowBoost: 1, tier: presets[p].tier, peakAlpha: 0,
+        x: 0, y: 0, letter: 'Н', sizeKey: 16, appearStart: 0, lifeDuration: 3000,
+        nextAppearAt: now + 200 + Math.random() * 8000, flicker: null, _slot: null, meteor: null,
+        dimMul: 1, _blocked: false, _nextBlockCheck: 0, _preset: true,
+        _presetNX: presets[p].nx, _presetNY: presets[p].ny, _presetTier: presets[p].tier
       });
     }
-
     var count = STAR_COUNT_BASE + Math.floor(Math.random() * STAR_COUNT_RANGE);
     if (isMobile) count = Math.round(count * 0.6);
     var randomCount = Math.max(0, count - presets.length);
     for (var i = 0; i < randomCount; i++) {
       stars.push({
-        visible: false, alpha: 0, env: 0, glowBoost: 1,
-        tier: 4, peakAlpha: 0,
-        x: 0, y: 0, letter: 'Н', sizeKey: 16,
-        appearStart: 0, lifeDuration: 3000,
-        nextAppearAt: now + 200 + Math.random() * 38000,
-        flicker: null,
-        _slot: null,
-        meteor: null,
-        dimMul: 1,
-        _blocked: false,
-        _nextBlockCheck: 0,
-        _preset: false
+        visible: false, alpha: 0, env: 0, glowBoost: 1, tier: 4, peakAlpha: 0,
+        x: 0, y: 0, letter: 'Н', sizeKey: 16, appearStart: 0, lifeDuration: 3000,
+        nextAppearAt: now + 200 + Math.random() * 38000, flicker: null, _slot: null, meteor: null,
+        dimMul: 1, _blocked: false, _nextBlockCheck: 0, _preset: false
       });
     }
-
-    if (forceMeteor) {
-      nextMeteorAt = now + 3000;
-    } else {
-      nextMeteorAt = now + (1 + Math.random() * 4) * 60 * 1000;
-    }
+    if (forceMeteor) nextMeteorAt = now + 3000;
+    else nextMeteorAt = now + (1 + Math.random() * 4) * 60 * 1000;
     meteorActive = false;
   }
 
   function startStarAppearance(s, now) {
     if (s._preset) {
       var pp = presetPixelPos(s._presetNX, s._presetNY);
-      s.x = pp.x;
-      s.y = pp.y;
-      s._slot = null;
-
-      /* Предустановленная звезда не загорается под буквой (или въ GLYPH_PAD-окрестности):
-         та же провѣрка, что у случайныхъ звёздъ. Если занято — откладываемъ
-         и пробуемъ снова черезъ 1,2–3,2 с (быстрая пересправка: какъ только
-         надпись уйдётъ, звезда сможетъ зажечься). */
-      if (isUnderGlyph(s.x, s.y)) {
+      s.x = pp.x; s.y = pp.y; s._slot = null;
+      if (isUnderGlyph(s.x, s.y) || isUnderMoon(s.x, s.y)) {
         s.nextAppearAt = now + 1200 + Math.random() * 2000;
         return;
       }
-
-      s.tier = s._presetTier;
-      s.letter = pickLetter();
-      s.sizeKey = pickStarSize();
-
-      var basePeakP = [0, 0.95, 0.65, 0.40, 0.22][s.tier];
-      s.peakAlpha = basePeakP * (0.85 + Math.random() * 0.15);
+      s.tier = s._presetTier; s.letter = pickLetter(); s.sizeKey = pickStarSize();
+      s.peakAlpha = [0, 0.95, 0.65, 0.40, 0.22][s.tier] * (0.85 + Math.random() * 0.15);
       s.lifeDuration = ([0, 1400, 2000, 2800, 3500][s.tier] + Math.random() * 900) * 16;
-
-      s.appearStart = now;
-      s.visible = true;
-      s.env = 0;
-      s.glowBoost = 1;
-      s.meteor = null;
-      s.dimMul = 1;
-      s._blocked = false;
-      s._nextBlockCheck = now + 120;
-
+      s.appearStart = now; s.visible = true; s.env = 0; s.glowBoost = 1; s.meteor = null;
+      s.dimMul = 1; s._blocked = false; s._nextBlockCheck = now + 120;
       var haveSlowP = Math.random() < 0.70;
       s.flicker = {
-        slowFreq: haveSlowP ? (0.25 + Math.random() * 0.55) : 0,
-        slowAmp:  haveSlowP ? (0.30 + Math.random() * 0.25) : 0,
-        fastFreq: 3.0 + Math.random() * 5.0,
-        fastAmp:  0.08 + Math.random() * 0.12,
-        phase:    Math.random() * Math.PI * 2,
-        phase2:   Math.random() * Math.PI * 2
+        slowFreq: haveSlowP ? (0.25 + Math.random() * 0.55) : 0, slowAmp: haveSlowP ? (0.30 + Math.random() * 0.25) : 0,
+        fastFreq: 3.0 + Math.random() * 5.0, fastAmp: 0.08 + Math.random() * 0.12,
+        phase: Math.random() * Math.PI * 2, phase2: Math.random() * Math.PI * 2
       };
       return;
     }
-
     var pos = null;
-    if (constellations.length && Math.random() < CONSTELLATION_CHANCE) {
-      pos = tryConstellationSlot();
-    }
+    if (constellations.length && Math.random() < CONSTELLATION_CHANCE) pos = tryConstellationSlot();
     if (!pos) pos = tryFreeSpot();
-    if (!pos) {
-      s.nextAppearAt = now + 500 + Math.random() * 1500;
-      return;
-    }
-    s.x = pos.x;
-    s.y = pos.y;
-    s._slot = pos._slot || null;
-
-    s.letter = pickLetter();
-    s.sizeKey = pickStarSize();
-
+    if (!pos) { s.nextAppearAt = now + 500 + Math.random() * 1500; return; }
+    s.x = pos.x; s.y = pos.y; s._slot = pos._slot || null;
+    s.letter = pickLetter(); s.sizeKey = pickStarSize();
     var r = Math.random();
-    if (r < 0.15) s.tier = 1;
-    else if (r < 0.40) s.tier = 2;
-    else if (r < 0.70) s.tier = 3;
-    else s.tier = 4;
-
-    var basePeak = [0, 0.95, 0.65, 0.40, 0.22][s.tier];
-    s.peakAlpha = basePeak * (0.85 + Math.random() * 0.15);
-
+    if (r < 0.15) s.tier = 1; else if (r < 0.40) s.tier = 2; else if (r < 0.70) s.tier = 3; else s.tier = 4;
+    s.peakAlpha = [0, 0.95, 0.65, 0.40, 0.22][s.tier] * (0.85 + Math.random() * 0.15);
     s.lifeDuration = ([0, 1400, 2000, 2800, 3500][s.tier] + Math.random() * 900) * 8;
-
-    s.appearStart = now;
-    s.visible = true;
-    s.env = 0;
-    s.glowBoost = 1;
-    s.meteor = null;
-    s.dimMul = 1;
-    s._blocked = false;
-    s._nextBlockCheck = 0;
-
+    s.appearStart = now; s.visible = true; s.env = 0; s.glowBoost = 1; s.meteor = null;
+    s.dimMul = 1; s._blocked = false; s._nextBlockCheck = 0;
     var haveSlow = Math.random() < 0.70;
     s.flicker = {
-      slowFreq: haveSlow ? (0.25 + Math.random() * 0.55) : 0,
-      slowAmp:  haveSlow ? (0.30 + Math.random() * 0.25) : 0,
-      fastFreq: 3.0 + Math.random() * 5.0,
-      fastAmp:  0.08 + Math.random() * 0.12,
-      phase:    Math.random() * Math.PI * 2,
-      phase2:   Math.random() * Math.PI * 2
+      slowFreq: haveSlow ? (0.25 + Math.random() * 0.55) : 0, slowAmp: haveSlow ? (0.30 + Math.random() * 0.25) : 0,
+      fastFreq: 3.0 + Math.random() * 5.0, fastAmp: 0.08 + Math.random() * 0.12,
+      phase: Math.random() * Math.PI * 2, phase2: Math.random() * Math.PI * 2
     };
   }
 
-  function starIntensity() {
-    if (isNight || forceStars) return 1;
-    return 0;
-  }
+  function starIntensity() { return (isNight || forceStars) ? 1 : 0; }
 
   function starDimFactor(s) {
     if (!s || s.peakAlpha < BRIGHT_PEAK) return 1;
@@ -8533,33 +8430,15 @@ window.addEventListener('error', function (e) {
   function spawnForcedMeteor(now) {
     for (var fi = 0; fi < stars.length; fi++) {
       var fs = stars[fi];
-      if (fs._preset) continue;
-      if (fs.visible || fs.meteor) continue;
-      var pos = tryFreeSpot();
-      if (!pos) continue;
-      fs.x = pos.x;
-      fs.y = pos.y;
-      fs._slot = pos._slot || null;
-      fs.letter = pickLetter();
-      fs.sizeKey = pickStarSize();
-      fs.visible = true;
-      fs.appearStart = now;
-      fs.lifeDuration = 8000;
-      fs.env = 1;
-      fs.alpha = 1;
-      fs.glowBoost = 1;
-      fs.dimMul = 1;
-      fs._blocked = false;
-      fs._nextBlockCheck = 0;
-      fs.flicker = {
-        slowFreq: 0.4, slowAmp: 0.3,
-        fastFreq: 5, fastAmp: 0.15,
-        phase: Math.random() * Math.PI * 2,
-        phase2: Math.random() * Math.PI * 2
-      };
+      if (fs._preset || fs.visible || fs.meteor) continue;
+      var pos = tryFreeSpot(); if (!pos) continue;
+      fs.x = pos.x; fs.y = pos.y; fs._slot = pos._slot || null;
+      fs.letter = pickLetter(); fs.sizeKey = pickStarSize();
+      fs.visible = true; fs.appearStart = now; fs.lifeDuration = 8000; fs.env = 1; fs.alpha = 1;
+      fs.glowBoost = 1; fs.dimMul = 1; fs._blocked = false; fs._nextBlockCheck = 0;
+      fs.flicker = { slowFreq: 0.4, slowAmp: 0.3, fastFreq: 5, fastAmp: 0.15, phase: Math.random() * Math.PI * 2, phase2: Math.random() * Math.PI * 2 };
       fs.meteor = { phase: 'flash', start: now, x: fs.x, y: fs.y, vx: 0, vy: 0 };
-      meteorActive = true;
-      nextMeteorAt = nextMeteorInterval(now);
+      meteorActive = true; nextMeteorAt = nextMeteorInterval(now);
       return true;
     }
     return false;
@@ -8568,7 +8447,6 @@ window.addEventListener('error', function (e) {
   function updateStars(now, dt) {
     var inten = starIntensity();
     var visibleCount = 0;
-
     if (!lightOn && !meteorActive && now >= nextMeteorAt) {
       var candidates = [];
       for (var ci = 0; ci < stars.length; ci++) {
@@ -8579,94 +8457,52 @@ window.addEventListener('error', function (e) {
       if (candidates.length) {
         var chosen = candidates[Math.floor(Math.random() * candidates.length)];
         chosen.meteor = { phase: 'flash', start: now, x: chosen.x, y: chosen.y, vx: 0, vy: 0 };
-        meteorActive = true;
-        nextMeteorAt = nextMeteorInterval(now);
+        meteorActive = true; nextMeteorAt = nextMeteorInterval(now);
       } else if (forceMeteor) {
         if (!spawnForcedMeteor(now)) nextMeteorAt = now + 1000;
       } else {
         nextMeteorAt = now + 60 * 1000;
       }
     }
-
     for (var i = 0; i < stars.length; i++) {
       var s = stars[i];
-
       if (s.meteor) {
         if (inten <= 0.01) {
-          meteorActive = false;
-          s.meteor = null;
-          scheduleNextAppearance(s, now);
-          continue;
+          meteorActive = false; s.meteor = null; scheduleNextAppearance(s, now); continue;
         }
-        var m = s.meteor;
-        var elapsed = now - m.start;
+        var m = s.meteor; var elapsed = now - m.start;
         if (m.phase === 'flash') {
           if (elapsed > 300) {
-            m.phase = 'fall';
-            m.start = now;
-            m.x = s.x;
-            m.y = s.y;
-            var angle = Math.PI / 4;
-            var speed = 500;
-            m.vx = Math.cos(angle) * speed;
-            m.vy = Math.sin(angle) * speed;
-          } else {
-            s.alpha = 1;
-            s.glowBoost = 3;
-          }
+            m.phase = 'fall'; m.start = now; m.x = s.x; m.y = s.y;
+            m.vx = Math.cos(Math.PI / 4) * 500; m.vy = Math.sin(Math.PI / 4) * 500;
+          } else { s.alpha = 1; s.glowBoost = 3; }
         } else if (m.phase === 'fall') {
-          m.x += m.vx * dt;
-          m.y += m.vy * dt;
-          var fallElapsed = now - m.start;
-          var fallDuration = 1800;
-          var t = fallElapsed / fallDuration;
+          m.x += m.vx * dt; m.y += m.vy * dt;
+          var t = (now - m.start) / 1800;
           if (t >= 1 || m.y > H + 100 || m.x > W + 100) {
-            meteorActive = false;
-            s.meteor = null;
-            scheduleNextAppearance(s, now);
-            continue;
+            meteorActive = false; s.meteor = null; scheduleNextAppearance(s, now); continue;
           }
           var fade = 1 - t;
-          var flicker1 = Math.sin(now * 0.04 + s.flicker.phase);
-          var flicker2 = Math.sin(now * 0.11 + s.flicker.phase2);
-          var flicker = 0.5 + 0.3 * flicker1 + 0.2 * flicker2;
-          s.alpha = Math.max(0, fade * flicker * 1.5);
-          s.glowBoost = 2 + 3 * flicker;
+          var flicker = 0.5 + 0.3 * Math.sin(now * 0.04 + s.flicker.phase) + 0.2 * Math.sin(now * 0.11 + s.flicker.phase2);
+          s.alpha = Math.max(0, fade * flicker * 1.5); s.glowBoost = 2 + 3 * flicker;
         }
         if (s.alpha > 0.02) visibleCount++;
         continue;
       }
-
       if (!s.visible) {
         if (inten > 0 && now >= s.nextAppearAt) startStarAppearance(s, now);
       } else {
-        /* Предустановленная звезда: гаснетъ, если надпись наехала.
-           Провѣрка разъ въ 120 мс; угасаніе за ~0,25 с (dimMul -= 4·dt);
-           если надпись уйдётъ до полнаго угасанія — разгорается обратно
-           (dimMul += 3·dt). Полностью погасшая уходитъ въ расписаніе
-           и переспрашиваетъ быстро (1,2–3,2 с) — когда надпись уйдётъ,
-           она снова зажгётся. */
         if (s._preset) {
-          if (now >= (s._nextBlockCheck || 0)) {
-            s._nextBlockCheck = now + 120;
-            s._blocked = isUnderGlyph(s.x, s.y);
-          }
+          if (now >= (s._nextBlockCheck || 0)) { s._nextBlockCheck = now + 120; s._blocked = isUnderGlyph(s.x, s.y); }
           if (s._blocked) {
             if (s.dimMul === undefined) s.dimMul = 1;
             s.dimMul -= dt * 4;
             if (s.dimMul <= 0) {
-              s.dimMul = 1;
-              s._blocked = false;
-              s._nextBlockCheck = 0;
-              scheduleNextAppearance(s, now);
-              s.nextAppearAt = now + 1200 + Math.random() * 2000;
-              continue;
+              s.dimMul = 1; s._blocked = false; s._nextBlockCheck = 0;
+              scheduleNextAppearance(s, now); s.nextAppearAt = now + 1200 + Math.random() * 2000; continue;
             }
-          } else if (s.dimMul !== undefined && s.dimMul < 1) {
-            s.dimMul = Math.min(1, s.dimMul + dt * 3);
-          }
+          } else if (s.dimMul !== undefined && s.dimMul < 1) s.dimMul = Math.min(1, s.dimMul + dt * 3);
         }
-
         var t2 = (now - s.appearStart) / s.lifeDuration;
         if (t2 >= 1) {
           scheduleNextAppearance(s, now);
@@ -8674,55 +8510,33 @@ window.addEventListener('error', function (e) {
           var riseFrac = (s.tier === 4) ? 0.30 : 0.15;
           var fallFrac = (s.tier === 4) ? 0.40 : 0.35;
           var env;
-
-          if (t2 < riseFrac) {
-            var k = t2 / riseFrac;
-            env = k * k * (3 - 2 * k);
-          } else if (t2 > 1 - fallFrac) {
-            var k2 = (1 - t2) / fallFrac;
-            env = k2 * k2 * (3 - 2 * k2);
-          } else {
-            env = 1;
-          }
-          s.env = env;
-          s.alpha = s.peakAlpha * env * inten;
-
+          if (t2 < riseFrac) { var k = t2 / riseFrac; env = k * k * (3 - 2 * k); }
+          else if (t2 > 1 - fallFrac) { var k2 = (1 - t2) / fallFrac; env = k2 * k2 * (3 - 2 * k2); }
+          else env = 1;
+          s.env = env; s.alpha = s.peakAlpha * env * inten;
           if (s.flicker) {
             var tSec = (now - s.appearStart) / 1000;
-            var slow = s.flicker.slowAmp > 0
-              ? Math.sin(tSec * s.flicker.slowFreq * Math.PI * 2 + s.flicker.phase)
-              : 0;
+            var slow = s.flicker.slowAmp > 0 ? Math.sin(tSec * s.flicker.slowFreq * Math.PI * 2 + s.flicker.phase) : 0;
             var fast = Math.sin(tSec * s.flicker.fastFreq * Math.PI * 2 + s.flicker.phase2);
             var breath = 1 + s.flicker.slowAmp * slow;
-            var twinkle = 1 + s.flicker.fastAmp * fast;
-            var pulse = breath * twinkle;
-            s.alpha *= pulse;
+            s.alpha *= breath * (1 + s.flicker.fastAmp * fast);
             s.glowBoost = breath;
-          } else {
-            s.glowBoost = 1;
-          }
-
+          } else s.glowBoost = 1;
           s.alpha *= starDimFactor(s);
           if (s._preset && s.dimMul !== undefined && s.dimMul < 1) s.alpha *= s.dimMul;
-          if (s.alpha > 1) s.alpha = 1;
-          if (s.alpha < 0) s.alpha = 0;
+          if (s.alpha > 1) s.alpha = 1; if (s.alpha < 0) s.alpha = 0;
         }
       }
       if (s.visible && s.alpha > 0.02) visibleCount++;
     }
-
     if (inten > 0.5 && visibleCount < STAR_MIN_VISIBLE) {
       var sleepers = [];
-      for (var j = 0; j < stars.length; j++) {
-        if (!stars[j].visible) sleepers.push(stars[j]);
-      }
+      for (var j = 0; j < stars.length; j++) if (!stars[j].visible) sleepers.push(stars[j]);
       sleepers.sort(function (a, b) { return a.nextAppearAt - b.nextAppearAt; });
       var need = STAR_MIN_VISIBLE - visibleCount;
       for (var mm = 0; mm < Math.min(need, sleepers.length); mm++) {
         startStarAppearance(sleepers[mm], now);
-        if (sleepers[mm].visible) {
-          sleepers[mm].appearStart = now - Math.random() * sleepers[mm].lifeDuration * 0.4;
-        }
+        if (sleepers[mm].visible) sleepers[mm].appearStart = now - Math.random() * sleepers[mm].lifeDuration * 0.4;
       }
     }
   }
@@ -8731,88 +8545,212 @@ window.addEventListener('error', function (e) {
     if (!stars.length || starIntensity() <= 0) return;
     for (var i = 0; i < stars.length; i++) {
       var s = stars[i];
-      if (!s.visible || s.alpha <= 0.01) continue;
-      var sprite = starSprites[s.sizeKey + ':' + s.letter];
-      if (!sprite) continue;
-
-      var drawX = s.meteor ? s.meteor.x : s.x;
-      var drawY = s.meteor ? s.meteor.y : s.y;
-
-      var scale = 1, glowAlpha = 0;
-      var gb = s.glowBoost || 1;
+      if (!s.visible || s.alpha <= 0.01 || s.meteor) continue;
+      var sprite = starSprites[s.sizeKey + ':' + s.letter]; if (!sprite) continue;
+      var scale = 1, glowAlpha = 0, gb = s.glowBoost || 1;
       if (s.tier === 1) { scale = 1 + 0.25 * s.env; glowAlpha = 0.85 * s.env * gb; }
       else if (s.tier === 2) { scale = 1 + 0.12 * s.env; glowAlpha = 0.40 * s.env * gb; }
       else if (s.tier === 3) { scale = 1 + 0.04 * s.env; }
-
-      if (s.peakAlpha >= BRIGHT_PEAK) {
-        var gDim = starDimFactor(s);
-        if (gDim < 1) glowAlpha *= gDim;
-      }
-
-      if (s.meteor) {
-        scale = 1.2;
-        glowAlpha = Math.max(glowAlpha, 0.8 * gb);
-      }
-
+      if (s.peakAlpha >= BRIGHT_PEAK) { var gDim = starDimFactor(s); if (gDim < 1) glowAlpha *= gDim; }
       if (s._preset && s.dimMul !== undefined && s.dimMul < 1) glowAlpha *= s.dimMul;
-
       if (glowAlpha > 0.02) {
         var glow = starGlows[s.sizeKey];
         if (glow) {
           var gScale = (1 + 0.6 * glowAlpha) * (0.7 + 0.3 * gb);
-          ctx.setTransform(gScale, 0, 0, gScale, drawX * dpr, drawY * dpr);
-          ctx.globalAlpha = glowAlpha;
-          ctx.drawImage(glow, -glow.width / 2, -glow.height / 2);
+          ctx.setTransform(gScale, 0, 0, gScale, s.x * dpr, s.y * dpr);
+          ctx.globalAlpha = glowAlpha; ctx.drawImage(glow, -glow.width / 2, -glow.height / 2);
         }
       }
-
-      ctx.setTransform(scale, 0, 0, scale, drawX * dpr, drawY * dpr);
-      ctx.globalAlpha = s.alpha;
-      ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
+      ctx.setTransform(scale, 0, 0, scale, s.x * dpr, s.y * dpr);
+      ctx.globalAlpha = s.alpha; ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
     }
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
+  }
+
+  /* ================ РИСОВАНІЕ ЛУНЫ ================ */
+  function drawMoon(now) {
+    updateMoonPos();
+    if (moonRadius <= 0) return;
+
+    var R = moonRadius;
+    var D = R * 2;
+    var phase = moonPos.phase;
+
+    var targetAppearance = Math.round(phase * 12);
+    if (targetAppearance > 12) targetAppearance = 12;
+    if (targetAppearance < 0) targetAppearance = 0;
+
+    ctx.save();
+    ctx.translate(moonScreenX * dpr, moonScreenY * dpr);
+    ctx.scale(dpr, dpr);
+
+    var tiltRatio = (W/2 - moonScreenX) / (W/2);
+    var tilt = -tiltRatio * (Math.PI / 6);
+    ctx.rotate(tilt);
+
+    var charW = D / 18;
+    var lineH = D / 7.5;
+    var fontSize = lineH * 1.15;
+    ctx.font = 'normal ' + fontSize + 'px "Gardenia Decor", "Yeseva One", Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    /* Сѣрыя буквы (фазовыя «0») — замѣтно темнее, но различимы */
+    var darkColor = 'rgba(108, 116, 140, 0.94)';
+
+    /* Палитра перелива — 6 оттѣнковъ (сшивъ №393):
+       бѣлый, ледяной, синѣе, золотистый, кремовый, свѣтло сѣрый */
+    var litPalette = [
+      { fill: 'rgba(255,255,255,1)', glow: 'rgba(220,235,255,1)' },  /* бѣлый */
+      { fill: 'rgba(200,230,255,1)', glow: 'rgba(140,200,255,1)' },  /* ледяной */
+      { fill: 'rgba(150,190,245,1)', glow: 'rgba( 80,150,230,1)' },  /* синѣе */
+      { fill: 'rgba(255,230,170,1)', glow: 'rgba(255,200,100,1)' },  /* золотистый */
+      { fill: 'rgba(255,240,220,1)', glow: 'rgba(245,210,170,1)' },  /* кремовый */
+      { fill: 'rgba(210,215,225,1)', glow: 'rgba(175,185,205,1)' }   /* свѣтло сѣрый */
+    ];
+    var PAL_N = litPalette.length;
+
+    var rowStates = PHASE_DATA[targetAppearance];
+
+    /* Собираемъ видимыя буквы (ограниченіе кругомъ R) */
+    var visible = [];
+    for (var r = 0; r < MOON_ROWS.length; r++) {
+      var rowStr = MOON_ROWS[r];
+      var rowY = (r - 3) * lineH;
+      var startX = -(rowStr.length - 1) * charW / 2;
+      var stateStr = rowStates[r];
+      for (var c = 0; c < rowStr.length; c++) {
+        var charX = startX + c * charW;
+        var nx = charX / R;
+        var ny = rowY / R;
+        if (nx * nx + ny * ny > 0.95) continue;
+        var isShadow = stateStr.charAt(c) === '0';
+        visible.push({
+          ch: rowStr.charAt(c),
+          x: charX,
+          y: rowY,
+          isShadow: isShadow,
+          baseIdx: (r * 5 + c * 3)
+        });
+      }
+    }
+
+    /* ПРОХОДЪ 0 (сшивъ №393) — непрозрачная подложка подъ каждой буквой,
+       строго по силуэту глифа, въ цвѣтъ фона страницы (--ink #1a1535).
+       Безъ тѣни, безъ размытія — только сама форма буквы.
+       Благодаря этому фонъ страницы больше не проступаетъ сквозь
+       полупрозрачныя буквы, и между буквами больше нѣтъ неоднородной
+       заливки; по внѣшнему периметру подложка не выходитъ за предѣлы
+       глифовъ — потому что заливается ровно тотъ же глифъ, что
+       рисуютъ всѣ остальные проходы. */
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'rgba(0,0,0,0)';
+    ctx.fillStyle = '#1a1535';
+    for (var pi = 0; pi < visible.length; pi++) {
+      ctx.fillText(visible[pi].ch, visible[pi].x, visible[pi].y);
+    }
+
+    /* ПРОХОДЪ 1 — сверхширокій внѣшній ореолъ (только бѣлыя) */
+    ctx.shadowBlur = 55;
+    ctx.shadowColor = 'rgba(120, 180, 255, 0.95)';
+    ctx.fillStyle = 'rgba(140, 185, 255, 0.55)';
+    for (var i = 0; i < visible.length; i++) {
+      var v = visible[i];
+      if (v.isShadow) continue;
+      ctx.fillText(v.ch, v.x, v.y);
+    }
+
+    /* ПРОХОДЪ 2 — средній яркій вѣнецъ (только бѣлыя) */
+    ctx.shadowBlur = 30;
+    ctx.shadowColor = 'rgba(200, 225, 255, 0.95)';
+    ctx.fillStyle = 'rgba(220, 235, 255, 0.85)';
+    for (var i = 0; i < visible.length; i++) {
+      var v = visible[i];
+      if (v.isShadow) continue;
+      ctx.fillText(v.ch, v.x, v.y);
+    }
+
+    /* ПРОХОДЪ 3 — плотное ядро съ переливомъ и мерцаніемъ (только бѣлыя).
+       Сшивъ №393: скорость переливовъ уменьшена вдвое (260 → 520 мс),
+       и сопутствующія пульсаціи замедлены вдвое (0.004 → 0.002; 0.006 → 0.003). */
+    var tShift = Math.floor(now / 520);
+    for (var i = 0; i < visible.length; i++) {
+      var v = visible[i];
+      if (v.isShadow) continue;
+      var palIdx = (tShift + v.baseIdx) % PAL_N;
+      var pal = litPalette[palIdx];
+      var pulse = 0.78 + 0.22 * Math.sin(now * 0.002 + v.baseIdx * 1.7);
+      var blurNow = 16 + 6 * Math.sin(now * 0.003 + v.baseIdx * 2.3);
+      ctx.globalAlpha = pulse;
+      ctx.shadowBlur = blurNow;
+      ctx.shadowColor = pal.glow;
+      ctx.fillStyle = pal.fill;
+      ctx.fillText(v.ch, v.x, v.y);
+    }
+    ctx.globalAlpha = 1;
+
+    /* ПРОХОДЪ 4 — сѣрыя буквы (фазовыя «0»): безъ свѣченія, поверхъ ореоловъ.
+       Опираются на непрозрачную подложку прохода 0 — фонъ больше не просвѣчиваетъ. */
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = 'rgba(0,0,0,0)';
+    ctx.fillStyle = darkColor;
+    for (var i = 0; i < visible.length; i++) {
+      var v = visible[i];
+      if (!v.isShadow) continue;
+      ctx.fillText(v.ch, v.x, v.y);
+    }
+
+    ctx.restore();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = 1;
   }
 
-  /* ================ ЧАСТИЦЫ ================ */
+  function drawMeteors(now) {
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      if (!s.meteor || s.alpha <= 0.01) continue;
+      var sprite = starSprites[s.sizeKey + ':' + s.letter]; if (!sprite) continue;
+      var scale = 1.2, glowAlpha = 0.8 * (s.glowBoost || 1);
+      if (glowAlpha > 0.02) {
+        var glow = starGlows[s.sizeKey];
+        if (glow) {
+          var gScale = (1 + 0.6 * glowAlpha) * (0.7 + 0.3 * (s.glowBoost || 1));
+          ctx.setTransform(gScale, 0, 0, gScale, s.meteor.x * dpr, s.meteor.y * dpr);
+          ctx.globalAlpha = glowAlpha; ctx.drawImage(glow, -glow.width / 2, -glow.height / 2);
+        }
+      }
+      ctx.setTransform(scale, 0, 0, scale, s.meteor.x * dpr, s.meteor.y * dpr);
+      ctx.globalAlpha = s.alpha; ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
+  }
 
   function makeSnowParticle(fromTop) {
-    var pool = snowSizesForWidth();
-    var sz = pool[Math.floor(Math.random() * pool.length)];
+    var pool = snowSizesForWidth(); var sz = pool[Math.floor(Math.random() * pool.length)];
     var now0 = performance.now();
     return {
-      type: MODE_SNOW, letter: pickLetter(), sizeKey: sz,
-      x: Math.random()*W, y: fromTop ? -40 - Math.random()*100 : Math.random()*H,
-      baseVy: 35 + Math.random()*45,
-      wobblePhase: Math.random()*Math.PI*2, wobbleAmp: 6 + Math.random()*10,
+      type: MODE_SNOW, letter: pickLetter(), sizeKey: sz, x: Math.random()*W, y: fromTop ? -40 - Math.random()*100 : Math.random()*H,
+      baseVy: 35 + Math.random()*45, wobblePhase: Math.random()*Math.PI*2, wobbleAmp: 6 + Math.random()*10,
       rotation: Math.random()*Math.PI*2, rotSpeed: (Math.random()-0.5)*0.8,
-      alpha: 0, maxAlpha: 0.40 + Math.random()*0.30,
-      sparkleStart: -1, nextSparkleAt: now0 + 1000 + Math.random()*7000
+      alpha: 0, maxAlpha: 0.40 + Math.random()*0.30, sparkleStart: -1, nextSparkleAt: now0 + 1000 + Math.random()*7000
     };
   }
 
   function makeRainParticle(fromTop) {
-    var pool = rainSizesForWidth();
-    var sz = pool[Math.floor(Math.random() * pool.length)];
+    var pool = rainSizesForWidth(); var sz = pool[Math.floor(Math.random() * pool.length)];
     return {
-      type: MODE_RAIN, letter: pickLetter(), sizeKey: sz,
-      x: Math.random()*W, y: fromTop ? -40 - Math.random()*100 : Math.random()*H,
-      baseVy: 280 + Math.random()*220,
-      wobblePhase: Math.random()*Math.PI*2, wobbleAmp: 1.5 + Math.random()*3.5,
-      tilt: (Math.random()-0.5)*0.10,
-      alpha: 0, maxAlpha: 0.45 + Math.random()*0.25
+      type: MODE_RAIN, letter: pickLetter(), sizeKey: sz, x: Math.random()*W, y: fromTop ? -40 - Math.random()*100 : Math.random()*H,
+      baseVy: 280 + Math.random()*220, wobblePhase: Math.random()*Math.PI*2, wobbleAmp: 1.5 + Math.random()*3.5,
+      tilt: (Math.random()-0.5)*0.10, alpha: 0, maxAlpha: 0.45 + Math.random()*0.25
     };
   }
 
   function makeFogParticle() {
     var sz = [18,24,30][Math.floor(Math.random()*3)];
     return {
-      type: MODE_FOG, letter: pickLetter(), sizeKey: sz,
-      x: Math.random()*W, y: Math.random()*H,
-      baseVy: 2 + Math.random()*6,
-      baseVx: (Math.random()<0.5?-1:1)*(10+Math.random()*25),
-      wobblePhase: Math.random()*Math.PI*2, wobbleAmp: 3 + Math.random()*8,
-      alpha: 0, maxAlpha: 0.25 + Math.random()*0.20
+      type: MODE_FOG, letter: pickLetter(), sizeKey: sz, x: Math.random()*W, y: Math.random()*H,
+      baseVy: 2 + Math.random()*6, baseVx: (Math.random()<0.5?-1:1)*(10+Math.random()*25),
+      wobblePhase: Math.random()*Math.PI*2, wobbleAmp: 3 + Math.random()*8, alpha: 0, maxAlpha: 0.25 + Math.random()*0.20
     };
   }
 
@@ -8833,11 +8771,8 @@ window.addEventListener('error', function (e) {
   }
 
   function particleDim(p) {
-    if (!isNight) return 1;
-    if (p.type === MODE_FOG) return 1;
-    if (isThunder) return 1;
-    if (p.type === MODE_SNOW || p.type === MODE_RAIN) return 0.5;
-    return 1;
+    if (!isNight) return 1; if (p.type === MODE_FOG) return 1; if (isThunder) return 1;
+    if (p.type === MODE_SNOW || p.type === MODE_RAIN) return 0.5; return 1;
   }
 
   function update(dt, now) {
@@ -8846,14 +8781,10 @@ window.addEventListener('error', function (e) {
       var p = particles[i];
       if (p.type === MODE_SNOW) {
         p.x += (p.baseVy * windRatio * windSign + Math.sin(tSec*1.1 + p.wobblePhase)*p.wobbleAmp) * dt;
-        p.y += p.baseVy * windMul * dt;
-        p.rotation += p.rotSpeed * dt;
+        p.y += p.baseVy * windMul * dt; p.rotation += p.rotSpeed * dt;
         if (p.alpha < p.maxAlpha) p.alpha += dt * 0.4;
         if (p.sparkleStart < 0) { if (now >= p.nextSparkleAt) p.sparkleStart = now; }
-        else if (now - p.sparkleStart > SPARKLE_DUR) {
-          p.sparkleStart = -1;
-          p.nextSparkleAt = now + SPARKLE_MIN_GAP + Math.random()*SPARKLE_RANGE;
-        }
+        else if (now - p.sparkleStart > SPARKLE_DUR) { p.sparkleStart = -1; p.nextSparkleAt = now + SPARKLE_MIN_GAP + Math.random()*SPARKLE_RANGE; }
       } else if (p.type === MODE_RAIN) {
         p.x += (p.baseVy * windRatio * windSign + Math.sin(tSec*0.9 + p.wobblePhase)*p.wobbleAmp) * dt;
         p.y += p.baseVy * windMul * dt;
@@ -8874,27 +8805,22 @@ window.addEventListener('error', function (e) {
 
   function sparkleK(p, now) {
     if (p.sparkleStart < 0) return 0;
-    var e = now - p.sparkleStart;
-    if (e < 0 || e > SPARKLE_DUR) return 0;
+    var e = now - p.sparkleStart; if (e < 0 || e > SPARKLE_DUR) return 0;
     return 0.5 - 0.5*Math.cos(2*Math.PI*e/SPARKLE_DUR);
   }
-
-  /* ================ РИСОВАНІЕ ================ */
 
   function draw(now) {
     ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.globalCompositeOperation = 'source-over';
-
     drawStars(now);
-
+    drawMoon(now);
+    drawMeteors(now);
     for (var i = 0; i < particles.length; i++) {
       var p = particles[i];
       if (p.x < -80 || p.x > W+80 || p.y < -60 || p.y > H+60) continue;
-      var sprite = sprites[p.sizeKey + ':' + p.letter];
-      if (!sprite) continue;
+      var sprite = sprites[p.sizeKey + ':' + p.letter]; if (!sprite) continue;
       var pDim = particleDim(p);
-
       if (p.type === MODE_SNOW) {
         var k = sparkleK(p, now);
         var cosR = Math.cos(p.rotation), sinR = Math.sin(p.rotation);
@@ -8903,41 +8829,31 @@ window.addEventListener('error', function (e) {
           if (glow) {
             var gScale = 1 + k*0.5;
             ctx.setTransform(cosR*gScale, sinR*gScale, -sinR*gScale, cosR*gScale, p.x*dpr, p.y*dpr);
-            ctx.globalAlpha = k*0.85 * pDim;
-            ctx.drawImage(glow, -glow.width/2, -glow.height/2);
+            ctx.globalAlpha = k*0.85 * pDim; ctx.drawImage(glow, -glow.width/2, -glow.height/2);
           }
         }
         var scale = 1 + k*SPARKLE_D_SCALE;
         var alpha = Math.min(1, p.alpha + k*SPARKLE_D_ALPHA) * pDim;
         ctx.setTransform(cosR*scale, sinR*scale, -sinR*scale, cosR*scale, p.x*dpr, p.y*dpr);
-        ctx.globalAlpha = alpha;
-        ctx.drawImage(sprite, -sprite.width/2, -sprite.height/2);
+        ctx.globalAlpha = alpha; ctx.drawImage(sprite, -sprite.width/2, -sprite.height/2);
       } else if (p.type === MODE_RAIN) {
         var tilt = Math.atan2(p.baseVy*windRatio*windSign, p.baseVy*windMul) + p.tilt;
         var c2 = Math.cos(tilt), s2 = Math.sin(tilt);
         ctx.setTransform(c2, s2, -s2, c2, p.x*dpr, p.y*dpr);
-        ctx.globalAlpha = p.alpha * pDim;
-        ctx.drawImage(sprite, -sprite.width/2, -sprite.height/2);
+        ctx.globalAlpha = p.alpha * pDim; ctx.drawImage(sprite, -sprite.width/2, -sprite.height/2);
       } else if (p.type === MODE_FOG) {
         ctx.setTransform(1,0,0,1, p.x*dpr, p.y*dpr);
-        ctx.globalAlpha = p.alpha * pDim;
-        ctx.drawImage(sprite, -sprite.width/2, -sprite.height/2);
+        ctx.globalAlpha = p.alpha * pDim; ctx.drawImage(sprite, -sprite.width/2, -sprite.height/2);
       }
     }
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.globalAlpha = 1;
-
+    ctx.setTransform(1,0,0,1,0,0); ctx.globalAlpha = 1;
     if (isThunder) drawThunder(now);
   }
 
   function drawThunder(now) {
-    if (lightningSecondaryAt > 0 && now >= lightningSecondaryAt) {
-      lightningFlashStart = lightningSecondaryAt;
-      lightningSecondaryAt = -1;
-    }
+    if (lightningSecondaryAt > 0 && now >= lightningSecondaryAt) { lightningFlashStart = lightningSecondaryAt; lightningSecondaryAt = -1; }
     if (now > lightningNext && lightningFlashStart < 0 && lightningSecondaryAt < 0) {
-      lightningFlashStart = now;
-      lightningNext = now + 4000 + Math.random()*14000;
+      lightningFlashStart = now; lightningNext = now + 4000 + Math.random()*14000;
       if (Math.random() < 0.3) lightningSecondaryAt = now + 130;
     }
     if (lightningFlashStart < 0) return;
@@ -8951,11 +8867,8 @@ window.addEventListener('error', function (e) {
     ctx.globalCompositeOperation = 'source-over';
   }
 
-  /* ================ ЦИКЛЪ ================ */
-
   function loop(now) {
-    if (document.hidden) { animId = null; return; }
-    if (lightOn) { animId = null; return; }
+    if (document.hidden || lightOn) { animId = null; return; }
     if (!lastTime) lastTime = now;
     var dt = (now - lastTime) / 1000;
     if (dt > 0.1) dt = 0.1;
@@ -8965,41 +8878,24 @@ window.addEventListener('error', function (e) {
     if (now - lastDraw >= FRAME_MS) { draw(now); lastDraw = now; }
     animId = requestAnimationFrame(loop);
   }
-  function start() {
-    if (lightOn) return;
-    if (!animId) { lastTime = 0; animId = requestAnimationFrame(loop); }
-  }
+  function start() { if (lightOn) return; if (!animId) { lastTime = 0; animId = requestAnimationFrame(loop); } }
   function stop() { if (animId) { cancelAnimationFrame(animId); animId = null; } }
-  function clearCanvas() {
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-  }
-
-  /* ================ ПРИМѢНИТЬ ================ */
+  function clearCanvas() { ctx.setTransform(1,0,0,1,0,0); ctx.clearRect(0,0,canvas.width,canvas.height); }
 
   function applyWeather(dec) {
     lastDecision = dec;
     var newMode = dec.mode;
     var newLevel = Math.max(0, Math.min(3, dec.level|0));
     var newThunder = !!dec.thunder;
-
     computeWind(newMode);
-
-    if (newMode !== mode) {
-      particles = [];
-      prepareSprites(newMode);
-      mode = newMode;
-    }
+    if (newMode !== mode) { particles = []; prepareSprites(newMode); mode = newMode; }
     if (newThunder !== isThunder) {
       lightningFlashStart = -1; lightningSecondaryAt = -1;
       if (newThunder) lightningNext = performance.now() + 2000 + Math.random()*4000;
     }
-    isThunder = newThunder;
-    level = newLevel;
-
-    if (mode === MODE_NONE || level === 0) {
-      particles = []; isThunder = false;
-    } else {
+    isThunder = newThunder; level = newLevel;
+    if (mode === MODE_NONE || level === 0) { particles = []; isThunder = false; }
+    else {
       var target = particleCountForLevel(level);
       if (particles.length > target) particles.splice(target);
       else while (particles.length < target) {
@@ -9011,22 +8907,15 @@ window.addEventListener('error', function (e) {
     start();
   }
 
-  /* ================ ФОРСАЖЪ ================ */
-
   function forcedDecision() {
     if (loc.match(/[?&]night/)) { nightForced = true; isNight = true; }
     if (loc.match(/[?&]day/))   { dayForced = true; isNight = false; }
-    if (loc.match(/[?&]star/))  {
-      forceStars = true; nightForced = true; isNight = true;
-      forceCloud = 0; cloudCover = 0;
-    }
+    if (loc.match(/[?&]star/))  { forceStars = true; nightForced = true; isNight = true; forceCloud = 0; cloudCover = 0; }
     var mC = loc.match(/[?&]cloud=(\d+)/);
     if (mC) { forceCloud = parseInt(mC[1], 10); cloudCover = forceCloud; }
     else if (nightForced && forceCloud === null) { forceCloud = 0; cloudCover = 0; }
-
     var mW = loc.match(/[?&]wind=(\d+(?:\.\d+)?)/);
     if (mW) wWind = parseFloat(mW[1]);
-
     if (loc.match(/[?&]thunder/)) return { mode: MODE_RAIN, level: 3, thunder: true, blizzard: false };
     if (loc.match(/[?&]fog/))     return { mode: MODE_FOG,  level: 2, thunder: false, blizzard: false };
     if (loc.match(/[?&]blizzard/)) {
@@ -9034,21 +8923,13 @@ window.addEventListener('error', function (e) {
       return { mode: MODE_SNOW, level: 3, thunder: false, blizzard: true };
     }
     var mS = loc.match(/[?&]snow(?:=(\d))?/);
-    if (mS) {
-      var lvlS = mS[1] !== undefined ? parseInt(mS[1], 10) : 2;
-      return { mode: MODE_SNOW, level: lvlS, thunder: false, blizzard: wWind !== null && wWind > 10 };
-    }
+    if (mS) return { mode: MODE_SNOW, level: mS[1] !== undefined ? parseInt(mS[1], 10) : 2, thunder: false, blizzard: wWind !== null && wWind > 10 };
     var mR = loc.match(/[?&]rain(?:=(\d))?/);
-    if (mR) {
-      var lvlR = mR[1] !== undefined ? parseInt(mR[1], 10) : 2;
-      return { mode: MODE_RAIN, level: lvlR, thunder: false, blizzard: false };
-    }
+    if (mR) return { mode: MODE_RAIN, level: mR[1] !== undefined ? parseInt(mR[1], 10) : 2, thunder: false, blizzard: false };
     if (loc.indexOf('noprecip') >= 0) return { mode: MODE_NONE, level: 0, thunder: false, blizzard: false };
     if (forceStars) return { mode: MODE_NONE, level: 0, thunder: false, blizzard: false };
     return null;
   }
-
-  /* ================ ЛЁГКАЯ ВЕРСІЯ ================ */
 
   if (window.MutationObserver) {
     var mo = new MutationObserver(function () {
@@ -9057,65 +8938,69 @@ window.addEventListener('error', function (e) {
       lightOn = nowLight;
       if (lightOn) {
         for (var mi = 0; mi < stars.length; mi++) {
-          if (stars[mi].meteor) {
-            stars[mi].meteor = null;
-            scheduleNextAppearance(stars[mi], performance.now());
-          }
+          if (stars[mi].meteor) { stars[mi].meteor = null; scheduleNextAppearance(stars[mi], performance.now()); }
         }
-        meteorActive = false;
-        stop();
-        clearCanvas();
-        canvas.style.display = 'none';
+        meteorActive = false; stop(); clearCanvas(); canvas.style.display = 'none';
       } else {
-        canvas.style.display = '';
-        start();
+        canvas.style.display = ''; start();
       }
     });
     mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
   }
 
-  /* ================ СТАРТЪ ================ */
+  window.moonCycleDemo = function (seconds) {
+    seconds = Math.max(5, Number(seconds) || 60);
+    var CYCLE_MS = 29.530588853 * 86400000;
+    moonDemoWasLight = lightOn;
+    if (lightOn) { lightOn = false; canvas.style.display = ''; }
+    moonDemoActive = true;
+    moonOffsetMs = 0;
+    var t0 = performance.now();
+    start();
+    (function step(now) {
+      if (!moonDemoActive) { moonOffsetMs = 0; return; }
+      var p = (now - t0) / (seconds * 1000);
+      if (p >= 1) { window.moonCycleDemoStop(); return; }
+      moonOffsetMs = p * CYCLE_MS;
+      requestAnimationFrame(step);
+    })(performance.now());
+  };
+  window.moonCycleDemoStop = function () {
+    moonDemoActive = false;
+    moonOffsetMs = 0;
+    if (moonDemoWasLight) {
+      lightOn = true;
+      stop();
+      canvas.style.display = 'none';
+      moonDemoWasLight = false;
+    }
+  };
 
   function init() {
     resize();
     if (lightOn) canvas.style.display = 'none';
-
     if (forceMeteor) {
-      forceStars = true;
-      nightForced = true;
-      isNight = true;
+      forceStars = true; nightForced = true; isNight = true;
       if (forceCloud === null) { forceCloud = 0; cloudCover = 0; }
     }
-
     var ns = nightStatus();
     if (!nightForced && !dayForced) isNight = ns.night;
-
-    if (window.console && console.log) {
-      console.log('[погода] init: солнце=' + ns.sunAlt.toFixed(1) + '° ночь=' + isNight
-        + ' лёгкій=' + lightOn + ' облака=' + cloudCover + '%'
-        + (forceMeteor ? ' [форсажъ метеоровъ]' : ''));
-    }
-
     var waitFonts = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
     var fontFallback = new Promise(function (resolve) { setTimeout(resolve, 2500); });
     Promise.race([waitFonts, fontFallback]).then(function () {
       prepareStarSprites();
       buildGlyphEls();
       initStars();
-
+      updateMoonPos();
       if (document.fonts && document.fonts.ready && document.fonts.ready.then) {
-        document.fonts.ready.then(function () {
-          _glyphRectsCache = null;
-          _glyphDirty = true;
-        });
+        document.fonts.ready.then(function () { _glyphRectsCache = null; _glyphDirty = true; });
       }
-
+      var md = loc.match(/[?&]moondemo(?:=(\d+))?/);
+      if (md) window.moonCycleDemo(md[1] ? parseInt(md[1], 10) : 60);
       var forced = forcedDecision();
       if (forced) { applyWeather(forced); return; }
-
       loadCache();
       if (forceCloud === null && wCloud !== null) cloudCover = wCloud;
-
       var dec = decideWeather();
       applyWeather(dec);
       fetchWeather();
@@ -9133,67 +9018,25 @@ window.addEventListener('error', function (e) {
         particles[i].x = particles[i].x / oldW * W;
         particles[i].y = particles[i].y / oldH * H;
       }
-      _glyphRectsCache = null;
-      _glyphDirty = true;
+      _glyphRectsCache = null; _glyphDirty = true;
       initStars();
+      updateMoonPos();
     }, 150);
   });
 
-  window.addEventListener('scroll', function () {
-    _glyphDirty = true;
-  }, { passive: true });
-
+  window.addEventListener('scroll', function () { _glyphDirty = true; }, { passive: true });
   setInterval(refreshNightStatus, 5 * 60 * 1000);
 
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden) {
-      stop();
-    } else {
-      refreshNightStatus();
-      start();
-    }
+    if (document.hidden) stop();
+    else { refreshNightStatus(); start(); }
   });
 
   window.__precipStatus = function () {
-    var visible = 0, tiers = [0,0,0,0,0], sizes = {}, flick = 0, presetVisible = 0, presetTotal = 0;
-    for (var k = 0; k < stars.length; k++) {
-      if (stars[k]._preset) presetTotal++;
-      if (stars[k].visible) {
-        visible++;
-        tiers[stars[k].tier]++;
-        sizes[stars[k].sizeKey] = (sizes[stars[k].sizeKey] || 0) + 1;
-        if (stars[k].flicker) flick++;
-        if (stars[k]._preset) presetVisible++;
-      }
-    }
-    var ns = nightStatus();
     return {
-      lightMode: lightOn,
-      canvasDisplay: canvas.style.display || 'block',
-      sunAlt: Math.round(ns.sunAlt * 10) / 10 + '°',
-      isNight: ns.night,
-      cloudCover: cloudCover,
-      starIntensity: Math.round(starIntensity() * 100) + '%',
-      starDimFactorSample: starDimFactor({ peakAlpha: 1 }),
-      forceMeteor: forceMeteor,
-      stars: {
-        count: stars.length,
-        visible: visible,
-        presets: { total: presetTotal, visible: presetVisible },
-        tiers: { bright: tiers[1], medium: tiers[2], weak: tiers[3], plain: tiers[4] },
-        visibleSizes: sizes,
-        flickering: flick,
-        constellations: constellations.length,
-        minDist: Math.round(currentMinDist() * 10) / 10,
-        glyphEls: glyphEls.length,
-        glyphRects: _glyphRectsCache ? _glyphRectsCache.length : '—',
-        glyphDirty: _glyphDirty
-      },
-      mode: mode,
-      level: level,
-      particles: particles.length,
-      meteor: { active: meteorActive, nextInMs: Math.max(0, Math.round(nextMeteorAt - performance.now())) },
-      animId: animId ? 'running' : 'stopped'
+      lightMode: lightOn, isNight: isNight,
+      moonDemoActive: moonDemoActive,
+      moon: { alt: moonPos.alt, az: moonPos.az, phase: moonPos.phase, x: moonScreenX, y: moonScreenY, radius: moonRadius, diameter: moonRadius * 2 }
     };
   };
 

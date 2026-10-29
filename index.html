@@ -7615,21 +7615,25 @@ window.addEventListener('error', function (e) {
 </script>
 
 <script>
-/* Погодныя сцены изъ буквъ «Начала» — №374.
+/* Погодныя сцены изъ буквъ «Начала» — №377.
    • Звёзды мельче и по калибру капель дождя: [11, 15, 19] на компьютерѣ,
      [11, 14, 16] на телефонѣ.
    • Звёздъ вдвое больше: 90–126 (на телефонѣ — пропорціонально менѣе).
    • Пульсація — какъ у настоящихъ звёздъ: буква по размеру НЕ мѣняется,
-     качаются яркость и ореолъ въ двухъ волнахъ (0,25–0,8 Гц дыханіе
-     и 3–8 Гц атмосферное мерцаніе).
+     качаются яркость и ореолъ въ двухъ волнахъ.
    • Жизнь ×4 отъ базовой, smoothstep-затуханіе.
    • Разстановка: минимальное разстояніе между звёздами (адаптивно отъ
      плотности поля), реджект-сэмплингъ. Случайныя «созвѣздія» — 3–5
-     сгущеній по 3–5 слотовъ; вокругъ каждаго — буферъ, куда обычныя
-     звёзды не заходятъ; 15% появленій идутъ въ свободные слоты
-     созвѣздій, остальныя — въ общее поле.
+     сгущеній по 3–5 слотовъ; вокругъ каждаго — буферъ.
    • Облака гасятъ звёзды, при проясненіи возвращаются мгновенно.
-   • Страховка: минимумъ 12 видимыхъ звёздъ. */
+   • Страховка: минимумъ 12 видимыхъ звёздъ.
+   • №375: день/ночь — живой пересчётъ каждыя 5 минутъ и при возвратѣ
+     на вкладку.
+   • №377: координаты глифовъ заголовковъ замеряются черезъ
+     Range.getBoundingClientRect() на настоящемъ DOM (безъ клоновъ),
+     оттого совпадаютъ съ реальными до пикселя. Кешъ держится до
+     прокрутки/resize и пересчитывается при сбросѣ. Звёзды не
+     рождаются ни подъ одной буквой, но между буквами — свободно. */
 (function () {
   'use strict';
 
@@ -7666,7 +7670,6 @@ window.addEventListener('error', function (e) {
   var WEIGHTS = [1,3,1,1];
   var WEIGHT_SUM = 6;
 
-  /* №374: звёзды — калибр капель дождя; вдвое больше */
   var STAR_SIZES_DESKTOP = [11, 15, 19];
   var STAR_SIZES_MOBILE  = [11, 14, 16];
   var STAR_SPRITE_SIZES  = [11, 14, 15, 16, 19];
@@ -7674,13 +7677,17 @@ window.addEventListener('error', function (e) {
   var STAR_COUNT_BASE    = 90;
   var STAR_COUNT_RANGE   = 36;
 
-  /* №374: разстановка и «созвѣздія» */
-  var CONSTELLATION_CHANCE      = 0.15;   /* шансъ попасть въ скопленіе */
+  var CONSTELLATION_CHANCE      = 0.15;
   var CONSTELLATION_COUNT_MIN   = 3;
   var CONSTELLATION_COUNT_MAX   = 5;
   var CONSTELLATION_STARS_MIN   = 3;
   var CONSTELLATION_STARS_MAX   = 5;
   var constellations = [];
+
+  /* №377: запретъ звёздъ подъ глифами заголовковъ — черезъ Range */
+  var GLYPH_PAD = 6;
+  var glyphEls = [];
+  var _glyphRectsCache = null;
 
   var SPARKLE_DUR = 700, SPARKLE_MIN_GAP = 6000, SPARKLE_RANGE = 14000;
   var SPARKLE_D_ALPHA = 0.55, SPARKLE_D_SCALE = 0.20;
@@ -7706,6 +7713,61 @@ window.addEventListener('error', function (e) {
     + '?latitude=53.35&longitude=83.78'
     + '&current=weather_code,snowfall,rain,wind_speed_10m,wind_direction_10m,visibility,cloud_cover'
     + '&wind_speed_unit=ms';
+
+  /* ================ ГЛИФЫ (Range) ================ */
+
+  function buildGlyphEls() {
+    glyphEls = [];
+    _glyphRectsCache = null;
+    var targets = document.querySelectorAll('.main-title, .subtitle, .subtitle-year');
+    for (var t = 0; t < targets.length; t++) {
+      var el = targets[t];
+      if (el && el.isConnected) glyphEls.push(el);
+    }
+  }
+
+  function refreshGlyphRectsCache() {
+    _glyphRectsCache = [];
+    if (!glyphEls.length) return;
+    for (var g = 0; g < glyphEls.length; g++) {
+      var el = glyphEls[g];
+      if (!el || !el.isConnected) continue;
+      var elRect = el.getBoundingClientRect();
+      if (elRect.width === 0 || elRect.height === 0) continue;
+      if (elRect.bottom < -60 || elRect.top > H + 60) continue;
+
+      /* Каждый текстовый узел — обходъ черезъ TreeWalker, каждая буква — Range */
+      var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null, false);
+      var node;
+      while ((node = walker.nextNode())) {
+        var nv = node.nodeValue || '';
+        for (var i = 0; i < nv.length; i++) {
+          var ch = nv.charAt(i);
+          if (ch === ' ' || ch === '\u00A0' || ch === '\t' || ch === '\n' || ch === '\r') continue;
+          var range = document.createRange();
+          try {
+            range.setStart(node, i);
+            range.setEnd(node, i + 1);
+          } catch (e) { continue; }
+          var r = range.getBoundingClientRect();
+          if (r.width < 0.1 || r.height < 0.1) continue;
+          if (!isFinite(r.left) || !isFinite(r.top)) continue;
+          _glyphRectsCache.push({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
+        }
+      }
+    }
+  }
+
+  function isUnderGlyph(x, y) {
+    if (!glyphEls.length) return false;
+    if (!_glyphRectsCache) refreshGlyphRectsCache();
+    for (var i = 0; i < _glyphRectsCache.length; i++) {
+      var r = _glyphRectsCache[i];
+      if (x >= r.left - GLYPH_PAD && x <= r.right + GLYPH_PAD &&
+          y >= r.top - GLYPH_PAD && y <= r.bottom + GLYPH_PAD) return true;
+    }
+    return false;
+  }
 
   /* ================ ПОЛЕ ЗВЁЗДЪ ================ */
 
@@ -7758,6 +7820,7 @@ window.addEventListener('error', function (e) {
       var cx = cxMin + margin + Math.random() * Math.max(10, cellW - margin * 2);
       var cy = cyMin + margin + Math.random() * Math.max(10, cellH - margin * 2);
       if (cx < b.xMin || cx > b.xMax || cy < b.yMin || cy > b.yMax) continue;
+      if (isUnderGlyph(cx, cy)) continue;
 
       var rad = md * 1.3 + Math.random() * 20;
       var nS = CONSTELLATION_STARS_MIN + Math.floor(Math.random() *
@@ -7795,6 +7858,7 @@ window.addEventListener('error', function (e) {
       for (var q = 0; q < co.slots.length; q++) if (!co.slots[q].taken) free.push(co.slots[q]);
       if (!free.length) continue;
       var slot = free[Math.floor(Math.random() * free.length)];
+      if (isUnderGlyph(slot.x, slot.y)) continue;
       var ok = true;
       for (var j = 0; j < stars.length; j++) {
         var o = stars[j];
@@ -7813,7 +7877,7 @@ window.addEventListener('error', function (e) {
     var b = starFieldBounds();
     var md = currentMinDist();
     var md2 = md * md;
-    for (var a = 0; a < 40; a++) {
+    for (var a = 0; a < 60; a++) {
       var x = b.xMin + Math.random() * (b.xMax - b.xMin);
       var y = b.yMin + Math.random() * (b.yMax - b.yMin);
       var inC = false;
@@ -7824,6 +7888,7 @@ window.addEventListener('error', function (e) {
         if (dx*dx + dy*dy < rr*rr) { inC = true; break; }
       }
       if (inC) continue;
+      if (isUnderGlyph(x, y)) continue;
       var ok = true;
       for (var i = 0; i < stars.length; i++) {
         var o = stars[i];
@@ -7986,6 +8051,14 @@ window.addEventListener('error', function (e) {
   function nightStatus() {
     var alt = sunAltitude(53.35, 83.78, new Date());
     return { night: alt < -6, sunAlt: alt };
+  }
+
+  function refreshNightStatus() {
+    if (nightForced || dayForced) return;
+    var ns = nightStatus();
+    if (ns.night === isNight) return;
+    isNight = ns.night;
+    updateHint();
   }
 
   /* ================ РѢШЕНІЕ ================ */
@@ -8249,7 +8322,6 @@ window.addEventListener('error', function (e) {
     }
     if (!pos) pos = tryFreeSpot();
     if (!pos) {
-      /* поле забито — попробуемъ чуть позже */
       s.nextAppearAt = now + 500 + Math.random() * 1500;
       return;
     }
@@ -8704,11 +8776,20 @@ window.addEventListener('error', function (e) {
         + ' лёгкій=' + lightOn + ' облака=' + cloudCover + '%');
     }
 
+    /* Шрифты — ждёмъ готовности, но не дольше 2.5 с */
     var waitFonts = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
-    var fontFallback = new Promise(function (resolve) { setTimeout(resolve, 1500); });
+    var fontFallback = new Promise(function (resolve) { setTimeout(resolve, 2500); });
     Promise.race([waitFonts, fontFallback]).then(function () {
       prepareStarSprites();
+      buildGlyphEls();
       initStars();
+
+      /* Шрифты могутъ догрузиться позже — сбрасываемъ кешъ */
+      if (document.fonts && document.fonts.ready && document.fonts.ready.then) {
+        document.fonts.ready.then(function () {
+          _glyphRectsCache = null;
+        });
+      }
 
       var forced = forcedDecision();
       if (forced) { applyWeather(forced); return; }
@@ -8733,13 +8814,26 @@ window.addEventListener('error', function (e) {
         particles[i].x = particles[i].x / oldW * W;
         particles[i].y = particles[i].y / oldH * H;
       }
+      _glyphRectsCache = null;
       initStars();
     }, 150);
   });
 
+  /* №377: кешъ прямоугольниковъ глифовъ живётъ до прокрутки —
+     viewport-координаты заголовковъ при прокруткѣ мѣняются */
+  window.addEventListener('scroll', function () {
+    _glyphRectsCache = null;
+  }, { passive: true });
+
+  setInterval(refreshNightStatus, 5 * 60 * 1000);
+
   document.addEventListener('visibilitychange', function () {
-    if (document.hidden) stop();
-    else start();
+    if (document.hidden) {
+      stop();
+    } else {
+      refreshNightStatus();
+      start();
+    }
   });
 
   window.__precipStatus = function () {
@@ -8767,7 +8861,9 @@ window.addEventListener('error', function (e) {
         visibleSizes: sizes,
         flickering: flick,
         constellations: constellations.length,
-        minDist: Math.round(currentMinDist() * 10) / 10
+        minDist: Math.round(currentMinDist() * 10) / 10,
+        glyphEls: glyphEls.length,
+        glyphRects: _glyphRectsCache ? _glyphRectsCache.length : '—'
       },
       mode: mode,
       level: level,

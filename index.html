@@ -7653,9 +7653,10 @@ window.addEventListener('error', function (e) {
 
   var lastTime = 0, animId = null, lastDraw = 0;
 
-  var LETTERS = ['Н','А','ч','л'];
-  var WEIGHTS = [1,3,1,1];
-  var WEIGHT_SUM = 6;
+    /* Разные буквы для разных явлений */
+  var SNOW_LETTERS = ['с','н','е','Г'];
+  var RAIN_LETTERS = ['д','о','ж','д','ь'];
+  var FOG_LETTERS  = ['т','у','M','А','н'];
 
   /* Новый алфавит только для звёзд */
   var STAR_LETTERS = ['з', 'в', 'е', 'з', 'д', 'ы'];
@@ -7764,13 +7765,13 @@ window.addEventListener('error', function (e) {
 
   /* Сшивъ №395: буква «л» теперь строчная во всѣхъ рядахъ */
   var MOON_ROWS = [
-    'НАЧАлА',
-    'АлАНАЧАлАНАЧА',
-    'ЧАлАНАЧАлАНАЧАлАН',
-    'НАЧАлАНАЧАлАНАЧАлАН',
-    'ЧАлАНАЧАлАНАЧАлАН',
-    'АлАНАЧАлАНАЧА',
-    'НАЧАлА'
+    'лунАлу',
+    'лунАлунАлунАл',
+    'лунАлунАлунАлунАл',
+    'лунАлунАлунАлунАлун',
+    'лунАлунАлунАлунАл',
+    'лунАлунАлунАл',
+    'лунАлу'
   ];
 
   /* Сшивъ №395: фазы 4, 10, 11 и 12 выставлены строго по заказу.
@@ -8387,22 +8388,26 @@ var FOG_CODES = [45,48];
   function snowSizesForWidth() { return (window.innerWidth < 600) ? [12, 14, 16] : [14, 20, 26]; }
   function rainSizesForWidth() { return (window.innerWidth < 600) ? [11, 14, 16] : [11, 15, 19]; }
 
-  function prepareSprites(m) {
+   function prepareSprites(m) {
     sprites = {}; glows = {};
     if (m === MODE_SNOW) {
       for (var s = 0; s < SNOW_SIZE_POOL.length; s++) {
         var size = SNOW_SIZE_POOL[s];
-        for (var l = 0; l < LETTERS.length; l++) sprites[size+':'+LETTERS[l]] = makeSnowSprite(LETTERS[l], size, dpr);
+        for (var l = 0; l < SNOW_LETTERS.length; l++) sprites[size+':'+SNOW_LETTERS[l]] = makeSnowSprite(SNOW_LETTERS[l], size, dpr);
         glows[size] = makeGlowSprite(size, dpr);
       }
     } else if (m === MODE_RAIN) {
       for (var s2 = 0; s2 < RAIN_SIZE_POOL.length; s2++) {
         var sizeR = RAIN_SIZE_POOL[s2];
-        for (var l2 = 0; l2 < LETTERS.length; l2++) sprites[sizeR+':'+LETTERS[l2]] = makeRainSprite(LETTERS[l2], sizeR, dpr);
+        for (var l2 = 0; l2 < RAIN_LETTERS.length; l2++) sprites[sizeR+':'+RAIN_LETTERS[l2]] = makeRainSprite(RAIN_LETTERS[l2], sizeR, dpr);
       }
     } else if (m === MODE_FOG) {
       var sF = [18,24,30];
-      for (var s3 = 0; s3 < sF.length; s3++) for (var l3 = 0; l3 < LETTERS.length; l3++) sprites[sF[s3]+':'+LETTERS[l3]] = makeFogSprite(LETTERS[l3], sF[s3], dpr);
+      for (var s3 = 0; s3 < sF.length; s3++) {
+        for (var l3 = 0; l3 < FOG_LETTERS.length; l3++) {
+          sprites[sF[s3]+':'+FOG_LETTERS[l3]] = makeFogSprite(FOG_LETTERS[l3], sF[s3], dpr);
+        }
+      }
     }
   }
 
@@ -8415,12 +8420,13 @@ var FOG_CODES = [45,48];
     }
   }
 
-  function pickLetter() {
-    var r = Math.random() * WEIGHT_SUM, acc = 0;
-    for (var i = 0; i < LETTERS.length; i++) { acc += WEIGHTS[i]; if (r < acc) return LETTERS[i]; }
-    return LETTERS[0];
+    /* Теперь pickLetter принимает массив (pool) и выбирает букву из него */
+  function pickLetter(pool) {
+    return pool[Math.floor(Math.random() * pool.length)];
   }
- function pickStarLetter() {
+
+  /* Для звёзд оставляем отдельную функцию, которая берёт буквы из STAR_LETTERS */
+  function pickStarLetter() {
     return STAR_LETTERS[Math.floor(Math.random() * STAR_LETTERS.length)];
   }
 
@@ -8866,30 +8872,30 @@ var FOG_CODES = [45,48];
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
   }
 
-  function makeSnowParticle(fromTop) {
+    function makeSnowParticle(fromTop) {
     var pool = snowSizesForWidth(); var sz = pool[Math.floor(Math.random() * pool.length)];
     var now0 = performance.now();
     return {
-      type: MODE_SNOW, letter: pickLetter(), sizeKey: sz, x: Math.random()*W, y: fromTop ? -40 - Math.random()*100 : Math.random()*H,
+      type: MODE_SNOW, letter: pickLetter(SNOW_LETTERS), sizeKey: sz, x: Math.random()*W, y: fromTop ? -40 - Math.random()*100 : Math.random()*H,
       baseVy: 35 + Math.random()*45, wobblePhase: Math.random()*Math.PI*2, wobbleAmp: 6 + Math.random()*10,
       rotation: Math.random()*Math.PI*2, rotSpeed: (Math.random()-0.5)*0.8,
       alpha: 0, maxAlpha: 0.40 + Math.random()*0.30, sparkleStart: -1, nextSparkleAt: now0 + 1000 + Math.random()*7000
     };
   }
 
-  function makeRainParticle(fromTop) {
+    function makeRainParticle(fromTop) {
     var pool = rainSizesForWidth(); var sz = pool[Math.floor(Math.random() * pool.length)];
     return {
-      type: MODE_RAIN, letter: pickLetter(), sizeKey: sz, x: Math.random()*W, y: fromTop ? -40 - Math.random()*100 : Math.random()*H,
+      type: MODE_RAIN, letter: pickLetter(RAIN_LETTERS), sizeKey: sz, x: Math.random()*W, y: fromTop ? -40 - Math.random()*100 : Math.random()*H,
       baseVy: 280 + Math.random()*220, wobblePhase: Math.random()*Math.PI*2, wobbleAmp: 1.5 + Math.random()*3.5,
       tilt: (Math.random()-0.5)*0.10, alpha: 0, maxAlpha: 0.45 + Math.random()*0.25
     };
   }
 
-  function makeFogParticle() {
+   function makeFogParticle() {
     var sz = [18,24,30][Math.floor(Math.random()*3)];
     return {
-      type: MODE_FOG, letter: pickLetter(), sizeKey: sz, x: Math.random()*W, y: Math.random()*H,
+      type: MODE_FOG, letter: pickLetter(FOG_LETTERS), sizeKey: sz, x: Math.random()*W, y: Math.random()*H,
       baseVy: 2 + Math.random()*6, baseVx: (Math.random()<0.5?-1:1)*(10+Math.random()*25),
       wobblePhase: Math.random()*Math.PI*2, wobbleAmp: 3 + Math.random()*8, alpha: 0, maxAlpha: 0.25 + Math.random()*0.20
     };

@@ -9378,3 +9378,271 @@ var FOG_CODES = [45,48];
   else init();
 })();
 </script>
+<!-- ===== НАЧАЛО БЛОКА ZEN MODE ===== -->
+<style>
+/* 1. Ключевые кадры для анимации интерфейса (дистанция 150vh, чтобы точно скрылось) */
+@keyframes zenFlyUp {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-150vh); }
+}
+@keyframes zenFlyDown {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(150vh); }
+}
+@keyframes zenReturnUp {
+    0% { transform: translateY(-150vh); }
+    100% { transform: translateY(0); }
+}
+@keyframes zenReturnDown {
+    0% { transform: translateY(150vh); }
+    100% { transform: translateY(0); }
+}
+
+/* 2. Жесткая блокировка прокрутки */
+html.zen-lock, body.zen-lock {
+    overflow: hidden !important;
+    touch-action: none !important; /* Отключаем свайпы на телефонах */
+}
+body.zen-active #pen-top { display: none !important; }
+
+/* 3. Улетание (Zen ON) — 2.5 секунды для плавности на большей дистанции */
+body.zen-active .rama-verh,
+body.zen-active .main-title,
+body.zen-active .subtitle,
+body.zen-active .subtitle-year {
+    animation: zenFlyUp 2.5s cubic-bezier(0.5, 0, 0.5, 1) forwards !important;
+}
+body.zen-active nav,
+body.zen-active .tape-slot,
+body.zen-active .alphabet-bar,
+body.zen-active .count-note,
+body.zen-active #tg-plates,
+body.zen-active main,
+body.zen-active .rama-niz,
+body.zen-active .build-info {
+    animation: zenFlyDown 2.5s cubic-bezier(0.5, 0, 0.5, 1) forwards !important;
+}
+
+/* 4. Возврат (Zen OFF) — 1.8 секунды, чтобы вернуть бодрость */
+body.zen-returning .rama-verh,
+body.zen-returning .main-title,
+body.zen-returning .subtitle,
+body.zen-returning .subtitle-year {
+    animation: zenReturnUp 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+}
+body.zen-returning nav,
+body.zen-returning .tape-slot,
+body.zen-returning .alphabet-bar,
+body.zen-returning .count-note,
+body.zen-returning #tg-plates,
+body.zen-returning main,
+body.zen-returning .rama-niz,
+body.zen-returning .build-info {
+    animation: zenReturnDown 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
+}
+
+/* ===== 5. Кнопка "фета" ===== */
+#zen-feta-btn {
+    position: fixed !important;
+    bottom: 24px !important;
+    right: 24px !important;
+    z-index: 999999;
+    cursor: pointer;
+    
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+    transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.5s ease;
+    pointer-events: none;
+}
+
+body.zen-active #zen-feta-btn {
+    opacity: 0.35 !important; /* Блеклая */
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+    /* Засыпание: 0.6s (охотнее) */
+    transition: opacity 0.6s ease-out, transform 0.6s ease-out, filter 0.6s ease-out;
+}
+
+body.zen-active #zen-feta-btn.active {
+    opacity: 1 !important; /* Яркая */
+    filter: brightness(1.2) drop-shadow(0 0 12px rgba(212,176,106,0.6));
+    /* Просыпается нехотя: 1.5s (лениво) */
+    transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out, filter 1.5s ease-in-out;
+}
+
+.zf-ring {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: conic-gradient(from 210deg, #7D6C52, #4E4333, #3C3427, #655741, #9D8665, #443B2C, #7D6C52);
+    box-shadow: 0 2px 0 rgba(0,0,0,.35), 0 7px 12px rgba(0,0,0,.5);
+    padding: 2px; box-sizing: border-box;
+}
+.zf-well {
+    width: 100%; height: 100%; border-radius: 50%;
+    background: radial-gradient(circle at 50% 38%, #201a44 0%, #120f2c 100%);
+    box-shadow: inset 0 7px 11px rgba(0,0,0,.9), inset 0 -1px 2px rgba(199,177,121,.28), inset 0 0 0 1px rgba(0,0,0,.6);
+    display: flex; align-items: center; justify-content: center; color: #c7b179;
+}
+.zf-well svg { width: 24px; height: 24px; display: block; }
+
+body.zen-active #zen-feta-btn:active .zf-ring {
+    transform: scale(0.92);
+    filter: brightness(0.85);
+}
+
+@media (max-width: 560px) {
+    .zf-ring { width: 32px; height: 32px; }
+    .zf-well svg { width: 18px; height: 18px; }
+}
+</style>
+
+<script>
+(function() {
+    let isZen = false;
+    let pressStart = 0;
+    let wakeTimer = null;
+    let floatBtn = null;
+    let screenWakeLock = null; // Хранилище для блокировки экрана
+
+    // === ФУНКЦИИ ДЛЯ УДЕРЖАНИЯ ЭКРАНА ВКЛЮЧЕННЫМ ===
+    async function requestWakeLock() {
+        if (!('wakeLock' in navigator)) return; // Если браузер не поддерживает — молча выходим
+        try {
+            screenWakeLock = await navigator.wakeLock.request('screen');
+            console.log('Экран зафиксирован (не погаснет).');
+        } catch (err) {
+            console.warn(`Не удалось удержать экран: ${err.name}, ${err.message}`);
+        }
+    }
+
+    function releaseWakeLock() {
+        if (screenWakeLock !== null) {
+            screenWakeLock.release();
+            screenWakeLock = null;
+            console.log('Экран разблокирован (может гаснуть).');
+        }
+    }
+
+    // Если пользователь свернул вкладку и вернулся, браузер сбрасывает Wake Lock.
+    // Восстанавливаем его, если мы всё ещё в Дзен-режиме.
+    document.addEventListener('visibilitychange', async () => {
+        if (document.visibilityState === 'visible' && isZen && screenWakeLock === null) {
+            await requestWakeLock();
+        }
+    });
+
+    // === ОСНОВНАЯ ЛОГИКА ===
+    window.addEventListener('load', () => {
+        floatBtn = document.createElement('div');
+        floatBtn.id = 'zen-feta-btn';
+        floatBtn.innerHTML = `
+            <div class="zf-ring">
+                <div class="zf-well">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true">
+                        <path d="M15.5 4 C13 4 12 5.6 12 8 L12 16 C12 18.4 10.8 19.8 8.5 20"/>
+                        <circle cx="12" cy="12" r="4.4"/>
+                    </svg>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(floatBtn);
+
+        document.addEventListener('pointerdown', (e) => {
+            if (e.target.closest('.key-spec')) pressStart = Date.now();
+        }, true);
+
+        document.addEventListener('pointerup', (e) => {
+            if (pressStart === 0) return;
+            const duration = Date.now() - pressStart;
+            pressStart = 0;
+            if (e.target.closest('.key-spec') && duration < 250 && typeof telegraphOn !== 'undefined' && !telegraphOn) {
+                toggleZenMode(true);
+            }
+        });
+        document.addEventListener('pointercancel', () => pressStart = 0);
+
+        floatBtn.addEventListener('mousedown', () => { floatBtn.dataset.wasSleeping = !floatBtn.classList.contains('active') ? '1' : '0'; });
+        floatBtn.addEventListener('touchstart', () => { floatBtn.dataset.wasSleeping = !floatBtn.classList.contains('active') ? '1' : '0'; }, {passive: true});
+
+        floatBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isZen && floatBtn.classList.contains('active') && floatBtn.dataset.wasSleeping === '0') {
+                toggleZenMode(false);
+            }
+        });
+
+        const wakeUp = () => {
+            if (!isZen) return;
+            if (!floatBtn.classList.contains('active')) {
+                floatBtn.classList.add('active');
+            }
+            clearTimeout(wakeTimer);
+            wakeTimer = setTimeout(() => floatBtn.classList.remove('active'), 1200);
+        };
+        
+        floatBtn.addEventListener('mousemove', wakeUp);
+        floatBtn.addEventListener('touchstart', wakeUp);
+        document.addEventListener('mousemove', wakeUp);
+        document.addEventListener('touchstart', wakeUp);
+    });
+
+    // === ГЛУШИЛКА ФИЗИЧЕСКОЙ КЛАВИАТУРЫ ===
+    window.addEventListener('keydown', function(e) {
+        if (document.body.classList.contains('zen-active')) {
+            if (e.key === 'Escape') {
+                toggleZenMode(false);
+                return;
+            }
+            e.preventDefault();
+            e.stopImmediatePropagation();
+        }
+    }, true);
+
+    window.addEventListener('keyup', function(e) {
+        if (document.body.classList.contains('zen-active')) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+        }
+    }, true);
+
+    function toggleZenMode(enable) {
+        if (enable === isZen) return;
+        isZen = enable;
+
+        if (enable) {
+            document.documentElement.classList.add('zen-lock');
+            document.body.classList.add('zen-lock');
+            
+            document.body.classList.remove('zen-returning');
+            document.body.classList.add('zen-active');
+
+            // Запрашиваем блокировку экрана
+            requestWakeLock();
+
+            if (floatBtn) {
+                floatBtn.classList.remove('active');
+                floatBtn.classList.add('active');
+                clearTimeout(wakeTimer);
+                wakeTimer = setTimeout(() => floatBtn.classList.remove('active'), 1200);
+            }
+        } else {
+            // Снимаем блокировку экрана
+            releaseWakeLock();
+
+            window.scrollTo(0, 0);
+            
+            document.body.classList.remove('zen-active');
+            document.body.classList.add('zen-returning');
+            
+            if (floatBtn) floatBtn.classList.remove('active');
+            clearTimeout(wakeTimer);
+            
+            setTimeout(() => {
+                document.body.classList.remove('zen-returning');
+                document.documentElement.classList.remove('zen-lock');
+                document.body.classList.remove('zen-lock');
+            }, 1850);
+        }
+    }
+})();
+</script>
+<!-- ===== КОНЕЦ БЛОКА ZEN MODE ===== -->

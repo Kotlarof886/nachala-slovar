@@ -7713,9 +7713,9 @@ window.addEventListener('error', function (e) {
   var PRESET_DESKTOP = PRESET_DESKTOP_RAW.map(function (p) { return { nx: p[0] / 600, ny: p[1] / 100, tier: p[2] }; });
   var PRESET_MOBILE = PRESET_MOBILE_RAW.map(function (p) { return { nx: p[0] / 700, ny: p[1] / 500, tier: p[2] }; });
 
-  /* ===== НАСТРОЙКИ СТРАЖЕЙ ===== */
+    /* ===== НАСТРОЙКИ СТРАЖЕЙ ===== */
   var GUARD_COUNT = 50; // По 50 стражей на каждое устройство
-  var GUARD_MOBILE_RECT = { minX: 0.05, maxX: 0.95, minY: 0.20, maxY: 0.90 }; // Нижняя часть телефона
+  var GUARD_MOBILE_RECT = { minX: 0.05, maxX: 0.95, minY: 0.05, maxY: 0.32 }; // Только зона заголовка (как в красной рамке)
   var GUARD_DESKTOP_RECT = { minX: 0.05, maxX: 0.95, minY: 0.05, maxY: 0.35 }; // Верхняя часть компьютера
 
 

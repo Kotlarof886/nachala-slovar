@@ -7648,7 +7648,7 @@ window.addEventListener('error', function (e) {
   var mode = MODE_NONE, level = 0;
 
   var W = 0, H = 0, dpr = 1;
-  var particles = [], stars = [];
+  var particles = [], stars = [], guards = [];
   var sprites = {}, glows = {}, starSprites = {}, starGlows = {};
 
   var lastTime = 0, animId = null, lastDraw = 0;
@@ -7696,28 +7696,28 @@ window.addEventListener('error', function (e) {
     [500, 80, 3], [540, 95, 1], [580, 85, 2], [595, 90, 3]
   ];
   
-  var PRESET_MOBILE_RAW = [
-    /* Ярус 1 (Y: 20-80) */
-    [40, 40, 3], [110, 30, 1], [180, 60, 2], [250, 40, 3], [320, 80, 1], 
-    [390, 50, 2], [460, 70, 3], [530, 40, 1], [600, 60, 2], [670, 30, 3],
-    /* Ярус 2 (Y: 100-180) */
-    [60, 130, 2], [130, 110, 3], [200, 150, 1], [270, 120, 2], [340, 160, 3], 
-    [410, 130, 1], [480, 150, 2], [550, 110, 3], [620, 140, 1], [680, 120, 2],
-    /* Ярус 3 (Y: 190-250) */
-    [30, 210, 3], [100, 190, 1], [170, 230, 2], [240, 200, 3], [310, 240, 1], 
-    [380, 210, 2], [450, 250, 3], [520, 190, 1], [590, 220, 2], [660, 200, 3],
-    /* Ярус 4 (Y: 280-340) */
-    [50, 290, 2], [120, 270, 3], [190, 310, 1], [260, 280, 2], [330, 320, 3], 
-    [400, 290, 1], [470, 330, 2], [540, 280, 3], [610, 300, 1], [680, 320, 2],
-    /* Ярус 5 (Y: 360-420) */
-    [20, 370, 1], [90, 350, 3], [160, 390, 2], [230, 360, 1], [300, 400, 3], 
-    [370, 370, 2], [440, 410, 1], [510, 360, 3], [580, 380, 2], [650, 350, 1],
-    /* Ярус 6 (Y: 440-490) */
-    [40, 450, 2], [110, 430, 3], [180, 470, 1], [250, 440, 2], [320, 480, 3], 
-    [390, 450, 1], [460, 490, 2], [530, 440, 3], [600, 460, 1], [670, 430, 2]
+   var PRESET_MOBILE_RAW = [
+    /* Созвездие 1: Левая верхняя часть */
+    [50, 50, 1], [90, 70, 2], [40, 110, 3], [120, 100, 1], [80, 130, 2],
+    /* Созвездие 2: Правая верхняя часть */
+    [550, 60, 1], [600, 40, 3], [630, 90, 2], [580, 120, 1], [640, 130, 3],
+    /* Созвездие 3: Левая нижняя часть */
+    [100, 300, 1], [150, 280, 2], [70, 350, 3], [130, 380, 1], [180, 320, 2],
+    /* Созвездие 4: Правая нижняя часть */
+    [520, 350, 1], [580, 320, 2], [620, 380, 3], [550, 400, 1], [600, 440, 2],
+    /* Созвездие 5: Центральное (немного смещено) */
+    [320, 200, 1], [380, 180, 2], [350, 250, 3], [400, 220, 1],
+    /* Одиночные яркие звёзды для баланса */
+    [250, 80, 1], [450, 450, 1]
   ];
   var PRESET_DESKTOP = PRESET_DESKTOP_RAW.map(function (p) { return { nx: p[0] / 600, ny: p[1] / 100, tier: p[2] }; });
   var PRESET_MOBILE = PRESET_MOBILE_RAW.map(function (p) { return { nx: p[0] / 700, ny: p[1] / 500, tier: p[2] }; });
+
+  /* ===== НАСТРОЙКИ СТРАЖЕЙ ===== */
+  var GUARD_COUNT = 50; // По 50 стражей на каждое устройство
+  var GUARD_MOBILE_RECT = { minX: 0.05, maxX: 0.95, minY: 0.20, maxY: 0.90 }; // Нижняя часть телефона
+  var GUARD_DESKTOP_RECT = { minX: 0.05, maxX: 0.95, minY: 0.05, maxY: 0.35 }; // Верхняя часть компьютера
+
 
   var CONSTELLATION_CHANCE      = 0.15;
   var CONSTELLATION_COUNT_MIN   = 3;
@@ -8465,7 +8465,7 @@ var FOG_CODES = [45,48];
     else s.nextAppearAt = now + 8000 + Math.random() * 22000;
   }
 
-  function initStars() {
+     function initStars() {
     stars = [];
     buildConstellations();
     var now = performance.now();
@@ -8474,7 +8474,7 @@ var FOG_CODES = [45,48];
     for (var p = 0; p < presets.length; p++) {
       stars.push({
         visible: false, alpha: 0, env: 0, glowBoost: 1, tier: presets[p].tier, peakAlpha: 0,
-                x: 0, y: 0, letter: 'з', sizeKey: 16, appearStart: 0, lifeDuration: 3000,
+        x: 0, y: 0, letter: 'Н', sizeKey: 16, appearStart: 0, lifeDuration: 3000,
         nextAppearAt: now + 200 + Math.random() * 8000, flicker: null, _slot: null, meteor: null,
         dimMul: 1, _blocked: false, _nextBlockCheck: 0, _preset: true,
         _presetNX: presets[p].nx, _presetNY: presets[p].ny, _presetTier: presets[p].tier
@@ -8486,7 +8486,7 @@ var FOG_CODES = [45,48];
     for (var i = 0; i < randomCount; i++) {
       stars.push({
         visible: false, alpha: 0, env: 0, glowBoost: 1, tier: 4, peakAlpha: 0,
-                x: 0, y: 0, letter: 'з', sizeKey: 16, appearStart: 0, lifeDuration: 3000,
+        x: 0, y: 0, letter: 'Н', sizeKey: 16, appearStart: 0, lifeDuration: 3000,
         nextAppearAt: now + 200 + Math.random() * 38000, flicker: null, _slot: null, meteor: null,
         dimMul: 1, _blocked: false, _nextBlockCheck: 0, _preset: false
       });
@@ -8494,6 +8494,39 @@ var FOG_CODES = [45,48];
     if (forceMeteor) nextMeteorAt = now + 3000;
     else nextMeteorAt = now + (1 + Math.random() * 4) * 60 * 1000;
     meteorActive = false;
+
+    // === СОЗДАНИЕ СТРАЖЕЙ ===
+    guards = [];
+    var rect = isMobile ? GUARD_MOBILE_RECT : GUARD_DESKTOP_RECT;
+    for (var g = 0; g < GUARD_COUNT; g++) {
+      var attempts = 0;
+      var gx, gy, ok;
+      do {
+        gx = W * (rect.minX + Math.random() * (rect.maxX - rect.minX));
+        gy = H * (rect.minY + Math.random() * (rect.maxY - rect.minY));
+        ok = true;
+        for (var k = 0; k < guards.length; k++) {
+          var dx = guards[k].x - gx, dy = guards[k].y - gy;
+          if (dx*dx + dy*dy < 400) { ok = false; break; }
+        }
+        attempts++;
+      } while (!ok && attempts < 50);
+
+      var dur = 6000 + Math.random() * 6000;
+      guards.push({
+        x: gx, y: gy,
+        size: isMobile ? STAR_SIZES_MOBILE[0] : STAR_SIZES_DESKTOP[0],
+        letter: pickStarLetter(),
+        phase: Math.random() * Math.PI * 2,
+        dur: dur,
+        timeOffset: Math.random() * dur,
+        maxPeak: 0.4 + Math.random() * 0.4,
+        isFlare: false,
+        flareProgress: 0,
+        _blocked: false,
+        _nextBlockCheck: 0
+      });
+    }
   }
 
   function startStarAppearance(s, now) {
@@ -8666,9 +8699,56 @@ var FOG_CODES = [45,48];
         if (sleepers[mm].visible) sleepers[mm].appearStart = now - Math.random() * sleepers[mm].lifeDuration * 0.4;
       }
     }
+
+        // === ОБНОВЛЕНИЕ СТРАЖЕЙ (ДЫХАНИЕ) ===
+    for (var i = 0; i < guards.length; i++) {
+      var g = guards[i];
+      
+      // Проверка на перекрытие заголовком (раз в 120 мс)
+      if (now >= (g._nextBlockCheck || 0)) {
+        g._nextBlockCheck = now + 120;
+        g._blocked = isUnderGlyph(g.x, g.y);
+      }
+
+      // Редкий разгон: примерно 1 шанс на 20 000 кадров (раз в 5-6 минут)
+      if (!g.isFlare && Math.random() < 0.00005) {
+        g.isFlare = true;
+        g.flareProgress = 0;
+        g.savedDur = g.dur;
+        g.dur = 4000; // Ускоряем дыхание во время вспышки (на 4 секунды)
+      }
+
+      // Вычисляем фазу дыхания (0 до 1)
+      var t = ((now + g.timeOffset) % g.dur) / g.dur;
+      
+      // Нелинейная, но плавная кривая (косинус)
+      // В начале (t=0) яркость максимальная, в середине (t=0.5) — минимальная.
+      var breath = (Math.cos(t * Math.PI * 2) + 1) / 2; 
+      
+      var currentAlpha = breath * g.maxPeak;
+
+      // Если случился разгон — пульсируем и затухаем
+      if (g.isFlare) {
+        g.flareProgress += dt * 0.25; // Затухание длится 4 секунды
+        
+        if (g.flareProgress >= 1) { 
+          g.isFlare = false; 
+          g.dur = g.savedDur; // Возвращаем долгое дыхание обратно
+        }
+        
+        // Пульсация: частое мерцание поверх плавного затухания
+        var pulse = 0.5 + 0.5 * Math.sin(g.flareProgress * Math.PI * 15);
+        currentAlpha = (1 - g.flareProgress) * (0.8 + 0.2 * pulse);
+      }
+
+      // Прячем под текстом заголовка
+      if (g._blocked) currentAlpha = 0;
+      
+      g.alpha = currentAlpha;
+    }
   }
 
-  function drawStars(now) {
+    function drawStars(now) {
     if (!stars.length || starIntensity() <= 0) return;
     for (var i = 0; i < stars.length; i++) {
       var s = stars[i];
@@ -8691,7 +8771,22 @@ var FOG_CODES = [45,48];
       ctx.setTransform(scale, 0, 0, scale, s.x * dpr, s.y * dpr);
       ctx.globalAlpha = s.alpha; ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
     }
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
+    
+    // === ОТРИСОВКА СТРАЖЕЙ ===
+    if (starIntensity() > 0) {
+      for (var i = 0; i < guards.length; i++) {
+        var g = guards[i];
+        if (g.alpha <= 0.01) continue;
+        var sprite = starSprites[g.size + ':' + g.letter]; 
+        if (!sprite) continue;
+        ctx.setTransform(1, 0, 0, 1, g.x * dpr, g.y * dpr);
+        ctx.globalAlpha = g.alpha;
+        ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
+      }
+    }
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0); 
+    ctx.globalAlpha = 1;
   }
 
   /* ================ РИСОВАНІЕ ЛУНЫ ================ */
@@ -8787,7 +8882,7 @@ var FOG_CODES = [45,48];
     }
 
     /* ПРОХОДЪ 1 — сверхширокій внѣшній ореолъ (только бѣлыя) */
-    ctx.shadowBlur = 55;
+    ctx.shadowBlur = 25;
     ctx.shadowColor = 'rgba(120, 180, 255, 0.95)';
     ctx.fillStyle = 'rgba(140, 185, 255, 0.55)';
     for (var i = 0; i < visible.length; i++) {

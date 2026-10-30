@@ -8708,7 +8708,7 @@ var FOG_CODES = [45,48];
     var litPalette = [
       { fill: [255, 255, 255], glow: [220, 235, 255] },  /* бѣлый */
       { fill: [200, 230, 255], glow: [140, 200, 255] },  /* ледяной */
-      { fill: [150, 190, 245], glow: [ 80, 150, 230] },  /* синѣе */
+        { fill: [165, 160, 155], glow: [110, 105, 100] },  /* пыльно-сѣрый */
       { fill: [255, 230, 170], glow: [255, 200, 100] },  /* золотистый */
       { fill: [255, 240, 220], glow: [245, 210, 170] },  /* кремовый */
       { fill: [210, 215, 225], glow: [175, 185, 205] }   /* свѣтло сѣрый */
@@ -8731,12 +8731,13 @@ var FOG_CODES = [45,48];
         var nx = charX / R;
         var ny = rowY / R;
         if (nx * nx + ny * ny > 0.95) continue;
-        visible.push({
+                visible.push({
           ch: rowStr.charAt(c),
           x: charX,
           y: rowY,
           isShadow: stateStr.charAt(c) === '0',
-          key: r + '_' + c
+          key: r + '_' + c,
+          dist2: nx * nx + ny * ny   /* квадрат расстояния от центра */
         });
       }
     }
@@ -8825,12 +8826,19 @@ var FOG_CODES = [45,48];
       var gg = Math.round(lerp(pa.glow[1], pb.glow[1], et));
       var gbl = Math.round(lerp(pa.glow[2], pb.glow[2], et));
 
-      /* мерцаніе — своё у каждой буквы (по случайному зерну) */
+            /* мерцаніе — своё у каждой буквы (по случайному зерну) */
       var pulse = 0.80 + 0.20 * Math.sin(now * 0.001 + st.seed);
       var blurNow = 15 + 6 * Math.sin(now * 0.0015 + st.seed * 1.3);
 
-      ctx.globalAlpha = pulse;
-      ctx.shadowBlur = blurNow;
+      /* Чем ближе буква к краю луны (dist2 ближе к 0.95), тем ярче она светится */
+      var edgeFactor = v.dist2 / 0.95;          /* 0 в центре, 1 на самом краю */
+      var boost = 1 + edgeFactor * 0.6;         /* Усиление до 1.6 раз */
+
+      var finalPulse = Math.min(1.0, pulse * boost); /* Ограничиваем прозрачность (максимум 1) */
+      var finalBlur = blurNow * boost;               /* Увеличиваем размер ореола */
+
+      ctx.globalAlpha = finalPulse;
+      ctx.shadowBlur = finalBlur;
       ctx.shadowColor = 'rgba(' + gr + ',' + gg + ',' + gbl + ',1)';
       ctx.fillStyle = 'rgba(' + fr + ',' + fg + ',' + fb + ',1)';
       ctx.fillText(v.ch, v.x, v.y);
@@ -8840,10 +8848,28 @@ var FOG_CODES = [45,48];
     /* ПРОХОДЪ 4 — сѣрыя буквы (фазовыя «0»): безъ свѣченія, поверхъ ореоловъ. */
     ctx.shadowBlur = 0;
     ctx.shadowColor = 'rgba(0,0,0,0)';
-    ctx.fillStyle = darkColor;
+    
+    // Цвет в самом центре (как был)
+    var darkCenter = { r: 108, g: 116, b: 140 };
+    // Цвет у самого края (темнее)
+    var darkEdge   = { r: 58, g: 62, b: 78 };
+    
     for (var i = 0; i < visible.length; i++) {
       var v = visible[i];
       if (!v.isShadow) continue;
+      
+      // v.dist2 — это квадрат расстояния от центра (от 0 до 1).
+      // Делаем плавный переход: в центре 0, у края 1.
+      var t = (v.dist2 - 0.25) / (0.85 - 0.25);
+      if (t < 0) t = 0;   // В центре буквы остаются светлыми
+      if (t > 1) t = 1;   // На краях — самыми темными
+      
+      // Смешиваем цвета
+      var r = Math.round(darkCenter.r + (darkEdge.r - darkCenter.r) * t);
+      var g = Math.round(darkCenter.g + (darkEdge.g - darkCenter.g) * t);
+      var b = Math.round(darkCenter.b + (darkEdge.b - darkCenter.b) * t);
+      
+      ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.94)';
       ctx.fillText(v.ch, v.x, v.y);
     }
 

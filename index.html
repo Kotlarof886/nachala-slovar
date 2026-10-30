@@ -7851,10 +7851,10 @@ window.addEventListener('error', function (e) {
       
       var baselineY, peakY;
       
-      if (isMobile) {
+     if (isMobile) {
         // Траектория привязана к высоте экрана (H)
-        baselineY = H * 0.22; // Края (опускаются до 22% высоты экрана)
-        peakY = H * 0.16;     // Верхушка (поднимается до 16% высоты экрана)
+        baselineY = H * 0.25; // Края (опускаются до 25%)
+        peakY = H * 0.19;     // Верхушка (опускается до 19%)
       } else {
         // Старая траектория для компьютера
         baselineY = Math.min(H * 0.4, 310);

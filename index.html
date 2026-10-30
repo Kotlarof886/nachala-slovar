@@ -8730,7 +8730,7 @@ var FOG_CODES = [45,48];
         var charX = startX + c * charW;
         var nx = charX / R;
         var ny = rowY / R;
-        if (nx * nx + ny * ny > 0.95) continue;
+        if (nx * nx + ny * ny > 1.01) continue;
                 visible.push({
           ch: rowStr.charAt(c),
           x: charX,

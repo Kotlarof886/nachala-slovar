@@ -7832,34 +7832,37 @@ window.addEventListener('error', function (e) {
     return { alt: alt, az: az, phase: phase, sunAlt: sunAlt };
   }
 
-    function updateMoonPos() {
+      function updateMoonPos() {
     moonPos = getMoonData(moonNow());
+    
     if (moonPos.sunAlt < -6 || loc.indexOf('forceMoon') >= 0 || moonDemoActive) {
       
       var isMobile = (window.innerWidth < 600);
       
       // 1. Уменьшаем размер луны на телефоне на 10%
-      var baseD = isMobile ? MOON_D_BASE * 0.9 : MOON_D_BASE;
+      var baseD = isMobile ? (MOON_D_BASE * 0.9) : MOON_D_BASE;
       moonRadius = baseD / 2;
       
       var x_ratio = moonPos.phase;
-      moonScreenX = W * 0.1 + x_ratio * W * 0.8;
-      var t = (moonScreenX - W/2) / (W/2);
+      moonScreenX = (W * 0.1) + (x_ratio * W * 0.8);
+      
+      // t меняется от -1 (левый край) до 1 (правый край)
+      var t = (moonScreenX - (W / 2)) / (W / 2);
       
       var baselineY, peakY;
       
       if (isMobile) {
-        // 2. Новая траектория для телефона (пологая дуга, как на рисунке)
-        // Края дуги опускаем ниже, а верхушку поднимаем не так высоко
-        baselineY = Math.min(H * 0.28, 220); 
-        peakY = Math.min(H * 0.16, 150);     
+        // Траектория для телефона: верхушка выше, края ниже.
+        // 140 — высота верхушки (середины), 280 — высота краев.
+        baselineY = Math.min(H * 0.35, 280); 
+        peakY = Math.min(H * 0.17, 140);     
       } else {
-        // Оставляем старую траекторию для компьютера
+        // Старая траектория для компьютера
         baselineY = Math.min(H * 0.4, 310);
         peakY = Math.min(H * 0.15, 130);
       }
       
-      // Формула параболы (создает дугу)
+      // Формула параболы создает плавную дугу
       moonScreenY = peakY + (baselineY - peakY) * t * t;
       
     } else {

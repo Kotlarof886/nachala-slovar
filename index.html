@@ -9517,7 +9517,8 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     let coalSpriteCache = new Map();
     const SMOKE_BASE_SIZES = [24, 40, 64, 96];
     const SMOKE_SHADES = ['#202020', '#505050', '#909090', '#c0c0c0'];
-    const smokeSpriteCache = [];
+    const SMOKE_LETTERS = ['д', 'ы', 'M', 'ъ'];
+    const smokeSpriteCache = {};
     let smokeSpritesReady = false;
 
     /* ===== Діагностика ===== */
@@ -9548,7 +9549,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     }
 
     function getSprite(text, size, color, glowColor, glowBlur) {
-        /* Огрубленіе до чётнаго размѣра: вдвое меньше уникальныхъ спрайтовъ */
         size = Math.max(2, Math.round(size / 2) * 2);
         const key = text + '|' + size + '|' + color + '|' + (glowColor || '') + '|' + (glowBlur | 0);
         let s = spriteCache.get(key);
@@ -9556,7 +9556,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         if (spriteCache.size > 3000) spriteCache.clear();
         s = makeSprite(text, size, color, glowColor, glowBlur);
         spriteCache.set(key, s);
-        if (!prewarmRunning) spriteStats.runtime++;   /* созданъ въ рантаймѣ, а не предгрѣвомъ */
+        if (!prewarmRunning) spriteStats.runtime++;
         return s;
     }
 
@@ -9603,13 +9603,16 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
 
     function initSmokeSprites() {
         if (smokeSpritesReady) return;
-        smokeSpriteCache.length = 0;
-        for (let b = 0; b < SMOKE_BASE_SIZES.length; b++) {
-            const row = [];
-            for (let sh = 0; sh < SMOKE_SHADES.length; sh++) {
-                row.push(makeSprite('M', SMOKE_BASE_SIZES[b], SMOKE_SHADES[sh], null, 0));
+        for (let i = 0; i < SMOKE_LETTERS.length; i++) {
+            const letter = SMOKE_LETTERS[i];
+            smokeSpriteCache[letter] = [];
+            for (let b = 0; b < SMOKE_BASE_SIZES.length; b++) {
+                const row = [];
+                for (let sh = 0; sh < SMOKE_SHADES.length; sh++) {
+                    row.push(makeSprite(letter, SMOKE_BASE_SIZES[b], SMOKE_SHADES[sh], null, 0));
+                }
+                smokeSpriteCache[letter].push(row);
             }
-            smokeSpriteCache.push(row);
         }
         smokeSpritesReady = true;
     }
@@ -9629,9 +9632,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         return 3;
     }
 
-    /* ===== ПРЕДГЕНЕРАЦІЯ ВСѢХЪ СПРАЙТОВЪ =====
-       Идётъ чанками по 5 штукъ через requestAnimationFrame — рендеръ не блокируется.
-       Вызывается при входѣ въ zen (параллельно съ 2.2-секунднымъ переходомъ) и послѣ resize. */
+    /* ===== ПРЕДГЕНЕРАЦІЯ ВСѢХЪ СПРАЙТОВЪ ===== */
     async function prewarmSpriteCache() {
         if (prewarmRunning) return;
         const myToken = ++prewarmToken;
@@ -9653,16 +9654,32 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         const FIRE_SIZES = [];
         for (let s = 6; s <= 26; s += 2) FIRE_SIZES.push(s);
 
+        // Запекаем свечение для мобильных
         for (const ch of FIRE_CHARS) for (const sz of FIRE_SIZES) for (const col of CORE_COLORS) {
-            getSprite(ch, sz, col, null, 0); spriteStats.prewarm++;
+            if (IS_MOBILE) {
+                getSprite(ch, sz, col, col, 4);
+            } else {
+                getSprite(ch, sz, col, null, 0);
+            }
+            spriteStats.prewarm++;
             if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
         }
         for (const ch of FIRE_CHARS) for (const sz of FIRE_SIZES) for (const col of SUB_COLORS) {
-            getSprite(ch, sz, col, null, 0); spriteStats.prewarm++;
+            if (IS_MOBILE) {
+                getSprite(ch, sz, col, col, 4);
+            } else {
+                getSprite(ch, sz, col, null, 0);
+            }
+            spriteStats.prewarm++;
             if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
         }
         for (const ch of FIRE_CHARS) for (const sz of FIRE_SIZES) for (const col of OUTER_COLORS) {
-            getSprite(ch, sz, col, null, 0); spriteStats.prewarm++;
+            if (IS_MOBILE) {
+                getSprite(ch, sz, col, col, 4);
+            } else {
+                getSprite(ch, sz, col, null, 0);
+            }
+            spriteStats.prewarm++;
             if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
         }
 
@@ -9676,13 +9693,13 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
 
         const EMBER_CHARS = ['у', 'Г', 'л', 'и'];
         const EMBER_SIZES = [8, 10, 12, 14];
-        const COALPOP_COLORS = ['#ff9933', '#cc5522', '#442211'];
+        // Добавлен цвет #cc3300 для тлеющих углей
+        const COALPOP_COLORS = ['#ff9933', '#cc5522', '#442211', '#cc3300'];
         for (const ch of EMBER_CHARS) for (const sz of EMBER_SIZES) for (const col of COALPOP_COLORS) {
             getSprite(ch, sz, col, col, 8); spriteStats.prewarm++;
             if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
         }
 
-        /* Угли — для текущаго (горячаго) состоянія */
         for (const ch of EMBER_CHARS) for (let sz = 8; sz <= 16; sz += 2) for (let si = 0; si < 8; si++) {
             const shift = (si - 4) / 4;
             getCoalSprite(ch, sz, true, 1.0, shift); spriteStats.prewarm++;
@@ -9860,7 +9877,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     }
 
     function smokeVyBase(vis)     { return -(60 + vis * 14); }
-    function smokeGrow(vis)       { return 2 + vis * 0.7; }
+    function smokeGrow(vis)       { return IS_MOBILE ? (1.2 + vis * 0.4) : (2 + vis * 0.7); }
     function vertSparkVyBase(vis) { return -(70 + vis * 22); }
 
     function spawnSidewaysSparks(count, intensity) {
@@ -9970,10 +9987,12 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     function spawnSmoke(x, y, vyBase, growRate, opts) {
         opts = opts || {};
         const startSize = opts.startSize || randSize(8, 14);
+        const baseLife = IS_MOBILE ? 2.5 : 5;
+        const randLife = IS_MOBILE ? 1.5 : 3;
         addParticle({
             type: 'smoke', x: x, y: y, vx: (Math.random() - 0.5) * 10,
             vy: vyBase - Math.random() * 20, life: 1,
-            maxLife: (5 + Math.random() * 3) * (opts.lifeMul || 1),
+            maxLife: (baseLife + Math.random() * randLife) * (opts.lifeMul || 1),
             text: pick(WORD_SMOKE), size: startSize,
             fontStr: 'normal ' + startSize + 'px ' + FONT, age: 0,
             seed: Math.random() * Math.PI * 2, growRate: growRate, dim: opts.dim
@@ -9997,8 +10016,12 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
                 nextCoalPopAt = time + 2500 + Math.random() * 3500;
             } else if (coalsPopped >= 2 && Math.random() < dt * 0.25) popCoal(time);
         }
+        
         const lvl = fireVisual;
         if (lvl <= 0.03) { flameTipInit = false; flameTipX = CX; flameTipY = CY - 80; return; }
+        
+        const heightMul = IS_MOBILE ? 0.85 : 1.0;
+        
         const lvlScale = Math.min(1, Math.max(0.1, lvl));
         const pulse = (Math.sin(time * 0.003) + 1) / 2;
         const coreRate = (50 + lvl * 20) * (0.7 + 0.3 * pulse);
@@ -10009,7 +10032,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
                 addParticle({
                     type: 'fire-core', x: CX + (Math.random() - 0.5) * 35, y: CY - 5,
                     vx: (Math.random() - 0.5) * 4,
-                    vy: -100 - Math.random() * 50 - pulse * lvl * 15,
+                    vy: (-100 - Math.random() * 50 - pulse * lvl * 15) * heightMul,
                     life: 1, maxLife: 0.7 + Math.random() * 0.4,
                     text: pick(WORD_FIRE), size: sz,
                     fontStr: 'normal ' + sz + 'px ' + FONT,
@@ -10018,11 +10041,12 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             }
             coreCount -= 1;
         }
+        
         if (Math.random() < dt * (20 + lvl * 10)) {
             const sz = randSize(12, 18) * lvlScale;
             addParticle({
                 type: 'fire-sub', x: CX - 22 + (Math.random() - 0.5) * 15, y: CY - 32,
-                vx: -20 - Math.random() * 20, vy: -80 - Math.random() * 40,
+                vx: -20 - Math.random() * 20, vy: (-80 - Math.random() * 40) * heightMul,
                 life: 1, maxLife: 0.5 + Math.random() * 0.3,
                 text: pick(WORD_FIRE), size: sz,
                 fontStr: 'normal ' + sz + 'px ' + FONT,
@@ -10030,13 +10054,14 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             });
             addParticle({
                 type: 'fire-sub', x: CX + 22 + (Math.random() - 0.5) * 15, y: CY - 32,
-                vx: 20 + Math.random() * 20, vy: -80 - Math.random() * 40,
+                vx: 20 + Math.random() * 20, vy: (-80 - Math.random() * 40) * heightMul,
                 life: 1, maxLife: 0.5 + Math.random() * 0.3,
                 text: pick(WORD_FIRE), size: sz,
                 fontStr: 'normal ' + sz + 'px ' + FONT,
                 swaySeed: Math.random() * Math.PI * 2
             });
         }
+        
         const outerRate = (60 + lvl * 30) * (0.6 + 0.4 * pulse);
         let outerCount = outerRate * dt;
         const spread = 60;
@@ -10047,7 +10072,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
                 const sz = randSize(12, 20) * lvlScale;
                 addParticle({
                     type: 'fire-outer', x: spawnX, y: CY - 5 + u * u * 15,
-                    vx: 0, vy: -60 - Math.random() * 30 - pulse * lvl * 10,
+                    vx: 0, vy: (-60 - Math.random() * 30 - pulse * lvl * 10) * heightMul,
                     initDX: spawnX - CX, life: 1,
                     maxLife: 0.7 + Math.random() * 0.6 + pulse * 0.2,
                     text: pick(WORD_FIRE), size: sz,
@@ -10057,6 +10082,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             }
             outerCount -= 1;
         }
+        
         const smokeRate = 4 + lvl * 10;
         let smokeCount = smokeRate * dt;
         const smokeVyB = smokeVyBase(lvl), smokeGrowV = smokeGrow(lvl);
@@ -10074,7 +10100,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             addParticle({
                 type: 'spark', x: CX + (Math.random() - 0.5) * 40,
                 y: CY - 20 - Math.random() * 30,
-                vx: (Math.random() - 0.5) * 20, vy: vyB + (Math.random() - 0.5) * 40,
+                vx: (Math.random() - 0.5) * 20, vy: (vyB + (Math.random() - 0.5) * 40) * heightMul,
                 gravity: 50, life: 1, maxLife: 1.5 + Math.random() * 1.0,
                 text: pick(WORD_SPARKS),
                 color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
@@ -10118,7 +10144,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         lastFireTime = time;
         lastDrawTime = time;
 
-        /* Діагностика: средній кадръ за 5 сек */
         frameTimeSum += dt * 1000; frameTimeCount++;
         if (time - lastFpsLog > 5000) {
             lastFpsLog = time;
@@ -10249,10 +10274,12 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             }
             if (p.x < -80 || p.x > W + 80 || p.y < -60 || p.y > H + 60) continue;
             fCtx.globalAlpha = (p.alpha !== undefined) ? p.alpha : Math.max(0, Math.min(1, p.life));
+            
             if (p.type === 'smoke') {
                 if (!smokeSpritesReady) initSmokeSprites();
                 const bIdx = pickSmokeBaseIdx(p.size), sIdx = pickSmokeShadeIdx(p.age);
-                const sprite = smokeSpriteCache[bIdx][sIdx];
+                const letterCache = smokeSpriteCache[p.text] || smokeSpriteCache['M'];
+                const sprite = letterCache[bIdx][sIdx];
                 const drawW = p.size * (sprite.w / SMOKE_BASE_SIZES[bIdx]);
                 const drawH = p.size * (sprite.h / SMOKE_BASE_SIZES[bIdx]);
                 fCtx.drawImage(sprite.img, p.x - drawW / 2, p.y - drawH / 2, drawW, drawH);
@@ -10260,6 +10287,11 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
                 let glowColor = null, glowBlur = 0;
                 if (p.type === 'spark' || p.type === 'coal-pop') { glowColor = p.color; glowBlur = 8; }
                 else if (p.type === 'smolder') { glowColor = p.color; glowBlur = 6; }
+                
+                if (IS_MOBILE && (p.type === 'fire-core' || p.type === 'fire-sub' || p.type === 'fire-outer')) {
+                    glowColor = p.color; glowBlur = 4;
+                }
+                
                 const sprite = getSprite(p.text, p.size, p.color || '#fff', glowColor, glowBlur);
                 if (p.type === 'coal-pop') {
                     fCtx.save(); fCtx.translate(p.x, p.y); fCtx.rotate(p.angle);
@@ -10363,7 +10395,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
                 clearTimeout(wakeTimer);
                 wakeTimer = setTimeout(function() { floatBtn.classList.remove('active'); }, 1200);
             }
-            /* Предгрѣвъ спрайтовъ — параллельно съ переходомъ */
             prewarmSpriteCache();
             Promise.all([
                 new Promise(function(res) { setTimeout(res, 2200); }),
@@ -10402,7 +10433,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         }
     }
 
-    /* Діагностика снаружи: откройте консоль и введите __zenStats() */
     window.__zenStats = function() {
         return {
             isZen: isZen,
@@ -10418,6 +10448,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     };
 })();
 </script>
+
 <div id="zen-hud" aria-hidden="true"></div>
 <style>
 #zen-hud{
@@ -10444,7 +10475,6 @@ body.zen-active #zen-hud{display:block}
     hud.appendChild(d);
     while (hud.children.length > MAX) hud.removeChild(hud.firstChild);
   }
-  /* Перехватываем console.log — только сообщенія [zen ...] и [zen prewarm ...] */
   var origLog = console.log.bind(console);
   console.log = function(){
     try { origLog.apply(console, arguments); } catch(e){}
@@ -10456,7 +10486,6 @@ body.zen-active #zen-hud{display:block}
     var s = parts.join(' ');
     if (/\[zen/.test(s)) push(s);
   };
-  /* Разъ въ 5 секундъ — краткая сводка черезъ __zenStats(), если она есть */
   setInterval(function(){
     if (!document.body.classList.contains('zen-active')) return;
     if (typeof window.__zenStats !== 'function') return;

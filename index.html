@@ -9384,7 +9384,7 @@ window.__weather = {
   else init();
 })();
 </script>
-<!-- ===== НАЧАЛО БЛОКА ZEN MODE ===== -->
+<!-- ===== НАЧАЛО БЛОКА ZEN MODE (ОПТИМИЗИРОВАННЫЙ) ===== -->
 <style>
 @keyframes zenFlyUp { 0% { transform: translateY(0); } 100% { transform: translateY(-150vh); } }
 @keyframes zenFlyDown { 0% { transform: translateY(0); } 100% { transform: translateY(150vh); } }
@@ -9502,7 +9502,6 @@ body.zen-active #zen-fire-canvas { display: block; }
     let fireCanvas, fCtx;
     let groundCanvasEl, groundCtx;
 
-    // Стадии: 0, 0.5, 0.7 (Zen-покой), 1, 2, 3, 4, 5
     let fireLevel = 0.7;
     let fireTargetVisual = 0.7;
     let fireVisual = 0.7;
@@ -9515,18 +9514,35 @@ body.zen-active #zen-fire-canvas { display: block; }
     let coalsPopped = 0;
     let nextCoalPopAt = 0;
 
-    let particles = [];
     let baseChars = [];
-
     let lastFireTime = 0;
 
     let W = 600, H = 800, CX = 300, CY = 750;
     let DPR = 1;
+
     const GROUND_HEIGHT = 65;
     const GROUND_DEPTH = 30;
+    const MAX_PARTICLES = 5000;
+
+    // ===== Кэшъ испечённыхъ размѣровъ + отмѣна стараго бейка =====
+    let bakedW = 0, bakedH = 0, bakedDpr = 0;
+    let bakeState = 'idle';   // 'idle' | 'running' | 'done'
+    let bakePromise = null;
+    let bakeToken = 0;
+
+    // === ПУЛ ОБЪЕКТОВ (Zero GC) ===
+    const particlePool = [];
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+        particlePool.push({
+            type: '', x: 0, y: 0, vx: 0, vy: 0, gravity: 0, life: 0, maxLife: 1,
+            text: '', color: '', size: 0, age: 0, seed: 0, growRate: 0,
+            fogWide: false, fogSlowVy: false, dim: 1, rot: 0, rotSpeed: 0,
+            angle: 0, swaySeed: 0, initDX: 0, fontStr: '', landedAt: 0, alpha: 1
+        });
+    }
+    let particleCount = 0;
 
     const FONT = '"Gardenia Decor", "Yeseva One", Georgia, serif';
-
     const WORD_FIRE   = ['о', 'Г', 'о', 'н', 'ь'];
     const WORD_SMOKE  = ['д', 'ы', 'M', 'ъ'];
     const WORD_LOGS   = ['к', 'р', 'я', 'ж', 'и', 'у', 'г', 'л'];
@@ -9538,7 +9554,6 @@ body.zen-active #zen-fire-canvas { display: block; }
     let windXWorld = 0;
     let isFogWeather = false;
     let isRainOrSnow = false;
-
     let flameTipX = 0, flameTipY = 0, flameTipInit = false;
 
     function refreshWeather() {
@@ -9570,94 +9585,192 @@ body.zen-active #zen-fire-canvas { display: block; }
         return isRainOrSnow ? 60000 : 120000;
     }
 
-    function bakeGround() {
-        if (!groundCanvasEl) return;
-        const dpr = Math.min(window.devicePixelRatio || 1, 2);
-        groundCanvasEl.width = Math.floor(W * dpr);
-        groundCanvasEl.height = Math.floor(H * dpr);
-        groundCanvasEl.style.width = W + 'px';
-        groundCanvasEl.style.height = H + 'px';
-        groundCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        groundCtx.imageSmoothingEnabled = false;
-        groundCtx.textAlign = 'center';
-        groundCtx.textBaseline = 'middle';
-        groundCtx.clearRect(0, 0, W, H);
-
-        groundCtx.beginPath();
-        groundCtx.moveTo(-10, H + 10);
-        for (let x = -10; x <= W + 10; x += 20) {
-            groundCtx.lineTo(x, groundTopAt(x));
-        }
-        groundCtx.lineTo(W + 10, H + 10);
-        groundCtx.closePath();
-        groundCtx.fillStyle = '#1a1535';
-        groundCtx.fill();
-
-        for (let x = -20; x < W + 20; x += 5) {
-            const topY = groundTopAt(x);
-            const layers = 10 + Math.floor(Math.random() * 6);
-            const distFromCenter = Math.min(1, Math.abs(x - CX) / (W / 2));
-            const baseGray = 52 - distFromCenter * 34;
-            for (let i = 0; i < layers; i++) {
-                const y = topY + i * 7 + Math.random() * 9;
-                if (y > H + 20) continue;
-                const gray = Math.max(8, Math.round(baseGray + (Math.random() - 0.5) * 12));
-                const size = Math.random() < 0.55 ? randSize(6, 10) : randSize(11, 20);
-                groundCtx.save();
-                groundCtx.translate(x + (Math.random() - 0.5) * 8, y);
-                groundCtx.rotate((Math.random() - 0.5) * 0.6);
-                groundCtx.font = 'normal ' + size + 'px ' + FONT;
-                groundCtx.fillStyle = `rgb(${gray}, ${gray}, ${gray+5})`;
-                groundCtx.globalAlpha = 0.95;
-                groundCtx.fillText(pick(WORD_GROUND), 0, 0);
-                groundCtx.restore();
-            }
-        }
-        for (let x = -20; x < W + 20; x += 3) {
-            const t = Math.abs((x - CX) / CX);
-            if (t < 0.55) continue;
-            const topY = groundTopAt(x);
-            const layers = 8 + Math.floor(Math.random() * 5);
-            const distFromCenter = Math.min(1, Math.abs(x - CX) / (W / 2));
-            const baseGray = 26 - distFromCenter * 20;
-            for (let i = 0; i < layers; i++) {
-                const y = topY + i * 6 + Math.random() * 8;
-                if (y > H + 20) continue;
-                const gray = Math.max(5, Math.round(baseGray + (Math.random() - 0.5) * 8));
-                const size = randSize(4, 8);
-                groundCtx.save();
-                groundCtx.translate(x + (Math.random() - 0.5) * 6, y);
-                groundCtx.rotate((Math.random() - 0.5) * 0.7);
-                groundCtx.font = 'normal ' + size + 'px ' + FONT;
-                groundCtx.fillStyle = `rgb(${gray}, ${gray}, ${gray+4})`;
-                groundCtx.globalAlpha = 0.9;
-                groundCtx.fillText(pick(WORD_GROUND), 0, 0);
-                groundCtx.restore();
-            }
-        }
+    function addParticle(p) {
+        if (particleCount >= MAX_PARTICLES) return;
+        const target = particlePool[particleCount];
+        for (let key in p) target[key] = p[key];
+        particleCount++;
     }
 
-    function resizeFireCanvas() {
-        if (!fireCanvas) return;
+    function initBaseChars() {
+        baseChars = [];
+        for (let i = 0; i < 200; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const r = Math.sqrt(Math.random());
+            const sinA = Math.sin(angle);
+            baseChars.push({
+                type: 'log',
+                x: Math.cos(angle) * r * 80,
+                y: sinA * r * (sinA > 0 ? 26 : 14),
+                letter: pick(WORD_LOGS),
+                size: randSize(12, 24),
+                rot: (Math.random() - 0.5) * 1.5,
+                color: Math.random() < 0.8 ? '#120500' : '#2a1000'
+            });
+        }
+        for (let i = 0; i < 250; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const r = Math.sqrt(Math.random()) * 0.7;
+            let y = Math.sin(angle) * r * 15;
+            if (y < -10) y = -10;
+            baseChars.push({
+                type: 'coal',
+                x: Math.cos(angle) * r * 80,
+                y: y,
+                letter: pick(WORD_EMBERS),
+                size: randSize(8, 16),
+                rot: (Math.random() - 0.5) * 1.5,
+                dist: r,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+        baseChars.sort((a, b) => a.y - b.y);
+    }
+
+    /* ===== Асинхронная печка земли (по кадрамъ) =====
+       Дешёвыя операціи — сразу (размѣры, заливка, фонъ).
+       Тяжёлые циклы (тысячи fillText) — рѣжутся на куски: каждыя 20 итерацій
+       бейк отдаётъ управленіе браузеру (requestAnimationFrame).
+       UI никогда не замираетъ даже на первомъ проходѣ. */
+    function beginBake() {
+        // Уже готово для текущихъ размѣровъ — resolve сразу
+        if (bakeState === 'done' && bakedW === W && bakedH === H && bakedDpr === DPR) {
+            return Promise.resolve();
+        }
+        // Уже идётъ — тотъ же промис
+        if (bakeState === 'running') return bakePromise;
+
+        bakeState = 'running';
+        const myToken = ++bakeToken;
+        const targetW = W, targetH = H, targetDpr = DPR;
+
+        bakePromise = (async () => {
+            // Установка размѣровъ земляной канвы (дешёво)
+            groundCanvasEl.width  = Math.floor(targetW * targetDpr);
+            groundCanvasEl.height = Math.floor(targetH * targetDpr);
+            groundCanvasEl.style.width  = targetW + 'px';
+            groundCanvasEl.style.height = targetH + 'px';
+            groundCtx.setTransform(targetDpr, 0, 0, targetDpr, 0, 0);
+            groundCtx.imageSmoothingEnabled = false;
+            groundCtx.textAlign = 'center';
+            groundCtx.textBaseline = 'middle';
+            groundCtx.clearRect(0, 0, targetW, targetH);
+
+            // Заливка земли (дешёво)
+            groundCtx.beginPath();
+            groundCtx.moveTo(-10, targetH + 10);
+            for (let x = -10; x <= targetW + 10; x += 20) {
+                groundCtx.lineTo(x, groundTopAt(x));
+            }
+            groundCtx.lineTo(targetW + 10, targetH + 10);
+            groundCtx.closePath();
+            groundCtx.fillStyle = '#1a1535';
+            groundCtx.fill();
+
+            const nextFrame = () => new Promise(r => requestAnimationFrame(r));
+
+            // Циклъ 1 — по чанкамъ
+            let counter = 0;
+            for (let x = -20; x < targetW + 20; x += 5) {
+                if (myToken !== bakeToken) return;  // отмѣнёнъ (resize)
+                const topY = groundTopAt(x);
+                const layers = 10 + Math.floor(Math.random() * 6);
+                const distFromCenter = Math.min(1, Math.abs(x - CX) / (targetW / 2));
+                const baseGray = 52 - distFromCenter * 34;
+                for (let i = 0; i < layers; i++) {
+                    const y = topY + i * 7 + Math.random() * 9;
+                    if (y > targetH + 20) continue;
+                    const gray = Math.max(8, Math.round(baseGray + (Math.random() - 0.5) * 12));
+                    const size = Math.random() < 0.55 ? randSize(6, 10) : randSize(11, 20);
+                    groundCtx.save();
+                    groundCtx.translate(x + (Math.random() - 0.5) * 8, y);
+                    groundCtx.rotate((Math.random() - 0.5) * 0.6);
+                    groundCtx.font = 'normal ' + size + 'px ' + FONT;
+                    groundCtx.fillStyle = `rgb(${gray}, ${gray}, ${gray+5})`;
+                    groundCtx.globalAlpha = 0.95;
+                    groundCtx.fillText(pick(WORD_GROUND), 0, 0);
+                    groundCtx.restore();
+                }
+                if (++counter % 20 === 0) await nextFrame();
+            }
+
+            // Циклъ 2 — по чанкамъ
+            counter = 0;
+            for (let x = -20; x < targetW + 20; x += 3) {
+                if (myToken !== bakeToken) return;
+                const t = Math.abs((x - CX) / CX);
+                if (t < 0.55) continue;
+                const topY = groundTopAt(x);
+                const layers = 8 + Math.floor(Math.random() * 5);
+                const distFromCenter = Math.min(1, Math.abs(x - CX) / (targetW / 2));
+                const baseGray = 26 - distFromCenter * 20;
+                for (let i = 0; i < layers; i++) {
+                    const y = topY + i * 6 + Math.random() * 8;
+                    if (y > targetH + 20) continue;
+                    const gray = Math.max(5, Math.round(baseGray + (Math.random() - 0.5) * 8));
+                    const size = randSize(4, 8);
+                    groundCtx.save();
+                    groundCtx.translate(x + (Math.random() - 0.5) * 6, y);
+                    groundCtx.rotate((Math.random() - 0.5) * 0.7);
+                    groundCtx.font = 'normal ' + size + 'px ' + FONT;
+                    groundCtx.fillStyle = `rgb(${gray}, ${gray}, ${gray+4})`;
+                    groundCtx.globalAlpha = 0.9;
+                    groundCtx.fillText(pick(WORD_GROUND), 0, 0);
+                    groundCtx.restore();
+                }
+                if (++counter % 20 === 0) await nextFrame();
+            }
+
+            if (myToken !== bakeToken) return;
+
+            // Брёвна (быстро, однимъ кускомъ)
+            groundCtx.save();
+            groundCtx.translate(CX, CY);
+            for (let i = 0; i < baseChars.length; i++) {
+                const c = baseChars[i];
+                if (c.type !== 'log') continue;
+                groundCtx.save();
+                groundCtx.translate(c.x, c.y);
+                groundCtx.rotate(c.rot);
+                groundCtx.font = 'normal ' + c.size + 'px ' + FONT;
+                groundCtx.fillStyle = c.color;
+                groundCtx.fillText(c.letter, 0, 0);
+                groundCtx.restore();
+            }
+            groundCtx.restore();
+
+            if (myToken === bakeToken) {
+                bakedW = targetW;
+                bakedH = targetH;
+                bakedDpr = targetDpr;
+                bakeState = 'done';
+            }
+        })();
+        return bakePromise;
+    }
+
+    /* ===== Дешёвыя размѣры (безъ бейка) ===== */
+    function updateCanvasDimensions() {
         DPR = Math.min(window.devicePixelRatio || 1, 2);
         W = window.innerWidth;
         H = window.innerHeight;
+        CX = W / 2;
+        CY = H - GROUND_HEIGHT + 8;
+
         fireCanvas.width  = Math.floor(W * DPR);
         fireCanvas.height = Math.floor(H * DPR);
-        fireCanvas.style.width = W + 'px';
+        fireCanvas.style.width  = W + 'px';
         fireCanvas.style.height = H + 'px';
         fCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
         fCtx.imageSmoothingEnabled = false;
         fCtx.textAlign = 'center';
         fCtx.textBaseline = 'middle';
-        CX = W / 2;
-        CY = H - GROUND_HEIGHT + 8;
-        particles = [];
+
+        particleCount = 0;
+        flameTipInit = false;
         flameTipX = CX;
         flameTipY = CY - 80;
-        flameTipInit = false;
         initBaseChars();
-        bakeGround();
     }
 
     function smokeVyBase(vis)      { return -(60 + vis * 14); }
@@ -9691,7 +9804,8 @@ body.zen-active #zen-fire-canvas { display: block; }
                 maxLife: 1.8 + Math.random() * 0.8,
                 text: pick(WORD_SPARKS),
                 color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
-                size: randSize(7, 11)
+                size: randSize(7, 11),
+                fontStr: 'normal ' + randSize(7, 11) + 'px ' + FONT
             });
 
             addParticle({
@@ -9705,7 +9819,8 @@ body.zen-active #zen-fire-canvas { display: block; }
                 maxLife: 2.0 + Math.random() * 0.8,
                 text: pick(WORD_SPARKS),
                 color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
-                size: randSize(7, 11)
+                size: randSize(7, 11),
+                fontStr: 'normal ' + randSize(7, 11) + 'px ' + FONT
             });
         }
     }
@@ -9723,6 +9838,7 @@ body.zen-active #zen-fire-canvas { display: block; }
             maxLife: 1.6 + Math.random() * 0.6,
             text: pick(WORD_EMBERS),
             size: randSize(8, 13),
+            fontStr: 'normal ' + randSize(8, 13) + 'px ' + FONT,
             rot: (Math.random() - 0.5) * 2,
             rotSpeed: (Math.random() - 0.5) * 8,
             angle: 0
@@ -9775,8 +9891,16 @@ body.zen-active #zen-fire-canvas { display: block; }
         document.body.appendChild(fireCanvas);
         fCtx = fireCanvas.getContext('2d');
 
-        resizeFireCanvas();
-        window.addEventListener('resize', resizeFireCanvas);
+        updateCanvasDimensions();
+
+        // Первый бейк — на простоѣ браузера: страница сразу отзывчива
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(beginBake, { timeout: 4000 });
+        } else {
+            setTimeout(beginBake, 1500);
+        }
+
+        window.addEventListener('resize', onResize);
 
         document.addEventListener('pointerdown', function(e) {
             if (!isZen) return;
@@ -9789,42 +9913,18 @@ body.zen-active #zen-fire-canvas { display: block; }
         requestAnimationFrame(fireLoop);
     }
 
-    function initBaseChars() {
-        baseChars = [];
-        for (let i = 0; i < 200; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const r = Math.sqrt(Math.random());
-            const sinA = Math.sin(angle);
-            baseChars.push({
-                type: 'log',
-                x: Math.cos(angle) * r * 80,
-                y: sinA * r * (sinA > 0 ? 26 : 14),
-                letter: pick(WORD_LOGS),
-                size: randSize(12, 24),
-                rot: (Math.random() - 0.5) * 1.5,
-                color: Math.random() < 0.8 ? '#120500' : '#2a1000'
-            });
+    function onResize() {
+        updateCanvasDimensions();
+        // Отмѣняемъ возможный незавершённый бейк и запускаемъ новый въ простоѣ
+        bakeToken++;
+        bakeState = 'idle';
+        bakedW = 0; bakedH = 0; bakedDpr = 0;
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(beginBake, { timeout: 4000 });
+        } else {
+            setTimeout(beginBake, 1500);
         }
-        for (let i = 0; i < 250; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const r = Math.sqrt(Math.random()) * 0.7;
-            let y = Math.sin(angle) * r * 15;
-            if (y < -10) y = -10;
-            baseChars.push({
-                type: 'coal',
-                x: Math.cos(angle) * r * 80,
-                y: y,
-                letter: pick(WORD_EMBERS),
-                size: randSize(8, 16),
-                rot: (Math.random() - 0.5) * 1.5,
-                dist: r,
-                phase: Math.random() * Math.PI * 2
-            });
-        }
-        baseChars.sort((a, b) => a.y - b.y);
     }
-
-    function addParticle(p) { if (particles.length < 5000) particles.push(p); }
 
     function spawnSmoke(x, y, vyBase, growRate, opts) {
         opts = opts || {};
@@ -9839,6 +9939,7 @@ body.zen-active #zen-fire-canvas { display: block; }
             maxLife: (5 + Math.random() * 3) * (isFogWeather ? 1.5 : 1) * (opts.lifeMul || 1),
             text: pick(WORD_SMOKE),
             size: startSize * (isFogWeather ? 1.6 : 1),
+            fontStr: 'normal ' + (startSize * (isFogWeather ? 1.6 : 1)) + 'px ' + FONT,
             age: 0,
             seed: Math.random() * Math.PI * 2,
             growRate: growRate * (isFogWeather ? 0.55 : 1),
@@ -9891,11 +9992,12 @@ body.zen-active #zen-fire-canvas { display: block; }
         const lvlScale = Math.min(1, Math.max(0.1, lvl));
         const pulse = (Math.sin(time * 0.003) + 1) / 2;
 
-        // 1. ЯДРО (центральный факел)
+        // 1. ЯДРО
         const coreRate = (50 + lvl * 20) * (0.7 + 0.3 * pulse);
         let coreCount = coreRate * dt;
         while (coreCount > 0) {
             if (Math.random() < coreCount) {
+                const sz = randSize(16, 24) * lvlScale;
                 addParticle({
                     type: 'fire-core',
                     x: CX + (Math.random() - 0.5) * 35,
@@ -9905,26 +10007,28 @@ body.zen-active #zen-fire-canvas { display: block; }
                     life: 1,
                     maxLife: 0.7 + Math.random() * 0.4,
                     text: pick(WORD_FIRE),
-                    size: randSize(16, 24) * lvlScale,
+                    size: sz,
+                    fontStr: 'normal ' + sz + 'px ' + FONT,
                     swaySeed: Math.random() * Math.PI * 2
                 });
             }
             coreCount -= 1;
         }
 
-        /* 2. СУБФАКЕЛЫ (левый и правый) */
+        // 2. СУБФАКЕЛЫ
         if (Math.random() < dt * (20 + lvl * 10)) {
+            const sz = randSize(12, 18) * lvlScale;
             addParticle({
                 type: 'fire-sub', x: CX - 22 + (Math.random() - 0.5) * 15, y: CY - 32,
                 vx: -20 - Math.random() * 20, vy: -80 - Math.random() * 40,
                 life: 1, maxLife: 0.5 + Math.random() * 0.3,
-                text: pick(WORD_FIRE), size: randSize(12, 18) * lvlScale, swaySeed: Math.random() * Math.PI * 2
+                text: pick(WORD_FIRE), size: sz, fontStr: 'normal ' + sz + 'px ' + FONT, swaySeed: Math.random() * Math.PI * 2
             });
             addParticle({
                 type: 'fire-sub', x: CX + 22 + (Math.random() - 0.5) * 15, y: CY - 32,
                 vx: 20 + Math.random() * 20, vy: -80 - Math.random() * 40,
                 life: 1, maxLife: 0.5 + Math.random() * 0.3,
-                text: pick(WORD_FIRE), size: randSize(12, 18) * lvlScale, swaySeed: Math.random() * Math.PI * 2
+                text: pick(WORD_FIRE), size: sz, fontStr: 'normal ' + sz + 'px ' + FONT, swaySeed: Math.random() * Math.PI * 2
             });
         }
 
@@ -9936,28 +10040,27 @@ body.zen-active #zen-fire-canvas { display: block; }
             if (Math.random() < outerCount) {
                 const u = (Math.random() - 0.5) * 2;
                 const spawnX = CX + u * spread / 2;
+                const sz = randSize(12, 20) * lvlScale;
                 addParticle({
                     type: 'fire-outer',
                     x: spawnX, y: CY - 5 + u * u * 15,
                     vx: 0, vy: -60 - Math.random() * 30 - pulse * lvl * 10,
                     initDX: spawnX - CX,
                     life: 1, maxLife: 0.7 + Math.random() * 0.6 + pulse * 0.2,
-                    text: pick(WORD_FIRE), size: randSize(12, 20) * lvlScale,
+                    text: pick(WORD_FIRE), size: sz, fontStr: 'normal ' + sz + 'px ' + FONT,
                     swaySeed: Math.random() * Math.PI * 2
                 });
             }
             outerCount -= 1;
         }
 
-        /* 4. ДЫМ
-           Точка рождения опущена к основанию (+40 к Y) и отслеживание кончика
-           теперь захватывает более низкие частицы огня. */
-        const smokeRate = 4 + lvl * 10; 
+        // 4. ДЫМ
+        const smokeRate = 4 + lvl * 10;
         let smokeCount = smokeRate * dt;
         const smokeVyB = smokeVyBase(lvl);
         const smokeGrowV = smokeGrow(lvl);
         const tipX = flameTipInit ? flameTipX : CX;
-        const tipY = (flameTipInit ? flameTipY : (CY - 80)) + 40; // Опускаем к основанию
+        const tipY = (flameTipInit ? flameTipY : (CY - 80)) + 40;
         while (smokeCount > 0) {
             if (Math.random() < smokeCount) {
                 spawnSmoke(
@@ -9974,6 +10077,7 @@ body.zen-active #zen-fire-canvas { display: block; }
         // 5. ВЕРТИКАЛЬНЫЕ ИСКРЫ
         if (Math.random() < dt * (8 + lvl * 5)) {
             const vyB = vertSparkVyBase(lvl);
+            const sz = randSize(6, 12);
             addParticle({
                 type: 'spark',
                 x: CX + (Math.random() - 0.5) * 40,
@@ -9985,7 +10089,8 @@ body.zen-active #zen-fire-canvas { display: block; }
                 maxLife: 1.5 + Math.random() * 1.0,
                 text: pick(WORD_SPARKS),
                 color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
-                size: randSize(6, 12)
+                size: sz,
+                fontStr: 'normal ' + sz + 'px ' + FONT
             });
         }
 
@@ -9996,23 +10101,20 @@ body.zen-active #zen-fire-canvas { display: block; }
         }
     }
 
-    function drawBase(time) {
+    function drawCoals(time) {
         const heatLevel = heatVisual;
         const glowPower = Math.min(1, 0.35 + (fireLevel === 0 ? 0 : fireVisual / 3) + heatLevel * 0.3);
-
         fCtx.save();
         fCtx.translate(CX, CY);
-
-        baseChars.forEach(function(c) {
+        for (let i = 0; i < baseChars.length; i++) {
+            const c = baseChars[i];
+            if (c.type !== 'coal') continue;
             fCtx.save();
             fCtx.translate(c.x, c.y);
             fCtx.rotate(c.rot);
             fCtx.font = 'normal ' + c.size + 'px ' + FONT;
 
-            if (c.type === 'log') {
-                fCtx.fillStyle = c.color;
-                fCtx.shadowBlur = 0;
-            } else if (heatLevel < 0.05) {
+            if (heatLevel < 0.05) {
                 fCtx.fillStyle = '#050201';
                 fCtx.shadowBlur = 0;
             } else if (c.dist < 0.6) {
@@ -10041,8 +10143,7 @@ body.zen-active #zen-fire-canvas { display: block; }
             }
             fCtx.fillText(c.letter, 0, 0);
             fCtx.restore();
-        });
-
+        }
         fCtx.restore();
         fCtx.globalAlpha = 1;
         fCtx.shadowBlur = 0;
@@ -10093,14 +10194,21 @@ body.zen-active #zen-fire-canvas { display: block; }
         }
 
         fCtx.clearRect(0, 0, W, H);
-        drawBase(time);
+
+        // Отрисовка углей (плавная, каждый кадр)
+        drawCoals(time);
+
         spawnParticles(dt, time);
 
         const windNoise = Math.sin(time * 0.001) * 15 + Math.sin(time * 0.003) * 5;
         const windTotal = windNoise + windXWorld;
 
-        for (let i = particles.length - 1; i >= 0; i--) {
-            const p = particles[i];
+        fCtx.globalAlpha = 1;
+        fCtx.shadowBlur = 0;
+        fCtx.shadowColor = 'transparent';
+
+        for (let i = particleCount - 1; i >= 0; i--) {
+            const p = particlePool[i];
 
             if (p.type === 'coal-pop') {
                 const gt = groundTopAt(p.x);
@@ -10125,13 +10233,21 @@ body.zen-active #zen-fire-canvas { display: block; }
                     p.maxLife = 1.2 + Math.random() * 1.0;
                     p.life = 1;
                     p.size = Math.max(6, p.size - 2);
+                    p.fontStr = 'normal ' + p.size + 'px ' + FONT;
                     p.alpha = 1;
                     p.color = '#ffaa33';
                 }
             }
 
             p.life -= dt / p.maxLife;
-            if (p.life <= 0) { particles.splice(i, 1); continue; }
+
+            if (p.life <= 0) {
+                const lastP = particlePool[particleCount - 1];
+                particlePool[particleCount - 1] = p;
+                particlePool[i] = lastP;
+                particleCount--;
+                continue;
+            }
 
             if (p.type === 'fire-core') {
                 p.age = 1 - p.life;
@@ -10143,12 +10259,11 @@ body.zen-active #zen-fire-canvas { display: block; }
                 else if (p.life > 0.2) p.color = '#ff9d00';
                 else p.color = '#d83b00';
                 p.alpha = Math.min(1, p.life * 2.5);
-                
-                // Отслеживаем кончик пламени раньше (0.65), чтобы опустить точку спавна дыма
+
                 if (p.life < 0.65) {
                     if (!flameTipInit) { flameTipX = p.x; flameTipY = p.y; flameTipInit = true; }
                     else {
-                        flameTipX += (p.x - flameTipX) * 0.12; 
+                        flameTipX += (p.x - flameTipX) * 0.12;
                         flameTipY += (p.y - flameTipY) * 0.12;
                     }
                 }
@@ -10182,25 +10297,22 @@ body.zen-active #zen-fire-canvas { display: block; }
                 p.y += p.vy * dt;
 
                 const curl = Math.sin(time * 0.002 + p.seed) * (6 + p.age * 8);
-
-                // Дым сильнее подвержен ветру
                 p.vx += (windTotal * 1.4 + curl - p.vx) * dt * 0.55;
 
-                /* Формируем вытянутый перевернутый конус. */
                 const midBulge = Math.sin(Math.PI * p.age);
-                const spreadBulge = 1 + midBulge * 1.0; 
+                const spreadBulge = 1 + midBulge * 1.0;
                 const distFromCenter = p.x - CX;
                 p.x += distFromCenter * 0.25 * spreadBulge * p.age * dt;
                 p.x += p.vx * dt;
 
                 const grow = (p.growRate !== undefined) ? p.growRate : 3;
-                const sizeBulge = 1 + midBulge * 1.2; 
+                const sizeBulge = 1 + midBulge * 1.2;
                 p.size += dt * grow * sizeBulge * (p.fogWide ? 1.4 : 1);
+                p.fontStr = 'normal ' + p.size + 'px ' + FONT;
 
                 const shade = Math.round(15 + 170 * p.age);
                 p.color = `rgb(${shade},${Math.max(0,shade-5)},${Math.max(0,shade-10)})`;
 
-                // Полупрозрачность
                 let baseA;
                 if (p.age < 0.10) baseA = (p.age / 0.10) * 0.35;
                 else if (p.age > 0.5) baseA = Math.max(0, (1 - p.age) / 0.5) * 0.35;
@@ -10228,6 +10340,8 @@ body.zen-active #zen-fire-canvas { display: block; }
                 p.color = p.life > 0.4 ? '#ff9933' : '#cc3300';
             }
 
+            if (p.x < -80 || p.x > W + 80 || p.y < -60 || p.y > H + 60) continue;
+
             fCtx.globalAlpha = p.alpha !== undefined ? p.alpha : Math.max(0, Math.min(1, p.life));
             fCtx.fillStyle = p.color || '#fff';
 
@@ -10239,17 +10353,18 @@ body.zen-active #zen-fire-canvas { display: block; }
                 fCtx.shadowBlur = 0;
             }
 
-            fCtx.font = 'normal ' + p.size + 'px ' + FONT;
+            fCtx.font = p.fontStr;
+
             if (p.type === 'coal-pop') {
                 fCtx.save();
                 fCtx.translate(p.x, p.y);
                 fCtx.rotate(p.angle);
                 fCtx.fillText(p.text, 0, 0);
                 fCtx.restore();
+                fCtx.shadowBlur = 0;
             } else {
                 fCtx.fillText(p.text, p.x, p.y);
             }
-            fCtx.shadowBlur = 0;
         }
 
         fCtx.globalAlpha = 1;
@@ -10354,13 +10469,11 @@ body.zen-active #zen-fire-canvas { display: block; }
             smokeFadeT = 0;
             zeroEnteredAt = 0;
             coalsPopped = 0;
-            particles = [];
+            particleCount = 0;
             flameTipInit = false;
             flameTipX = CX;
             flameTipY = CY - 80;
             lastDecreaseAt = Date.now();
-
-            if (fireCanvas) resizeFireCanvas();
 
             fireCanvas.style.transition = 'none';
             groundCanvasEl.style.transition = 'none';
@@ -10376,13 +10489,20 @@ body.zen-active #zen-fire-canvas { display: block; }
                 wakeTimer = setTimeout(function() { floatBtn.classList.remove('active'); }, 1200);
             }
 
-            setTimeout(function() {
+            // Входъ мгновенный: контентъ уже улетаетъ. Канва выѣдетъ,
+            // когда исполнится И 2200 мс пауза, И бейк будетъ готовъ.
+            // Бейк идётъ по кадрамъ — затыка нѣтъ, даже если его запустить сейчасъ.
+            Promise.all([
+                new Promise(function(res) { setTimeout(res, 2200); }),
+                beginBake()
+            ]).then(function() {
+                if (!isZen) { zenTransitioning = false; return; }
                 fireCanvas.style.transition = 'transform 1.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
                 groundCanvasEl.style.transition = 'transform 1.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
                 fireCanvas.style.transform = 'translateY(0)';
                 groundCanvasEl.style.transform = 'translateY(0)';
                 setTimeout(function() { zenTransitioning = false; }, 1350);
-            }, 2200);
+            });
 
         } else {
             releaseWakeLock();

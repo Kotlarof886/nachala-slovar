@@ -9384,7 +9384,7 @@ window.__weather = {
   else init();
 })();
 </script>
-<!-- ===== НАЧАЛО БЛОКА ZEN MODE (ОПТИМИЗИРОВАННЫЙ) ===== -->
+<!-- ===== НАЧАЛО БЛОКА ZEN MODE (ОПТИМИЗИРОВАННЫЙ, СПРАЙТЫ) ===== -->
 <style>
 @keyframes zenFlyUp { 0% { transform: translateY(0); } 100% { transform: translateY(-150vh); } }
 @keyframes zenFlyDown { 0% { transform: translateY(0); } 100% { transform: translateY(150vh); } }
@@ -9523,10 +9523,11 @@ body.zen-active #zen-fire-canvas { display: block; }
     const GROUND_HEIGHT = 65;
     const GROUND_DEPTH = 30;
     const MAX_PARTICLES = 5000;
+    const FONT = '"Gardenia Decor", "Yeseva One", Georgia, serif';
 
     // ===== Кэшъ испечённыхъ размѣровъ + отмѣна стараго бейка =====
     let bakedW = 0, bakedH = 0, bakedDpr = 0;
-    let bakeState = 'idle';   // 'idle' | 'running' | 'done'
+    let bakeState = 'idle';
     let bakePromise = null;
     let bakeToken = 0;
 
@@ -9542,7 +9543,132 @@ body.zen-active #zen-fire-canvas { display: block; }
     }
     let particleCount = 0;
 
-    const FONT = '"Gardenia Decor", "Yeseva One", Georgia, serif';
+    /* ===== Кэшъ спрайтовъ: fillText + shadowBlur → drawImage ===== */
+    const spriteCache = new Map();
+    let coalSpriteCache = new Map();
+    const SMOKE_BASE_SIZES = [24, 40, 64, 96];
+    const SMOKE_SHADES = ['#202020', '#505050', '#909090', '#c0c0c0'];
+    const smokeSpriteCache = [];
+    let smokeSpritesReady = false;
+
+    function makeSprite(text, size, color, glowColor, glowBlur) {
+        const pad = (glowBlur > 0 ? glowBlur + 4 : 4);
+        const w = Math.ceil(size * 1.1 + pad * 2);
+        const h = Math.ceil(size * 1.4 + pad * 2);
+        const c = document.createElement('canvas');
+        c.width  = Math.max(1, Math.ceil(w * DPR));
+        c.height = Math.max(1, Math.ceil(h * DPR));
+        const g = c.getContext('2d');
+        g.scale(DPR, DPR);
+        g.font = 'normal ' + size + 'px ' + FONT;
+        g.textAlign = 'center';
+        g.textBaseline = 'middle';
+        if (glowBlur > 0 && glowColor) {
+            g.shadowBlur = glowBlur;
+            g.shadowColor = glowColor;
+            g.fillStyle = color;
+            g.fillText(text, w / 2, h / 2);
+            g.shadowBlur = 0;
+            g.shadowColor = 'transparent';
+        }
+        g.fillStyle = color;
+        g.fillText(text, w / 2, h / 2);
+        return { img: c, w: w, h: h };
+    }
+
+    function getSprite(text, size, color, glowColor, glowBlur) {
+        size = Math.max(1, Math.round(size));
+        const key = text + '|' + size + '|' + color + '|' + (glowColor || '') + '|' + (glowBlur | 0);
+        let s = spriteCache.get(key);
+        if (s) return s;
+        if (spriteCache.size > 3000) spriteCache.clear();
+        s = makeSprite(text, size, color, glowColor, glowBlur);
+        spriteCache.set(key, s);
+        return s;
+    }
+
+    /* Угли: переливъ сохранёнъ — shift квантуемъ на 8 ступеней, каждая ступень свой спрайтъ */
+    function getCoalSprite(letter, size, isHot, heatLevel, shift) {
+        size = Math.max(1, Math.round(size));
+        if (!isHot) {
+            const key = letter + '|' + size + '|cold';
+            let s = coalSpriteCache.get(key);
+            if (s) return s;
+            s = makeSprite(letter, size, '#050201', null, 0);
+            coalSpriteCache.set(key, s);
+            return s;
+        }
+        if (coalSpriteCache.size > 8000) coalSpriteCache.clear();
+
+        const shiftQ = Math.round((shift || 0) * 4) / 4;
+
+        if (heatLevel < 0.98) {
+            const bucket = Math.round(heatLevel * 20) / 20;
+            const cr = Math.round((200 + shiftQ * 30) * bucket);
+            const cg = Math.round((90 + shiftQ * 20) * bucket);
+            const cb = Math.round((20 + shiftQ * 8) * bucket);
+            const color = 'rgb(' + cr + ',' + cg + ',' + cb + ')';
+            const glow  = 'rgba(255,60,0,' + bucket.toFixed(2) + ')';
+            const key = letter + '|' + size + '|rgb|' + color + '|' + bucket;
+            let s = coalSpriteCache.get(key);
+            if (s) return s;
+            s = makeSprite(letter, size, color, glow, Math.max(2, 10 * bucket));
+            coalSpriteCache.set(key, s);
+            return s;
+        }
+
+        /* Сверхгорячій уголь — полный переливъ через HSL, какъ въ оригиналѣ */
+        const glowPower = Math.min(1, 0.35 + (fireLevel === 0 ? 0 : fireVisual / 3) + heatLevel * 0.3);
+        const hue = 20 + shiftQ * 15;
+        const light = 40 + shiftQ * 20 + glowPower * 20;
+        const hueQ = Math.round(hue / 5) * 5;
+        const lightQ = Math.round(light / 10) * 10;
+        const color = 'hsl(' + hueQ + ',100%,' + lightQ + '%)';
+        const glow  = 'hsl(' + hueQ + ',100%,50%)';
+        const key = letter + '|' + size + '|hsl|' + hueQ + '|' + lightQ;
+        let s = coalSpriteCache.get(key);
+        if (s) return s;
+        s = makeSprite(letter, size, color, glow, 5);
+        coalSpriteCache.set(key, s);
+        return s;
+    }
+
+    function initSmokeSprites() {
+        if (smokeSpritesReady) return;
+        smokeSpriteCache.length = 0;
+        for (let b = 0; b < SMOKE_BASE_SIZES.length; b++) {
+            const row = [];
+            for (let sh = 0; sh < SMOKE_SHADES.length; sh++) {
+                row.push(makeSprite('M', SMOKE_BASE_SIZES[b], SMOKE_SHADES[sh], null, 0));
+            }
+            smokeSpriteCache.push(row);
+        }
+        smokeSpritesReady = true;
+    }
+
+    function pickSmokeBaseIdx(size) {
+        let best = 0, bestDiff = Infinity;
+        for (let i = 0; i < SMOKE_BASE_SIZES.length; i++) {
+            const d = Math.abs(SMOKE_BASE_SIZES[i] - size);
+            if (d < bestDiff) { bestDiff = d; best = i; }
+        }
+        return best;
+    }
+
+    function pickSmokeShadeIdx(age) {
+        if (age < 0.22) return 0;
+        if (age < 0.45) return 1;
+        if (age < 0.70) return 2;
+        return 3;
+    }
+
+    function clearSpriteCaches() {
+        spriteCache.clear();
+        coalSpriteCache.clear();
+        smokeSpritesReady = false;
+        initSmokeSprites();
+    }
+
     const WORD_FIRE   = ['о', 'Г', 'о', 'н', 'ь'];
     const WORD_SMOKE  = ['д', 'ы', 'M', 'ъ'];
     const WORD_LOGS   = ['к', 'р', 'я', 'ж', 'и', 'у', 'г', 'л'];
@@ -9552,7 +9678,6 @@ body.zen-active #zen-fire-canvas { display: block; }
 
     let weatherLastFetch = 0;
     let windXWorld = 0;
-    let isFogWeather = false;
     let isRainOrSnow = false;
     let flameTipX = 0, flameTipY = 0, flameTipInit = false;
 
@@ -9569,7 +9694,6 @@ body.zen-active #zen-fire-canvas { display: block; }
             if (Math.abs(sign) < 0.1) sign = 1;
         }
         windXWorld = sign * sp * 8.5;
-        isFogWeather = w.mode === 'fog';
         isRainOrSnow = w.mode === 'rain' || w.mode === 'snow';
     }
 
@@ -9627,17 +9751,11 @@ body.zen-active #zen-fire-canvas { display: block; }
         baseChars.sort((a, b) => a.y - b.y);
     }
 
-    /* ===== Асинхронная печка земли (по кадрамъ) =====
-       Дешёвыя операціи — сразу (размѣры, заливка, фонъ).
-       Тяжёлые циклы (тысячи fillText) — рѣжутся на куски: каждыя 20 итерацій
-       бейк отдаётъ управленіе браузеру (requestAnimationFrame).
-       UI никогда не замираетъ даже на первомъ проходѣ. */
+    /* ===== Асинхронная печка земли (по кадрамъ) ===== */
     function beginBake() {
-        // Уже готово для текущихъ размѣровъ — resolve сразу
         if (bakeState === 'done' && bakedW === W && bakedH === H && bakedDpr === DPR) {
             return Promise.resolve();
         }
-        // Уже идётъ — тотъ же промис
         if (bakeState === 'running') return bakePromise;
 
         bakeState = 'running';
@@ -9645,7 +9763,6 @@ body.zen-active #zen-fire-canvas { display: block; }
         const targetW = W, targetH = H, targetDpr = DPR;
 
         bakePromise = (async () => {
-            // Установка размѣровъ земляной канвы (дешёво)
             groundCanvasEl.width  = Math.floor(targetW * targetDpr);
             groundCanvasEl.height = Math.floor(targetH * targetDpr);
             groundCanvasEl.style.width  = targetW + 'px';
@@ -9656,7 +9773,6 @@ body.zen-active #zen-fire-canvas { display: block; }
             groundCtx.textBaseline = 'middle';
             groundCtx.clearRect(0, 0, targetW, targetH);
 
-            // Заливка земли (дешёво)
             groundCtx.beginPath();
             groundCtx.moveTo(-10, targetH + 10);
             for (let x = -10; x <= targetW + 10; x += 20) {
@@ -9669,10 +9785,9 @@ body.zen-active #zen-fire-canvas { display: block; }
 
             const nextFrame = () => new Promise(r => requestAnimationFrame(r));
 
-            // Циклъ 1 — по чанкамъ
             let counter = 0;
             for (let x = -20; x < targetW + 20; x += 5) {
-                if (myToken !== bakeToken) return;  // отмѣнёнъ (resize)
+                if (myToken !== bakeToken) return;
                 const topY = groundTopAt(x);
                 const layers = 10 + Math.floor(Math.random() * 6);
                 const distFromCenter = Math.min(1, Math.abs(x - CX) / (targetW / 2));
@@ -9694,7 +9809,6 @@ body.zen-active #zen-fire-canvas { display: block; }
                 if (++counter % 20 === 0) await nextFrame();
             }
 
-            // Циклъ 2 — по чанкамъ
             counter = 0;
             for (let x = -20; x < targetW + 20; x += 3) {
                 if (myToken !== bakeToken) return;
@@ -9723,7 +9837,6 @@ body.zen-active #zen-fire-canvas { display: block; }
 
             if (myToken !== bakeToken) return;
 
-            // Брёвна (быстро, однимъ кускомъ)
             groundCtx.save();
             groundCtx.translate(CX, CY);
             for (let i = 0; i < baseChars.length; i++) {
@@ -9749,7 +9862,6 @@ body.zen-active #zen-fire-canvas { display: block; }
         return bakePromise;
     }
 
-    /* ===== Дешёвыя размѣры (безъ бейка) ===== */
     function updateCanvasDimensions() {
         DPR = Math.min(window.devicePixelRatio || 1, 2);
         W = window.innerWidth;
@@ -9893,7 +10005,16 @@ body.zen-active #zen-fire-canvas { display: block; }
 
         updateCanvasDimensions();
 
-        // Первый бейк — на простоѣ браузера: страница сразу отзывчива
+        if (document.fonts && document.fonts.ready && document.fonts.ready.then) {
+            document.fonts.ready.then(function () {
+                spriteCache.clear();
+                coalSpriteCache.clear();
+                smokeSpritesReady = false;
+                initSmokeSprites();
+            });
+        }
+        initSmokeSprites();
+
         if ('requestIdleCallback' in window) {
             requestIdleCallback(beginBake, { timeout: 4000 });
         } else {
@@ -9915,7 +10036,7 @@ body.zen-active #zen-fire-canvas { display: block; }
 
     function onResize() {
         updateCanvasDimensions();
-        // Отмѣняемъ возможный незавершённый бейк и запускаемъ новый въ простоѣ
+        clearSpriteCaches();
         bakeToken++;
         bakeState = 'idle';
         bakedW = 0; bakedH = 0; bakedDpr = 0;
@@ -9936,15 +10057,13 @@ body.zen-active #zen-fire-canvas { display: block; }
             vx: (Math.random() - 0.5) * 10,
             vy: vyBase - Math.random() * 20,
             life: 1,
-            maxLife: (5 + Math.random() * 3) * (isFogWeather ? 1.5 : 1) * (opts.lifeMul || 1),
+            maxLife: (5 + Math.random() * 3) * (opts.lifeMul || 1),
             text: pick(WORD_SMOKE),
-            size: startSize * (isFogWeather ? 1.6 : 1),
-            fontStr: 'normal ' + (startSize * (isFogWeather ? 1.6 : 1)) + 'px ' + FONT,
+            size: startSize,
+            fontStr: 'normal ' + startSize + 'px ' + FONT,
             age: 0,
             seed: Math.random() * Math.PI * 2,
-            growRate: growRate * (isFogWeather ? 0.55 : 1),
-            fogWide: isFogWeather,
-            fogSlowVy: isFogWeather,
+            growRate: growRate,
             dim: opts.dim
         });
     }
@@ -9992,7 +10111,6 @@ body.zen-active #zen-fire-canvas { display: block; }
         const lvlScale = Math.min(1, Math.max(0.1, lvl));
         const pulse = (Math.sin(time * 0.003) + 1) / 2;
 
-        // 1. ЯДРО
         const coreRate = (50 + lvl * 20) * (0.7 + 0.3 * pulse);
         let coreCount = coreRate * dt;
         while (coreCount > 0) {
@@ -10015,7 +10133,6 @@ body.zen-active #zen-fire-canvas { display: block; }
             coreCount -= 1;
         }
 
-        // 2. СУБФАКЕЛЫ
         if (Math.random() < dt * (20 + lvl * 10)) {
             const sz = randSize(12, 18) * lvlScale;
             addParticle({
@@ -10032,7 +10149,6 @@ body.zen-active #zen-fire-canvas { display: block; }
             });
         }
 
-        // 3. ОБОЛОЧКА
         const outerRate = (60 + lvl * 30) * (0.6 + 0.4 * pulse);
         let outerCount = outerRate * dt;
         const spread = 60;
@@ -10054,7 +10170,6 @@ body.zen-active #zen-fire-canvas { display: block; }
             outerCount -= 1;
         }
 
-        // 4. ДЫМ
         const smokeRate = 4 + lvl * 10;
         let smokeCount = smokeRate * dt;
         const smokeVyB = smokeVyBase(lvl);
@@ -10074,7 +10189,6 @@ body.zen-active #zen-fire-canvas { display: block; }
             smokeCount -= 1;
         }
 
-        // 5. ВЕРТИКАЛЬНЫЕ ИСКРЫ
         if (Math.random() < dt * (8 + lvl * 5)) {
             const vyB = vertSparkVyBase(lvl);
             const sz = randSize(6, 12);
@@ -10094,7 +10208,6 @@ body.zen-active #zen-fire-canvas { display: block; }
             });
         }
 
-        // 6. БОКОВЫЕ ИСКРЫ
         const sparkRate = 0.15 + lvl * lvl * 0.06;
         if (lvl > 0.5 && Math.random() < dt * sparkRate) {
             spawnSidewaysSparks(1, lvl);
@@ -10103,50 +10216,39 @@ body.zen-active #zen-fire-canvas { display: block; }
 
     function drawCoals(time) {
         const heatLevel = heatVisual;
-        const glowPower = Math.min(1, 0.35 + (fireLevel === 0 ? 0 : fireVisual / 3) + heatLevel * 0.3);
         fCtx.save();
         fCtx.translate(CX, CY);
         for (let i = 0; i < baseChars.length; i++) {
             const c = baseChars[i];
             if (c.type !== 'coal') continue;
+
+            let sprite;
+            if (heatLevel < 0.05) {
+                sprite = getCoalSprite(c.letter, c.size, false, 0, 0);
+            } else if (c.dist < 0.6) {
+                const shift = Math.sin(time * 0.004 + c.phase);
+                sprite = getCoalSprite(c.letter, c.size, true, heatLevel, shift);
+            } else {
+                const dim = Math.max(0.1, heatLevel);
+                const cr = Math.round(18 * dim);
+                const cg = Math.round(5 * dim);
+                const color = 'rgb(' + cr + ',' + cg + ',0)';
+                const key = c.letter + '|' + Math.round(c.size) + '|dark|' + color;
+                sprite = coalSpriteCache.get(key);
+                if (!sprite) {
+                    sprite = makeSprite(c.letter, c.size, color, null, 0);
+                    coalSpriteCache.set(key, sprite);
+                }
+            }
+
             fCtx.save();
             fCtx.translate(c.x, c.y);
             fCtx.rotate(c.rot);
-            fCtx.font = 'normal ' + c.size + 'px ' + FONT;
-
-            if (heatLevel < 0.05) {
-                fCtx.fillStyle = '#050201';
-                fCtx.shadowBlur = 0;
-            } else if (c.dist < 0.6) {
-                const shift = Math.sin(time * 0.004 + c.phase);
-                if (heatLevel < 0.98) {
-                    const cr = Math.round((200 + shift * 30) * heatLevel);
-                    const cg = Math.round((90 + shift * 20) * heatLevel);
-                    const cb = Math.round((20 + shift * 8) * heatLevel);
-                    fCtx.fillStyle = `rgb(${cr},${cg},${cb})`;
-                    fCtx.shadowBlur = 10 * heatLevel;
-                    fCtx.shadowColor = `rgba(255, 60, 0, ${heatLevel})`;
-                } else {
-                    const hue = 20 + shift * 15;
-                    const light = 40 + shift * 20 + glowPower * 20;
-                    fCtx.fillStyle = `hsl(${hue}, 100%, ${light}%)`;
-                    fCtx.shadowBlur = 6 * glowPower;
-                    fCtx.shadowColor = `hsl(${hue}, 100%, 50%)`;
-                }
-            } else {
-                if (heatLevel < 0.98) {
-                    fCtx.fillStyle = `rgb(${Math.round(18 * heatLevel)},${Math.round(5 * heatLevel)},0)`;
-                } else {
-                    fCtx.fillStyle = '#120500';
-                }
-                fCtx.shadowBlur = 0;
-            }
-            fCtx.fillText(c.letter, 0, 0);
+            fCtx.drawImage(sprite.img, -sprite.w / 2, -sprite.h / 2, sprite.w, sprite.h);
             fCtx.restore();
         }
         fCtx.restore();
         fCtx.globalAlpha = 1;
-        fCtx.shadowBlur = 0;
     }
 
     function fireLoop(time) {
@@ -10195,17 +10297,12 @@ body.zen-active #zen-fire-canvas { display: block; }
 
         fCtx.clearRect(0, 0, W, H);
 
-        // Отрисовка углей (плавная, каждый кадр)
         drawCoals(time);
 
         spawnParticles(dt, time);
 
         const windNoise = Math.sin(time * 0.001) * 15 + Math.sin(time * 0.003) * 5;
         const windTotal = windNoise + windXWorld;
-
-        fCtx.globalAlpha = 1;
-        fCtx.shadowBlur = 0;
-        fCtx.shadowColor = 'transparent';
 
         for (let i = particleCount - 1; i >= 0; i--) {
             const p = particlePool[i];
@@ -10259,7 +10356,6 @@ body.zen-active #zen-fire-canvas { display: block; }
                 else if (p.life > 0.2) p.color = '#ff9d00';
                 else p.color = '#d83b00';
                 p.alpha = Math.min(1, p.life * 2.5);
-
                 if (p.life < 0.65) {
                     if (!flameTipInit) { flameTipX = p.x; flameTipY = p.y; flameTipInit = true; }
                     else {
@@ -10292,27 +10388,18 @@ body.zen-active #zen-fire-canvas { display: block; }
             }
             else if (p.type === 'smoke') {
                 p.age = 1 - p.life;
-                if (!p.fogSlowVy) p.vy *= (1 - dt * 0.08);
-                else              p.vy *= (1 - dt * 0.04);
+                p.vy *= (1 - dt * 0.08);
                 p.y += p.vy * dt;
-
                 const curl = Math.sin(time * 0.002 + p.seed) * (6 + p.age * 8);
                 p.vx += (windTotal * 1.4 + curl - p.vx) * dt * 0.55;
-
                 const midBulge = Math.sin(Math.PI * p.age);
                 const spreadBulge = 1 + midBulge * 1.0;
                 const distFromCenter = p.x - CX;
                 p.x += distFromCenter * 0.25 * spreadBulge * p.age * dt;
                 p.x += p.vx * dt;
-
                 const grow = (p.growRate !== undefined) ? p.growRate : 3;
                 const sizeBulge = 1 + midBulge * 1.2;
-                p.size += dt * grow * sizeBulge * (p.fogWide ? 1.4 : 1);
-                p.fontStr = 'normal ' + p.size + 'px ' + FONT;
-
-                const shade = Math.round(15 + 170 * p.age);
-                p.color = `rgb(${shade},${Math.max(0,shade-5)},${Math.max(0,shade-10)})`;
-
+                p.size += dt * grow * sizeBulge;
                 let baseA;
                 if (p.age < 0.10) baseA = (p.age / 0.10) * 0.35;
                 else if (p.age > 0.5) baseA = Math.max(0, (1 - p.age) / 0.5) * 0.35;
@@ -10342,28 +10429,32 @@ body.zen-active #zen-fire-canvas { display: block; }
 
             if (p.x < -80 || p.x > W + 80 || p.y < -60 || p.y > H + 60) continue;
 
-            fCtx.globalAlpha = p.alpha !== undefined ? p.alpha : Math.max(0, Math.min(1, p.life));
-            fCtx.fillStyle = p.color || '#fff';
+            fCtx.globalAlpha = (p.alpha !== undefined) ? p.alpha : Math.max(0, Math.min(1, p.life));
 
-            if (p.type === 'spark' || p.type === 'coal-pop') {
-                fCtx.shadowBlur = 8; fCtx.shadowColor = p.color;
-            } else if (p.type === 'smolder') {
-                fCtx.shadowBlur = 6; fCtx.shadowColor = p.color;
-            } else {
-                fCtx.shadowBlur = 0;
+            if (p.type === 'smoke') {
+                if (!smokeSpritesReady) initSmokeSprites();
+                const bIdx = pickSmokeBaseIdx(p.size);
+                const sIdx = pickSmokeShadeIdx(p.age);
+                const sprite = smokeSpriteCache[bIdx][sIdx];
+                const drawW = p.size * (sprite.w / SMOKE_BASE_SIZES[bIdx]);
+                const drawH = p.size * (sprite.h / SMOKE_BASE_SIZES[bIdx]);
+                fCtx.drawImage(sprite.img, p.x - drawW / 2, p.y - drawH / 2, drawW, drawH);
             }
+            else {
+                let glowColor = null, glowBlur = 0;
+                if (p.type === 'spark' || p.type === 'coal-pop') { glowColor = p.color; glowBlur = 8; }
+                else if (p.type === 'smolder') { glowColor = p.color; glowBlur = 6; }
+                const sprite = getSprite(p.text, p.size, p.color || '#fff', glowColor, glowBlur);
 
-            fCtx.font = p.fontStr;
-
-            if (p.type === 'coal-pop') {
-                fCtx.save();
-                fCtx.translate(p.x, p.y);
-                fCtx.rotate(p.angle);
-                fCtx.fillText(p.text, 0, 0);
-                fCtx.restore();
-                fCtx.shadowBlur = 0;
-            } else {
-                fCtx.fillText(p.text, p.x, p.y);
+                if (p.type === 'coal-pop') {
+                    fCtx.save();
+                    fCtx.translate(p.x, p.y);
+                    fCtx.rotate(p.angle);
+                    fCtx.drawImage(sprite.img, -sprite.w / 2, -sprite.h / 2, sprite.w, sprite.h);
+                    fCtx.restore();
+                } else {
+                    fCtx.drawImage(sprite.img, p.x - sprite.w / 2, p.y - sprite.h / 2, sprite.w, sprite.h);
+                }
             }
         }
 
@@ -10489,9 +10580,6 @@ body.zen-active #zen-fire-canvas { display: block; }
                 wakeTimer = setTimeout(function() { floatBtn.classList.remove('active'); }, 1200);
             }
 
-            // Входъ мгновенный: контентъ уже улетаетъ. Канва выѣдетъ,
-            // когда исполнится И 2200 мс пауза, И бейк будетъ готовъ.
-            // Бейк идётъ по кадрамъ — затыка нѣтъ, даже если его запустить сейчасъ.
             Promise.all([
                 new Promise(function(res) { setTimeout(res, 2200); }),
                 beginBake()

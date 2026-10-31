@@ -9373,7 +9373,13 @@ var FOG_CODES = [45,48];
       moon: { alt: moonPos.alt, az: moonPos.az, phase: moonPos.phase, x: moonScreenX, y: moonScreenY, radius: moonRadius, diameter: moonRadius * 2 }
     };
   };
-
+/* Экспортъ погодныхъ данныхъ для другихъ скриптовъ (ZEN-режимъ, костёръ) */
+window.__weather = {
+    get windSpeed() { return wWind; },
+    get windDir()   { return wWDir; },
+    get mode()      { return mode; },
+    get level()     { return level; }
+};
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
@@ -9463,59 +9469,172 @@ body.zen-active #zen-feta-btn.active {
 body.zen-active #zen-feta-btn:active .zf-ring { transform: scale(0.92); filter: brightness(0.85); }
 @media (max-width: 560px) { .zf-ring { width: 32px; height: 32px; } .zf-well svg { width: 18px; height: 18px; } }
 
+#zen-ground-canvas {
+    position: fixed; inset: 0;
+    width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: 99997;
+    display: none;
+    will-change: transform;
+}
+body.zen-active #zen-ground-canvas { display: block; }
+
 #zen-fire-canvas {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
+    position: fixed; inset: 0;
+    width: 100vw; height: 100vh;
     pointer-events: none;
     z-index: 99998;
     display: none;
-    opacity: 0;
-    transition: opacity 1.5s ease;
+    will-change: transform;
 }
-body.zen-active #zen-fire-canvas {
-    display: block;
-    opacity: 1;
-}
+body.zen-active #zen-fire-canvas { display: block; }
 </style>
 
 <script>
 (function() {
     let isZen = false;
+    let zenTransitioning = false;
     let pressStart = 0;
     let wakeTimer = null;
     let floatBtn = null;
     let screenWakeLock = null;
 
     let fireCanvas, fCtx;
-    let fireLevel = 1;
-    let fireVisual = 1;
+    let groundCanvasEl, groundCtx;
+
+    // Стадии: 0, 0.5, 0.7 (Zen-покой), 1, 2, 3, 4, 5
+    let fireLevel = 0.7;
+    let fireTargetVisual = 0.7;
+    let fireVisual = 0.7;
+    let heatVisual = 1;
+    let coolT = 0;
+    let smokeFadeT = 1;
+    let zeroEnteredAt = 0;
+    let lastDecreaseAt = Date.now();
+
+    let coalsPopped = 0;
+    let nextCoalPopAt = 0;
+
     let particles = [];
-    let logs = [];
-    let bedEmbers = [];
+    let baseChars = [];
+
     let lastFireTime = 0;
-    let lastInteraction = Date.now();
-    let lastDecrease = Date.now();
 
     let W = 600, H = 800, CX = 300, CY = 750;
     let DPR = 1;
+    const GROUND_HEIGHT = 65;
+    const GROUND_DEPTH = 30;
 
     const FONT = '"Gardenia Decor", "Yeseva One", Georgia, serif';
 
     const WORD_FIRE   = ['о', 'Г', 'о', 'н', 'ь'];
     const WORD_SMOKE  = ['д', 'ы', 'M', 'ъ'];
-    const WORD_LOGS   = ['к', 'р', 'я', 'ж', 'и'];
+    const WORD_LOGS   = ['к', 'р', 'я', 'ж', 'и', 'у', 'г', 'л'];
     const WORD_EMBERS = ['у', 'Г', 'л', 'и'];
     const WORD_SPARKS = ['и', 'с', 'к', 'р', 'ы'];
+    const WORD_GROUND = ['т', 'в', 'е', 'р', 'д', 'ь'];
+
+    let weatherLastFetch = 0;
+    let windXWorld = 0;
+    let isFogWeather = false;
+    let isRainOrSnow = false;
+
+    let flameTipX = 0, flameTipY = 0, flameTipInit = false;
+
+    function refreshWeather() {
+        const now = performance.now();
+        if (now - weatherLastFetch < 500) return;
+        weatherLastFetch = now;
+        const w = window.__weather || {};
+        const sp = w.windSpeed || 0;
+        const dir = w.windDir;
+        let sign = 1;
+        if (dir !== null && dir !== undefined) {
+            sign = -Math.sin(dir * Math.PI / 180);
+            if (Math.abs(sign) < 0.1) sign = 1;
+        }
+        windXWorld = sign * sp * 8.5;
+        isFogWeather = w.mode === 'fog';
+        isRainOrSnow = w.mode === 'rain' || w.mode === 'snow';
+    }
 
     function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
     function randSize(min, max) { return Math.round(min + Math.random() * (max - min)); }
 
-    function getEmberColor(heat) {
-        if (heat < 0.15) return '#111111';
-        const h = 15 + heat * 35, s = 100, l = 20 + heat * 55;
-        return `hsl(${h}, ${s}%, ${l}%)`;
+    function groundTopAt(x) {
+        const t = (x - CX) / CX;
+        return H - GROUND_HEIGHT + t * t * GROUND_DEPTH;
+    }
+
+    function getDecreaseInterval() {
+        return isRainOrSnow ? 60000 : 120000;
+    }
+
+    function bakeGround() {
+        if (!groundCanvasEl) return;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        groundCanvasEl.width = Math.floor(W * dpr);
+        groundCanvasEl.height = Math.floor(H * dpr);
+        groundCanvasEl.style.width = W + 'px';
+        groundCanvasEl.style.height = H + 'px';
+        groundCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        groundCtx.imageSmoothingEnabled = false;
+        groundCtx.textAlign = 'center';
+        groundCtx.textBaseline = 'middle';
+        groundCtx.clearRect(0, 0, W, H);
+
+        groundCtx.beginPath();
+        groundCtx.moveTo(-10, H + 10);
+        for (let x = -10; x <= W + 10; x += 20) {
+            groundCtx.lineTo(x, groundTopAt(x));
+        }
+        groundCtx.lineTo(W + 10, H + 10);
+        groundCtx.closePath();
+        groundCtx.fillStyle = '#1a1535';
+        groundCtx.fill();
+
+        for (let x = -20; x < W + 20; x += 5) {
+            const topY = groundTopAt(x);
+            const layers = 10 + Math.floor(Math.random() * 6);
+            const distFromCenter = Math.min(1, Math.abs(x - CX) / (W / 2));
+            const baseGray = 52 - distFromCenter * 34;
+            for (let i = 0; i < layers; i++) {
+                const y = topY + i * 7 + Math.random() * 9;
+                if (y > H + 20) continue;
+                const gray = Math.max(8, Math.round(baseGray + (Math.random() - 0.5) * 12));
+                const size = Math.random() < 0.55 ? randSize(6, 10) : randSize(11, 20);
+                groundCtx.save();
+                groundCtx.translate(x + (Math.random() - 0.5) * 8, y);
+                groundCtx.rotate((Math.random() - 0.5) * 0.6);
+                groundCtx.font = 'normal ' + size + 'px ' + FONT;
+                groundCtx.fillStyle = `rgb(${gray}, ${gray}, ${gray+5})`;
+                groundCtx.globalAlpha = 0.95;
+                groundCtx.fillText(pick(WORD_GROUND), 0, 0);
+                groundCtx.restore();
+            }
+        }
+        for (let x = -20; x < W + 20; x += 3) {
+            const t = Math.abs((x - CX) / CX);
+            if (t < 0.55) continue;
+            const topY = groundTopAt(x);
+            const layers = 8 + Math.floor(Math.random() * 5);
+            const distFromCenter = Math.min(1, Math.abs(x - CX) / (W / 2));
+            const baseGray = 26 - distFromCenter * 20;
+            for (let i = 0; i < layers; i++) {
+                const y = topY + i * 6 + Math.random() * 8;
+                if (y > H + 20) continue;
+                const gray = Math.max(5, Math.round(baseGray + (Math.random() - 0.5) * 8));
+                const size = randSize(4, 8);
+                groundCtx.save();
+                groundCtx.translate(x + (Math.random() - 0.5) * 6, y);
+                groundCtx.rotate((Math.random() - 0.5) * 0.7);
+                groundCtx.font = 'normal ' + size + 'px ' + FONT;
+                groundCtx.fillStyle = `rgb(${gray}, ${gray}, ${gray+4})`;
+                groundCtx.globalAlpha = 0.9;
+                groundCtx.fillText(pick(WORD_GROUND), 0, 0);
+                groundCtx.restore();
+            }
+        }
     }
 
     function resizeFireCanvas() {
@@ -9532,27 +9651,58 @@ body.zen-active #zen-fire-canvas {
         fCtx.textAlign = 'center';
         fCtx.textBaseline = 'middle';
         CX = W / 2;
-        CY = H - 50;
+        CY = H - GROUND_HEIGHT + 8;
         particles = [];
-        initLogs();
+        flameTipX = CX;
+        flameTipY = CY - 80;
+        flameTipInit = false;
+        initBaseChars();
+        bakeGround();
     }
 
-    // Запуск искр в стороны
-    function spawnSidewaysSparks(count) {
+    function smokeVyBase(vis)      { return -(60 + vis * 14); }
+    function smokeGrow(vis)        { return 2 + vis * 0.7; }
+    function vertSparkVyBase(vis)  { return -(70 + vis * 22); }
+
+    function spawnSidewaysSparks(count, intensity) {
+        intensity = Math.max(1, Math.min(5, intensity || 1));
+        const EDGE_X = 80;
+        const MAX_REACH = EDGE_X + intensity * 22;
         for (let i = 0; i < count; i++) {
-            const dir = Math.random() > 0.5 ? 1 : -1; // Влево или вправо
-            const speedX = (40 + Math.random() * 80) * dir;
-            const speedY = -30 - Math.random() * 50; // Подлетают немного вверх
-            
+            const dir = Math.random() > 0.5 ? 1 : -1;
+            const isRare = Math.random() < 0.15;
+            let targetDelta;
+            if (isRare) targetDelta = EDGE_X + Math.random() * (MAX_REACH - EDGE_X);
+            else        targetDelta = EDGE_X + (Math.random() - 0.5) * 30;
+
+            const baseVy = (130 + Math.random() * 60) * 0.35;
+            const gravity = (240 + Math.random() * 60) * 0.35;
+            const tLand = 2 * baseVy / gravity;
+            const vx = targetDelta / tLand;
+
             addParticle({
                 type: 'spark',
-                x: CX + (Math.random() - 0.5) * 30,
-                y: CY - 15 - Math.random() * 15,
-                vx: speedX,
-                vy: speedY,
-                gravity: 350 + Math.random() * 150, // Сильная гравитация для быстрого падения
+                x: CX + (Math.random() - 0.5) * 20,
+                y: CY - 35,
+                vx: vx * dir,
+                vy: -baseVy,
+                gravity: gravity,
                 life: 1,
-                maxLife: 1.2 + Math.random() * 0.8, // Живут дольше, чтобы долететь до земли
+                maxLife: 1.8 + Math.random() * 0.8,
+                text: pick(WORD_SPARKS),
+                color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
+                size: randSize(7, 11)
+            });
+
+            addParticle({
+                type: 'spark',
+                x: CX + (Math.random() - 0.5) * 40,
+                y: CY - 20 - Math.random() * 30,
+                vx: (Math.random() - 0.5) * 10,
+                vy: -(150 + Math.random() * 50),
+                gravity: 50,
+                life: 1,
+                maxLife: 2.0 + Math.random() * 0.8,
                 text: pick(WORD_SPARKS),
                 color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
                 size: randSize(7, 11)
@@ -9560,11 +9710,71 @@ body.zen-active #zen-fire-canvas {
         }
     }
 
+    function popCoal(time) {
+        const dir = Math.random() > 0.5 ? 1 : -1;
+        addParticle({
+            type: 'coal-pop',
+            x: CX + (Math.random() - 0.5) * 40,
+            y: CY - 5,
+            vx: dir * (40 + Math.random() * 60),
+            vy: -(180 + Math.random() * 80),
+            gravity: 380,
+            life: 1,
+            maxLife: 1.6 + Math.random() * 0.6,
+            text: pick(WORD_EMBERS),
+            size: randSize(8, 13),
+            rot: (Math.random() - 0.5) * 2,
+            rotSpeed: (Math.random() - 0.5) * 8,
+            angle: 0
+        });
+    }
+
+    function nextLevel(cur) {
+        if (cur === 0.7) return 1;
+        if (cur === 0) return 0.5;
+        if (cur === 0.5) return 1;
+        if (cur >= 5) return 1;
+        return cur + 1;
+    }
+
+    function onTap() {
+        if (!isZen) return;
+        const was = fireLevel;
+        fireLevel = nextLevel(was);
+
+        if (fireLevel === 0) {
+            fireTargetVisual = 0;
+            zeroEnteredAt = Date.now();
+            coolT = 0;
+            smokeFadeT = 1;
+        } else if (fireLevel === 0.5) {
+            fireTargetVisual = 0;
+            coalsPopped = 0;
+            nextCoalPopAt = performance.now() + 800 + Math.random() * 1200;
+        } else {
+            fireTargetVisual = fireLevel;
+        }
+
+        if (was === 0) { coolT = 0; smokeFadeT = 0; }
+
+        if (fireLevel >= 1) {
+            const burstN = Math.min(3, 1 + Math.ceil(fireLevel / 2));
+            spawnSidewaysSparks(burstN, fireLevel);
+        }
+        lastDecreaseAt = Date.now();
+    }
+
     function initFireCanvas() {
+        groundCanvasEl = document.createElement('canvas');
+        groundCanvasEl.id = 'zen-ground-canvas';
+        document.body.appendChild(groundCanvasEl);
+        groundCtx = groundCanvasEl.getContext('2d');
+
         fireCanvas = document.createElement('canvas');
         fireCanvas.id = 'zen-fire-canvas';
         document.body.appendChild(fireCanvas);
         fCtx = fireCanvas.getContext('2d');
+
         resizeFireCanvas();
         window.addEventListener('resize', resizeFireCanvas);
 
@@ -9573,286 +9783,381 @@ body.zen-active #zen-fire-canvas {
             if (e.target.closest('#zen-feta-btn')) return;
             const distX = Math.abs(e.clientX - window.innerWidth / 2);
             const distY = window.innerHeight - e.clientY;
-            if (distX < 200 && distY < 220) {
-                lastInteraction = Date.now();
-                lastDecrease = Date.now();
-                
-                // Увеличиваем уровень и выпускаем 3-5 искр (зависит от уровня)
-                fireLevel = fireLevel >= 5 ? 1 : fireLevel + 1;
-                spawnSidewaysSparks(3 + Math.floor(Math.random() * 3));
-            }
+            if (distX < 200 && distY < 220) onTap();
         }, true);
 
         requestAnimationFrame(fireLoop);
     }
 
-    function initLogs() {
-        logs = [];
-        for (let i = 0; i < 14; i++) {
-            const angle = (Math.PI * 2 / 14) * i + (Math.random() - 0.5) * 0.2;
-            const length = 40 + Math.random() * 30;
-            const size = randSize(14, 18);
-            const embers = [];
-            for (let k = 0; k < 8; k++) {
-                embers.push({
-                    px: (length * 0.1) + Math.random() * (length * 0.8),
-                    py: (Math.random() - 0.5) * size,
-                    letter: pick(WORD_EMBERS),
-                    sizeOffset: Math.random() * 4,
-                    phase: Math.random() * Math.PI * 2,
-                    speed: 0.00005 + Math.random() * 0.00005
-                });
-            }
-            logs.push({ angle, length, word: WORD_LOGS[i % WORD_LOGS.length], size, embers });
-        }
-        bedEmbers = [];
-        for (let i = 0; i < 60; i++) {
-            const a = Math.random() * Math.PI * 2;
-            const r = Math.random() * 60;
-            bedEmbers.push({
-                x: Math.cos(a) * r,
-                y: Math.sin(a) * r * 0.3 + 5,
-                letter: pick(WORD_EMBERS),
-                size: randSize(10, 15),
-                phase: Math.random() * Math.PI * 2,
-                speed: 0.00005 + Math.random() * 0.00005
+    function initBaseChars() {
+        baseChars = [];
+        for (let i = 0; i < 200; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const r = Math.sqrt(Math.random());
+            const sinA = Math.sin(angle);
+            baseChars.push({
+                type: 'log',
+                x: Math.cos(angle) * r * 80,
+                y: sinA * r * (sinA > 0 ? 26 : 14),
+                letter: pick(WORD_LOGS),
+                size: randSize(12, 24),
+                rot: (Math.random() - 0.5) * 1.5,
+                color: Math.random() < 0.8 ? '#120500' : '#2a1000'
             });
         }
+        for (let i = 0; i < 250; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const r = Math.sqrt(Math.random()) * 0.7;
+            let y = Math.sin(angle) * r * 15;
+            if (y < -10) y = -10;
+            baseChars.push({
+                type: 'coal',
+                x: Math.cos(angle) * r * 80,
+                y: y,
+                letter: pick(WORD_EMBERS),
+                size: randSize(8, 16),
+                rot: (Math.random() - 0.5) * 1.5,
+                dist: r,
+                phase: Math.random() * Math.PI * 2
+            });
+        }
+        baseChars.sort((a, b) => a.y - b.y);
     }
 
-    function addParticle(p) {
-        if (particles.length < 5000) particles.push(p);
+    function addParticle(p) { if (particles.length < 5000) particles.push(p); }
+
+    function spawnSmoke(x, y, vyBase, growRate, opts) {
+        opts = opts || {};
+        const startSize = opts.startSize || randSize(8, 14);
+        addParticle({
+            type: 'smoke',
+            x: x,
+            y: y,
+            vx: (Math.random() - 0.5) * 10,
+            vy: vyBase - Math.random() * 20,
+            life: 1,
+            maxLife: (5 + Math.random() * 3) * (isFogWeather ? 1.5 : 1) * (opts.lifeMul || 1),
+            text: pick(WORD_SMOKE),
+            size: startSize * (isFogWeather ? 1.6 : 1),
+            age: 0,
+            seed: Math.random() * Math.PI * 2,
+            growRate: growRate * (isFogWeather ? 0.55 : 1),
+            fogWide: isFogWeather,
+            fogSlowVy: isFogWeather,
+            dim: opts.dim
+        });
     }
 
     function spawnParticles(dt, time) {
-        const lvl = fireVisual;
-        if (lvl <= 0.03) return;
+        if (fireLevel === 0 && smokeFadeT > 0) {
+            if (Math.random() < dt * (4 * smokeFadeT)) {
+                spawnSmoke(
+                    CX + (Math.random() - 0.5) * 20,
+                    CY - 3,
+                    -35,
+                    1.5,
+                    { startSize: randSize(4, 7), dim: smokeFadeT }
+                );
+            }
+        }
 
+        if (fireLevel === 0.5) {
+            if (Math.random() < dt * 3.5) {
+                spawnSmoke(
+                    CX + (Math.random() - 0.5) * 24,
+                    CY - 4,
+                    -40,
+                    1.6,
+                    { startSize: randSize(4, 8) }
+                );
+            }
+            if (coalsPopped < 2 && time >= nextCoalPopAt) {
+                popCoal(time);
+                coalsPopped++;
+                nextCoalPopAt = time + 2500 + Math.random() * 3500;
+            } else if (coalsPopped >= 2 && Math.random() < dt * 0.25) {
+                popCoal(time);
+            }
+        }
+
+        const lvl = fireVisual;
+        if (lvl <= 0.03) {
+            flameTipInit = false;
+            flameTipX = CX;
+            flameTipY = CY - 80;
+            return;
+        }
+
+        const lvlScale = Math.min(1, Math.max(0.1, lvl));
         const pulse = (Math.sin(time * 0.003) + 1) / 2;
 
-        // 1. ЦЕНТРАЛЬНЫЙ СТЕРЖЕНЬ (Ядро) - расширенное основание
+        // 1. ЯДРО (центральный факел)
         const coreRate = (50 + lvl * 20) * (0.7 + 0.3 * pulse);
         let coreCount = coreRate * dt;
         while (coreCount > 0) {
             if (Math.random() < coreCount) {
                 addParticle({
                     type: 'fire-core',
-                    x: CX + (Math.random() - 0.5) * 28, // Шире у основания (было 12)
+                    x: CX + (Math.random() - 0.5) * 35,
                     y: CY - 5,
                     vx: (Math.random() - 0.5) * 4,
-                    vy: -95 - Math.random() * 40 - pulse * lvl * 15,
+                    vy: -100 - Math.random() * 50 - pulse * lvl * 15,
                     life: 1,
-                    maxLife: 0.6 + Math.random() * 0.4,
+                    maxLife: 0.7 + Math.random() * 0.4,
                     text: pick(WORD_FIRE),
-                    size: randSize(16, 22),
+                    size: randSize(16, 24) * lvlScale,
                     swaySeed: Math.random() * Math.PI * 2
                 });
             }
             coreCount -= 1;
         }
 
-        // 2. СУБФАКЕЛЫ (Слева и справа, основания заходят в центр)
+        /* 2. СУБФАКЕЛЫ (левый и правый) */
         if (Math.random() < dt * (20 + lvl * 10)) {
-            // Левый
             addParticle({
-                type: 'fire-sub',
-                x: CX - 12 + (Math.random() - 0.5) * 16, // Основание перекрывает центр
-                y: CY - 5,
-                vx: -15 - Math.random() * 15, // Отклоняется влево
-                vy: -50 - Math.random() * 30,
-                dir: -1,
-                life: 1,
-                maxLife: 0.4 + Math.random() * 0.3, // Короче ядра
-                text: pick(WORD_FIRE),
-                size: randSize(12, 16),
-                swaySeed: Math.random() * Math.PI * 2
+                type: 'fire-sub', x: CX - 22 + (Math.random() - 0.5) * 15, y: CY - 32,
+                vx: -20 - Math.random() * 20, vy: -80 - Math.random() * 40,
+                life: 1, maxLife: 0.5 + Math.random() * 0.3,
+                text: pick(WORD_FIRE), size: randSize(12, 18) * lvlScale, swaySeed: Math.random() * Math.PI * 2
             });
-            // Правый
             addParticle({
-                type: 'fire-sub',
-                x: CX + 12 + (Math.random() - 0.5) * 16,
-                y: CY - 5,
-                vx: 15 + Math.random() * 15,
-                vy: -50 - Math.random() * 30,
-                dir: 1,
-                life: 1,
-                maxLife: 0.4 + Math.random() * 0.3,
-                text: pick(WORD_FIRE),
-                size: randSize(12, 16),
-                swaySeed: Math.random() * Math.PI * 2
+                type: 'fire-sub', x: CX + 22 + (Math.random() - 0.5) * 15, y: CY - 32,
+                vx: 20 + Math.random() * 20, vy: -80 - Math.random() * 40,
+                life: 1, maxLife: 0.5 + Math.random() * 0.3,
+                text: pick(WORD_FIRE), size: randSize(12, 18) * lvlScale, swaySeed: Math.random() * Math.PI * 2
             });
         }
 
-        // 3. ВНЕШНЯЯ ОБОЛОЧКА (Форма луковицы)
+        // 3. ОБОЛОЧКА
         const outerRate = (60 + lvl * 30) * (0.6 + 0.4 * pulse);
         let outerCount = outerRate * dt;
-        const spread = 44;
+        const spread = 60;
         while (outerCount > 0) {
             if (Math.random() < outerCount) {
                 const u = (Math.random() - 0.5) * 2;
                 const spawnX = CX + u * spread / 2;
-                const yOffset = u * u * 12;
                 addParticle({
                     type: 'fire-outer',
-                    x: spawnX,
-                    y: CY - 5 + yOffset,
-                    vx: 0,
-                    vy: -50 - Math.random() * 25 - pulse * lvl * 10,
+                    x: spawnX, y: CY - 5 + u * u * 15,
+                    vx: 0, vy: -60 - Math.random() * 30 - pulse * lvl * 10,
                     initDX: spawnX - CX,
-                    life: 1,
-                    maxLife: 0.6 + Math.random() * 0.5 + pulse * 0.2,
-                    text: pick(WORD_FIRE),
-                    size: randSize(12, 18),
+                    life: 1, maxLife: 0.7 + Math.random() * 0.6 + pulse * 0.2,
+                    text: pick(WORD_FIRE), size: randSize(12, 20) * lvlScale,
                     swaySeed: Math.random() * Math.PI * 2
                 });
             }
             outerCount -= 1;
         }
 
-        // 4. ДЫМ
-        const smokeRate = 4 + lvl * 9;
+        /* 4. ДЫМ
+           Точка рождения опущена к основанию (+40 к Y) и отслеживание кончика
+           теперь захватывает более низкие частицы огня. */
+        const smokeRate = 4 + lvl * 10; 
         let smokeCount = smokeRate * dt;
+        const smokeVyB = smokeVyBase(lvl);
+        const smokeGrowV = smokeGrow(lvl);
+        const tipX = flameTipInit ? flameTipX : CX;
+        const tipY = (flameTipInit ? flameTipY : (CY - 80)) + 40; // Опускаем к основанию
         while (smokeCount > 0) {
             if (Math.random() < smokeCount) {
-                addParticle({
-                    type: 'smoke',
-                    x: CX + (Math.random() - 0.5) * 40,
-                    y: CY - 100 - Math.random() * 40,
-                    vx: (Math.random() - 0.5) * 15,
-                    vy: -85 - Math.random() * 45,
-                    life: 1,
-                    maxLife: 5 + Math.random() * 3,
-                    text: pick(WORD_SMOKE),
-                    size: randSize(1, 2),
-                    age: 0,
-                    seed: Math.random() * Math.PI * 2
-                });
+                spawnSmoke(
+                    tipX + (Math.random() - 0.5) * 4,
+                    tipY - Math.random() * 4,
+                    smokeVyB,
+                    smokeGrowV,
+                    { startSize: randSize(6, 10) }
+                );
             }
             smokeCount -= 1;
         }
 
-        // 5. ОБЫЧНЫЕ ИСКРЫ (Вверх, невысоко)
-        if (Math.random() < dt * (10 + lvl * 5)) {
+        // 5. ВЕРТИКАЛЬНЫЕ ИСКРЫ
+        if (Math.random() < dt * (8 + lvl * 5)) {
+            const vyB = vertSparkVyBase(lvl);
             addParticle({
                 type: 'spark',
-                x: CX + (Math.random() - 0.5) * 30,
-                y: CY - 70 - Math.random() * 40,
-                vx: (Math.random() - 0.5) * 40,
-                vy: -80 - Math.random() * 40,
-                gravity: 25,
+                x: CX + (Math.random() - 0.5) * 40,
+                y: CY - 20 - Math.random() * 30,
+                vx: (Math.random() - 0.5) * 20,
+                vy: vyB + (Math.random() - 0.5) * 40,
+                gravity: 50,
                 life: 1,
-                maxLife: 0.6 + Math.random() * 0.4,
+                maxLife: 1.5 + Math.random() * 1.0,
                 text: pick(WORD_SPARKS),
                 color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
-                size: randSize(7, 10)
+                size: randSize(6, 12)
             });
         }
 
-        // 6. СЛУЧАЙНЫЕ ИСКРЫ В СТОРОНЫ (шанс зависит от уровня)
-        if (lvl > 1 && Math.random() < dt * (lvl * 0.4)) {
-            spawnSidewaysSparks(1 + Math.floor(Math.random() * 2));
+        // 6. БОКОВЫЕ ИСКРЫ
+        const sparkRate = 0.15 + lvl * lvl * 0.06;
+        if (lvl > 0.5 && Math.random() < dt * sparkRate) {
+            spawnSidewaysSparks(1, lvl);
         }
     }
 
-    function drawLogs(time) {
-        const glowPower = Math.min(1, fireVisual / 3);
-        const slowShimmer = Math.sin(time * 0.0008) * 0.18 + 0.82;
+    function drawBase(time) {
+        const heatLevel = heatVisual;
+        const glowPower = Math.min(1, 0.35 + (fireLevel === 0 ? 0 : fireVisual / 3) + heatLevel * 0.3);
 
         fCtx.save();
         fCtx.translate(CX, CY);
 
-        logs.forEach(function(log) {
+        baseChars.forEach(function(c) {
             fCtx.save();
-            fCtx.rotate(log.angle);
-            fCtx.globalAlpha = 1;
-            fCtx.font = 'normal ' + log.size + 'px ' + FONT;
-            fCtx.fillStyle = '#1a0f08';
-            fCtx.fillText(log.word, log.length, 0);
-            log.embers.forEach(function(e) {
-                const heatSine = Math.sin(time * e.speed + e.phase);
-                const edgeFactor = e.px / log.length;
-                const centerHeat = Math.max(0, 1 - edgeFactor * 2.5);
-                const heat = (heatSine + 1) / 2 * glowPower * centerHeat * slowShimmer;
-                fCtx.globalAlpha = 0.9;
-                fCtx.font = 'normal ' + (log.size - 4 + e.sizeOffset) + 'px ' + FONT;
-                fCtx.fillStyle = getEmberColor(heat);
-                fCtx.fillText(e.letter, e.px, e.py);
-            });
-            fCtx.restore();
-        });
+            fCtx.translate(c.x, c.y);
+            fCtx.rotate(c.rot);
+            fCtx.font = 'normal ' + c.size + 'px ' + FONT;
 
-        bedEmbers.forEach(function(e) {
-            const distToCenter = Math.sqrt(e.x * e.x + e.y * e.y) / 60;
-            const centerHeat = Math.max(0, 1 - distToCenter);
-            const heat = centerHeat * glowPower * slowShimmer;
-            fCtx.globalAlpha = 0.95;
-            fCtx.font = 'normal ' + e.size + 'px ' + FONT;
-            fCtx.fillStyle = getEmberColor(heat);
-            fCtx.fillText(e.letter, e.x, e.y);
+            if (c.type === 'log') {
+                fCtx.fillStyle = c.color;
+                fCtx.shadowBlur = 0;
+            } else if (heatLevel < 0.05) {
+                fCtx.fillStyle = '#050201';
+                fCtx.shadowBlur = 0;
+            } else if (c.dist < 0.6) {
+                const shift = Math.sin(time * 0.004 + c.phase);
+                if (heatLevel < 0.98) {
+                    const cr = Math.round((200 + shift * 30) * heatLevel);
+                    const cg = Math.round((90 + shift * 20) * heatLevel);
+                    const cb = Math.round((20 + shift * 8) * heatLevel);
+                    fCtx.fillStyle = `rgb(${cr},${cg},${cb})`;
+                    fCtx.shadowBlur = 10 * heatLevel;
+                    fCtx.shadowColor = `rgba(255, 60, 0, ${heatLevel})`;
+                } else {
+                    const hue = 20 + shift * 15;
+                    const light = 40 + shift * 20 + glowPower * 20;
+                    fCtx.fillStyle = `hsl(${hue}, 100%, ${light}%)`;
+                    fCtx.shadowBlur = 6 * glowPower;
+                    fCtx.shadowColor = `hsl(${hue}, 100%, 50%)`;
+                }
+            } else {
+                if (heatLevel < 0.98) {
+                    fCtx.fillStyle = `rgb(${Math.round(18 * heatLevel)},${Math.round(5 * heatLevel)},0)`;
+                } else {
+                    fCtx.fillStyle = '#120500';
+                }
+                fCtx.shadowBlur = 0;
+            }
+            fCtx.fillText(c.letter, 0, 0);
+            fCtx.restore();
         });
 
         fCtx.restore();
         fCtx.globalAlpha = 1;
+        fCtx.shadowBlur = 0;
     }
 
     function fireLoop(time) {
-        if (!isZen) {
-            lastFireTime = 0;
-            requestAnimationFrame(fireLoop);
-            return;
-        }
+        if (!isZen) { lastFireTime = 0; requestAnimationFrame(fireLoop); return; }
 
         if (!lastFireTime) lastFireTime = time;
         const dt = Math.min(0.05, (time - lastFireTime) / 1000);
         lastFireTime = time;
 
-        fireVisual += (fireLevel - fireVisual) * Math.min(1, dt * 2.5);
-        if (Math.abs(fireLevel - fireVisual) < 0.01) fireVisual = fireLevel;
+        refreshWeather();
 
-        if (fireLevel > 0 && Date.now() - lastInteraction > 60000 && Date.now() - lastDecrease > 60000) {
-            fireLevel--;
-            lastDecrease = Date.now();
+        const diff = fireTargetVisual - fireVisual;
+        let visualRate;
+        if (diff > 0) {
+            if (fireVisual < 0.9) visualRate = 0.5;
+            else                  visualRate = 2.5;
+        } else {
+            visualRate = 0.15;
+        }
+        fireVisual += diff * Math.min(1, dt * visualRate);
+        if (Math.abs(diff) < 0.01) fireVisual = fireTargetVisual;
+
+        const heatTarget = (fireLevel === 0) ? (1 - coolT) : 1;
+        heatVisual += (heatTarget - heatVisual) * Math.min(1, dt * 0.1);
+        if (Math.abs(heatTarget - heatVisual) < 0.01) heatVisual = heatTarget;
+
+        if (fireLevel === 0 && zeroEnteredAt > 0) {
+            const elapsed = Date.now() - zeroEnteredAt;
+            coolT = Math.min(1, elapsed / 60000);
+            smokeFadeT = Math.max(0, 1 - elapsed / 30000);
+        }
+
+        if (fireLevel > 0 && fireLevel !== 0.7 && Date.now() - lastDecreaseAt > getDecreaseInterval()) {
+            lastDecreaseAt = Date.now();
+            if (fireLevel === 1 || fireLevel === 0.5) {
+                fireLevel = 0;
+                fireTargetVisual = 0;
+                zeroEnteredAt = Date.now();
+                coolT = 0;
+                smokeFadeT = 1;
+            } else {
+                fireLevel -= 1;
+                fireTargetVisual = fireLevel;
+            }
         }
 
         fCtx.clearRect(0, 0, W, H);
-        drawLogs(time);
+        drawBase(time);
         spawnParticles(dt, time);
 
-        const windX = Math.sin(time * 0.001) * 15 + Math.sin(time * 0.003) * 5;
+        const windNoise = Math.sin(time * 0.001) * 15 + Math.sin(time * 0.003) * 5;
+        const windTotal = windNoise + windXWorld;
 
         for (let i = particles.length - 1; i >= 0; i--) {
             const p = particles[i];
+
+            if (p.type === 'coal-pop') {
+                const gt = groundTopAt(p.x);
+                if (p.y >= gt) {
+                    p.y = gt;
+                    p.type = 'smolder';
+                    p.vx = 0; p.vy = 0;
+                    p.landedAt = time;
+                    p.maxLife = 2.5 + Math.random() * 2;
+                    p.life = 1;
+                    p.color = '#ff9933';
+                    p.alpha = 1;
+                }
+            }
+            else if (p.type === 'spark') {
+                const gt = groundTopAt(p.x);
+                if (p.y >= gt) {
+                    p.type = 'smolder';
+                    p.y = gt;
+                    p.vx = 0; p.vy = 0;
+                    p.landedAt = time;
+                    p.maxLife = 1.2 + Math.random() * 1.0;
+                    p.life = 1;
+                    p.size = Math.max(6, p.size - 2);
+                    p.alpha = 1;
+                    p.color = '#ffaa33';
+                }
+            }
+
             p.life -= dt / p.maxLife;
-
-            // Если искра упала на землю, гасим её
-            if (p.type === 'spark' && p.y > CY + 10) {
-                p.life = 0;
-            }
-
-            if (p.life <= 0) {
-                particles.splice(i, 1);
-                continue;
-            }
+            if (p.life <= 0) { particles.splice(i, 1); continue; }
 
             if (p.type === 'fire-core') {
                 p.age = 1 - p.life;
-                const sway = Math.sin(time * 0.01 + p.swaySeed) * 3 * p.age;
-                p.x += (p.vx + sway + windX * 0.05) * dt;
+                const sway = Math.sin(time * 0.01 + p.swaySeed) * (2 + p.age * 12) * p.age;
+                p.x += (p.vx + sway + windTotal * 0.55) * dt;
                 p.y += p.vy * dt;
-
                 if (p.life > 0.8) p.color = '#ffffff';
                 else if (p.life > 0.5) p.color = '#fff0c2';
                 else if (p.life > 0.2) p.color = '#ff9d00';
                 else p.color = '#d83b00';
                 p.alpha = Math.min(1, p.life * 2.5);
+                
+                // Отслеживаем кончик пламени раньше (0.65), чтобы опустить точку спавна дыма
+                if (p.life < 0.65) {
+                    if (!flameTipInit) { flameTipX = p.x; flameTipY = p.y; flameTipInit = true; }
+                    else {
+                        flameTipX += (p.x - flameTipX) * 0.12; 
+                        flameTipY += (p.y - flameTipY) * 0.12;
+                    }
+                }
             }
             else if (p.type === 'fire-sub') {
                 p.age = 1 - p.life;
-                // Субфакелы сильно качаются
                 const sway = Math.sin(time * 0.02 + p.swaySeed) * 20 * p.age;
-                p.x += (p.vx + sway + windX * 0.05) * dt;
+                p.x += (p.vx + sway + windTotal * 0.55) * dt;
                 p.y += p.vy * dt;
-
                 if (p.life > 0.85) p.color = '#fff0c2';
                 else if (p.life > 0.5) p.color = '#ff9d00';
                 else p.color = '#d83b00';
@@ -9860,14 +10165,10 @@ body.zen-active #zen-fire-canvas {
             }
             else if (p.type === 'fire-outer') {
                 p.age = 1 - p.life;
-                const ageN = p.age;
-                // Луковица
-                const factor = 1 + 0.8 * Math.sin(ageN * Math.PI) - ageN * 0.8;
+                const factor = 1 + 0.8 * Math.sin(p.age * Math.PI) - p.age * 0.8;
                 const desiredX = CX + p.initDX * factor;
-                
-                p.x += ((desiredX - p.x) * 3 + windX * 0.05) * dt;
+                p.x += ((desiredX - p.x) * 3 + windTotal * 0.55) * dt;
                 p.y += p.vy * dt;
-
                 if (p.life > 0.85) p.color = '#fff0c2';
                 else if (p.life > 0.6) p.color = '#ff9d00';
                 else if (p.life > 0.25) p.color = '#d83b00';
@@ -9876,36 +10177,78 @@ body.zen-active #zen-fire-canvas {
             }
             else if (p.type === 'smoke') {
                 p.age = 1 - p.life;
-                p.vy *= (1 - dt * 0.08);
+                if (!p.fogSlowVy) p.vy *= (1 - dt * 0.08);
+                else              p.vy *= (1 - dt * 0.04);
                 p.y += p.vy * dt;
-                const curl = Math.sin(time * 0.002 + p.seed) * 20;
-                p.vx += (windX + curl - p.vx) * dt * 0.4;
+
+                const curl = Math.sin(time * 0.002 + p.seed) * (6 + p.age * 8);
+
+                // Дым сильнее подвержен ветру
+                p.vx += (windTotal * 1.4 + curl - p.vx) * dt * 0.55;
+
+                /* Формируем вытянутый перевернутый конус. */
+                const midBulge = Math.sin(Math.PI * p.age);
+                const spreadBulge = 1 + midBulge * 1.0; 
+                const distFromCenter = p.x - CX;
+                p.x += distFromCenter * 0.25 * spreadBulge * p.age * dt;
                 p.x += p.vx * dt;
-                p.size += dt * 3;
-                if (p.age < 0.10) p.alpha = (p.age / 0.10) * 0.7;
-                else if (p.age > 0.5) p.alpha = Math.max(0, (1 - p.age) / 0.5) * 0.7;
-                else p.alpha = 0.7;
+
+                const grow = (p.growRate !== undefined) ? p.growRate : 3;
+                const sizeBulge = 1 + midBulge * 1.2; 
+                p.size += dt * grow * sizeBulge * (p.fogWide ? 1.4 : 1);
+
+                const shade = Math.round(15 + 170 * p.age);
+                p.color = `rgb(${shade},${Math.max(0,shade-5)},${Math.max(0,shade-10)})`;
+
+                // Полупрозрачность
+                let baseA;
+                if (p.age < 0.10) baseA = (p.age / 0.10) * 0.35;
+                else if (p.age > 0.5) baseA = Math.max(0, (1 - p.age) / 0.5) * 0.35;
+                else baseA = 0.35;
+                p.alpha = baseA * (p.dim !== undefined ? p.dim : 1);
             }
             else if (p.type === 'spark') {
+                p.vx += windTotal * 1.2 * dt;
                 p.y += p.vy * dt;
                 p.x += p.vx * dt;
-                p.vy += (p.gravity || 15) * dt; 
-                p.vx *= (1 - dt * 0.5);
+                p.vy += (p.gravity || 15) * dt;
+                p.vx *= (1 - dt * 0.2);
                 p.alpha = p.life;
+            }
+            else if (p.type === 'coal-pop') {
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.vy += p.gravity * dt;
+                p.angle += p.rotSpeed * dt;
+                p.color = p.life > 0.6 ? '#ff9933' : (p.life > 0.3 ? '#cc5522' : '#442211');
+                p.alpha = Math.min(1, p.life * 1.5);
+            }
+            else if (p.type === 'smolder') {
+                p.alpha = Math.pow(p.life, 1.2) * (0.7 + 0.3 * Math.sin(time * 0.015 + p.landedAt * 0.0005));
+                p.color = p.life > 0.4 ? '#ff9933' : '#cc3300';
             }
 
             fCtx.globalAlpha = p.alpha !== undefined ? p.alpha : Math.max(0, Math.min(1, p.life));
             fCtx.fillStyle = p.color || '#fff';
 
-            if (p.type === 'spark') {
-                fCtx.shadowBlur = 8;
-                fCtx.shadowColor = p.color;
+            if (p.type === 'spark' || p.type === 'coal-pop') {
+                fCtx.shadowBlur = 8; fCtx.shadowColor = p.color;
+            } else if (p.type === 'smolder') {
+                fCtx.shadowBlur = 6; fCtx.shadowColor = p.color;
             } else {
                 fCtx.shadowBlur = 0;
             }
 
             fCtx.font = 'normal ' + p.size + 'px ' + FONT;
-            fCtx.fillText(p.text, p.x, p.y);
+            if (p.type === 'coal-pop') {
+                fCtx.save();
+                fCtx.translate(p.x, p.y);
+                fCtx.rotate(p.angle);
+                fCtx.fillText(p.text, 0, 0);
+                fCtx.restore();
+            } else {
+                fCtx.fillText(p.text, p.x, p.y);
+            }
             fCtx.shadowBlur = 0;
         }
 
@@ -9915,24 +10258,13 @@ body.zen-active #zen-fire-canvas {
 
     async function requestWakeLock() {
         if (!('wakeLock' in navigator)) return;
-        try {
-            screenWakeLock = await navigator.wakeLock.request('screen');
-        } catch (err) {
-            console.warn('Не удалось удержать экран: ' + err.name);
-        }
+        try { screenWakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
     }
-
     function releaseWakeLock() {
-        if (screenWakeLock !== null) {
-            screenWakeLock.release();
-            screenWakeLock = null;
-        }
+        if (screenWakeLock !== null) { screenWakeLock.release(); screenWakeLock = null; }
     }
-
     document.addEventListener('visibilitychange', async function() {
-        if (document.visibilityState === 'visible' && isZen && screenWakeLock === null) {
-            await requestWakeLock();
-        }
+        if (document.visibilityState === 'visible' && isZen && screenWakeLock === null) await requestWakeLock();
     });
 
     window.addEventListener('load', function() {
@@ -9982,7 +10314,6 @@ body.zen-active #zen-fire-canvas {
             clearTimeout(wakeTimer);
             wakeTimer = setTimeout(function() { floatBtn.classList.remove('active'); }, 1200);
         };
-
         floatBtn.addEventListener('mousemove', wakeUp);
         floatBtn.addEventListener('touchstart', wakeUp);
         document.addEventListener('mousemove', wakeUp);
@@ -9996,7 +10327,6 @@ body.zen-active #zen-fire-canvas {
             e.stopImmediatePropagation();
         }
     }, true);
-
     window.addEventListener('keyup', function(e) {
         if (document.body.classList.contains('zen-active')) {
             e.preventDefault();
@@ -10005,23 +10335,39 @@ body.zen-active #zen-fire-canvas {
     }, true);
 
     function toggleZenMode(enable) {
-        if (enable === isZen) return;
-        isZen = enable;
+        if (enable === isZen || zenTransitioning) return;
+        zenTransitioning = true;
 
         if (enable) {
+            isZen = true;
             document.documentElement.classList.add('zen-lock');
             document.body.classList.add('zen-lock');
             document.body.classList.remove('zen-returning');
             document.body.classList.add('zen-active');
             requestWakeLock();
 
-            fireLevel = 1;
-            fireVisual = 1;
+            fireLevel = 0.7;
+            fireTargetVisual = 0.7;
+            fireVisual = 0.7;
+            heatVisual = 1;
+            coolT = 0;
+            smokeFadeT = 0;
+            zeroEnteredAt = 0;
+            coalsPopped = 0;
             particles = [];
-            lastInteraction = Date.now();
-            lastDecrease = Date.now();
+            flameTipInit = false;
+            flameTipX = CX;
+            flameTipY = CY - 80;
+            lastDecreaseAt = Date.now();
 
             if (fireCanvas) resizeFireCanvas();
+
+            fireCanvas.style.transition = 'none';
+            groundCanvasEl.style.transition = 'none';
+            fireCanvas.style.transform = 'translateY(100vh)';
+            groundCanvasEl.style.transform = 'translateY(100vh)';
+            fireCanvas.style.display = 'block';
+            groundCanvasEl.style.display = 'block';
 
             if (floatBtn) {
                 floatBtn.classList.remove('active');
@@ -10029,20 +10375,45 @@ body.zen-active #zen-fire-canvas {
                 clearTimeout(wakeTimer);
                 wakeTimer = setTimeout(function() { floatBtn.classList.remove('active'); }, 1200);
             }
+
+            setTimeout(function() {
+                fireCanvas.style.transition = 'transform 1.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                groundCanvasEl.style.transition = 'transform 1.3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                fireCanvas.style.transform = 'translateY(0)';
+                groundCanvasEl.style.transform = 'translateY(0)';
+                setTimeout(function() { zenTransitioning = false; }, 1350);
+            }, 2200);
+
         } else {
             releaseWakeLock();
             window.scrollTo(0, 0);
-            document.body.classList.remove('zen-active');
-            document.body.classList.add('zen-returning');
 
             if (floatBtn) floatBtn.classList.remove('active');
             clearTimeout(wakeTimer);
 
+            fireCanvas.style.transition = 'transform 1.1s cubic-bezier(0.4, 0, 0.6, 1)';
+            groundCanvasEl.style.transition = 'transform 1.1s cubic-bezier(0.4, 0, 0.6, 1)';
+            fireCanvas.style.transform = 'translateY(100vh)';
+            groundCanvasEl.style.transform = 'translateY(100vh)';
+
             setTimeout(function() {
-                document.body.classList.remove('zen-returning');
-                document.documentElement.classList.remove('zen-lock');
-                document.body.classList.remove('zen-lock');
-            }, 1850);
+                fireCanvas.style.display = 'none';
+                groundCanvasEl.style.display = 'none';
+                fireCanvas.style.transform = '';
+                groundCanvasEl.style.transform = '';
+                fireCanvas.style.transition = '';
+                groundCanvasEl.style.transition = '';
+                isZen = false;
+
+                document.body.classList.remove('zen-active');
+                document.body.classList.add('zen-returning');
+                setTimeout(function() {
+                    document.body.classList.remove('zen-returning');
+                    document.documentElement.classList.remove('zen-lock');
+                    document.body.classList.remove('zen-lock');
+                    zenTransitioning = false;
+                }, 1850);
+            }, 1120);
         }
     }
 })();

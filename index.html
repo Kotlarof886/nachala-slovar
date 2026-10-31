@@ -9488,10 +9488,29 @@ body.zen-active #zen-ground-canvas { display: block; }
     will-change: transform;
 }
 body.zen-active #zen-fire-canvas { display: block; }
+
+/* Погодный canvas в зене: поднимаем над костром, чтобы был виден.
+   Вне зена — z-index: 0 как было (словарь над ним). */
+body.zen-active #precip-canvas {
+    z-index: 99999 !important;
+}
 </style>
 
 <script>
 (function() {
+    /* ===== Мобильный профиль ===== */
+    const IS_MOBILE = !window.matchMedia('(pointer: fine)').matches
+                      || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
+    /* ===== Правка 2: DPR на телефоне ограничен 1.5 (на компьютерѣ — 2) ===== */
+    const DPR_CAP = IS_MOBILE ? 1.5 : 2.0;
+
+    /* ===== Правка 3: ограниченіе FPS =====
+       Чтобы вернуть 60 FPS на телефонѣ — поставьте ZEN_FPS_LIMIT в false */
+    const ZEN_FPS_LIMIT = true;
+    const TARGET_FPS = (IS_MOBILE && ZEN_FPS_LIMIT) ? 30 : 60;
+    const FRAME_MS = 1000 / TARGET_FPS;
+
     let isZen = false;
     let zenTransitioning = false;
     let pressStart = 0;
@@ -9516,6 +9535,7 @@ body.zen-active #zen-fire-canvas { display: block; }
 
     let baseChars = [];
     let lastFireTime = 0;
+    let lastDrawTime = 0;
 
     let W = 600, H = 800, CX = 300, CY = 750;
     let DPR = 1;
@@ -9525,13 +9545,11 @@ body.zen-active #zen-fire-canvas { display: block; }
     const MAX_PARTICLES = 5000;
     const FONT = '"Gardenia Decor", "Yeseva One", Georgia, serif';
 
-    // ===== Кэшъ испечённыхъ размѣровъ + отмѣна стараго бейка =====
     let bakedW = 0, bakedH = 0, bakedDpr = 0;
     let bakeState = 'idle';
     let bakePromise = null;
     let bakeToken = 0;
 
-    // === ПУЛ ОБЪЕКТОВ (Zero GC) ===
     const particlePool = [];
     for (let i = 0; i < MAX_PARTICLES; i++) {
         particlePool.push({
@@ -9587,7 +9605,6 @@ body.zen-active #zen-fire-canvas { display: block; }
         return s;
     }
 
-    /* Угли: переливъ сохранёнъ — shift квантуемъ на 8 ступеней, каждая ступень свой спрайтъ */
     function getCoalSprite(letter, size, isHot, heatLevel, shift) {
         size = Math.max(1, Math.round(size));
         if (!isHot) {
@@ -9617,7 +9634,6 @@ body.zen-active #zen-fire-canvas { display: block; }
             return s;
         }
 
-        /* Сверхгорячій уголь — полный переливъ через HSL, какъ въ оригиналѣ */
         const glowPower = Math.min(1, 0.35 + (fireLevel === 0 ? 0 : fireVisual / 3) + heatLevel * 0.3);
         const hue = 20 + shiftQ * 15;
         const light = 40 + shiftQ * 20 + glowPower * 20;
@@ -9751,7 +9767,6 @@ body.zen-active #zen-fire-canvas { display: block; }
         baseChars.sort((a, b) => a.y - b.y);
     }
 
-    /* ===== Асинхронная печка земли (по кадрамъ) ===== */
     function beginBake() {
         if (bakeState === 'done' && bakedW === W && bakedH === H && bakedDpr === DPR) {
             return Promise.resolve();
@@ -9863,7 +9878,8 @@ body.zen-active #zen-fire-canvas { display: block; }
     }
 
     function updateCanvasDimensions() {
-        DPR = Math.min(window.devicePixelRatio || 1, 2);
+        /* ===== Правка 2: DPR ограничен DPR_CAP (1.5 на телефонѣ, 2 на компьютерѣ) ===== */
+        DPR = Math.min(window.devicePixelRatio || 1, DPR_CAP);
         W = window.innerWidth;
         H = window.innerHeight;
         CX = W / 2;
@@ -10252,11 +10268,20 @@ body.zen-active #zen-fire-canvas { display: block; }
     }
 
     function fireLoop(time) {
-        if (!isZen) { lastFireTime = 0; requestAnimationFrame(fireLoop); return; }
+        if (!isZen) { lastFireTime = 0; lastDrawTime = 0; requestAnimationFrame(fireLoop); return; }
 
         if (!lastFireTime) lastFireTime = time;
         const dt = Math.min(0.05, (time - lastFireTime) / 1000);
+
+        /* ===== Правка 3: ограниченіе FPS.
+           Физика обновляется только когда рисуемъ — dt копится межъ кадрами,
+           движеніе остаётся пропорціональнымъ времени. */
+        if (time - lastDrawTime < FRAME_MS - 1) {
+            requestAnimationFrame(fireLoop);
+            return;
+        }
         lastFireTime = time;
+        lastDrawTime = time;
 
         refreshWeather();
 
@@ -10565,6 +10590,7 @@ body.zen-active #zen-fire-canvas { display: block; }
             flameTipX = CX;
             flameTipY = CY - 80;
             lastDecreaseAt = Date.now();
+            lastDrawTime = 0;
 
             fireCanvas.style.transition = 'none';
             groundCanvasEl.style.transition = 'none';

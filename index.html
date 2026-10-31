@@ -10011,20 +10011,20 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             coreCount -= 1;
         }
         
-        // Изменено: боковые факелы теперь стремятся внутрь
+                // Изменено: боковые факелы раздвинуты чуть шире
         if (Math.random() < dt * (20 + lvl * 10)) {
             const sz = randSize(12, 18) * lvlScale;
             addParticle({
-                type: 'fire-sub', x: CX - 22 + (Math.random() - 0.5) * 15, y: CY - 32,
-                vx: 15 + Math.random() * 15, vy: (-80 - Math.random() * 40) * heightMul, // vx > 0 (вправо к центру)
+                type: 'fire-sub', x: CX - 30 + (Math.random() - 0.5) * 15, y: CY - 32,
+                vx: 10 + Math.random() * 10, vy: (-80 - Math.random() * 40) * heightMul, // vx > 0 (вправо к центру)
                 life: 1, maxLife: 0.5 + Math.random() * 0.3,
                 text: pick(WORD_FIRE), size: sz,
                 fontStr: 'normal ' + sz + 'px ' + FONT,
                 swaySeed: Math.random() * Math.PI * 2
             });
             addParticle({
-                type: 'fire-sub', x: CX + 22 + (Math.random() - 0.5) * 15, y: CY - 32,
-                vx: -15 - Math.random() * 15, vy: (-80 - Math.random() * 40) * heightMul, // vx < 0 (влево к центру)
+                type: 'fire-sub', x: CX + 30 + (Math.random() - 0.5) * 15, y: CY - 32,
+                vx: -10 - Math.random() * 10, vy: (-80 - Math.random() * 40) * heightMul, // vx < 0 (влево к центру)
                 life: 1, maxLife: 0.5 + Math.random() * 0.3,
                 text: pick(WORD_FIRE), size: sz,
                 fontStr: 'normal ' + sz + 'px ' + FONT,

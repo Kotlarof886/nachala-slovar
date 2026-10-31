@@ -9384,25 +9384,20 @@ window.__weather = {
   else init();
 })();
 </script>
-<!-- ===== НАЧАЛО БЛОКА ZEN MODE (ОПТИМИЗИРОВАННЫЙ, СПРАЙТЫ) ===== -->
+<!-- ===== НАЧАЛО БЛОКА ZEN MODE (С ПРЕДГЕНЕРАЦИЕЙ) ===== -->
 <style>
 @keyframes zenFlyUp { 0% { transform: translateY(0); } 100% { transform: translateY(-150vh); } }
 @keyframes zenFlyDown { 0% { transform: translateY(0); } 100% { transform: translateY(150vh); } }
 @keyframes zenReturnUp { 0% { transform: translateY(-150vh); } 100% { transform: translateY(0); } }
 @keyframes zenReturnDown { 0% { transform: translateY(150vh); } 100% { transform: translateY(0); } }
 
-html.zen-lock, body.zen-lock {
-    overflow: hidden !important;
-    touch-action: none !important;
-}
+html.zen-lock, body.zen-lock { overflow: hidden !important; touch-action: none !important; }
 body.zen-active #pen-top { display: none !important; }
 
 body.zen-active .rama-verh,
 body.zen-active .main-title,
 body.zen-active .subtitle,
-body.zen-active .subtitle-year {
-    animation: zenFlyUp 2.5s cubic-bezier(0.5, 0, 0.5, 1) forwards !important;
-}
+body.zen-active .subtitle-year { animation: zenFlyUp 2.5s cubic-bezier(0.5, 0, 0.5, 1) forwards !important; }
 body.zen-active nav,
 body.zen-active .tape-slot,
 body.zen-active .alphabet-bar,
@@ -9410,16 +9405,12 @@ body.zen-active .count-note,
 body.zen-active #tg-plates,
 body.zen-active main,
 body.zen-active .rama-niz,
-body.zen-active .build-info {
-    animation: zenFlyDown 2.5s cubic-bezier(0.5, 0, 0.5, 1) forwards !important;
-}
+body.zen-active .build-info { animation: zenFlyDown 2.5s cubic-bezier(0.5, 0, 0.5, 1) forwards !important; }
 
 body.zen-returning .rama-verh,
 body.zen-returning .main-title,
 body.zen-returning .subtitle,
-body.zen-returning .subtitle-year {
-    animation: zenReturnUp 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
-}
+body.zen-returning .subtitle-year { animation: zenReturnUp 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important; }
 body.zen-returning nav,
 body.zen-returning .tape-slot,
 body.zen-returning .alphabet-bar,
@@ -9427,30 +9418,21 @@ body.zen-returning .count-note,
 body.zen-returning #tg-plates,
 body.zen-returning main,
 body.zen-returning .rama-niz,
-body.zen-returning .build-info {
-    animation: zenReturnDown 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important;
-}
+body.zen-returning .build-info { animation: zenReturnDown 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards !important; }
 
 #zen-feta-btn {
-    position: fixed !important;
-    bottom: 24px !important;
-    right: 24px !important;
-    z-index: 999999;
-    cursor: pointer;
-    opacity: 0;
+    position: fixed !important; bottom: 24px !important; right: 24px !important;
+    z-index: 999999; cursor: pointer; opacity: 0;
     transform: translateY(30px) scale(0.9);
     transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.5s ease;
     pointer-events: none;
 }
 body.zen-active #zen-feta-btn {
-    opacity: 0.35 !important;
-    transform: translateY(0) scale(1);
-    pointer-events: auto;
+    opacity: 0.35 !important; transform: translateY(0) scale(1); pointer-events: auto;
     transition: opacity 0.6s ease-out, transform 0.6s ease-out, filter 0.6s ease-out;
 }
 body.zen-active #zen-feta-btn.active {
-    opacity: 1 !important;
-    filter: brightness(1.2) drop-shadow(0 0 12px rgba(212,176,106,0.6));
+    opacity: 1 !important; filter: brightness(1.2) drop-shadow(0 0 12px rgba(212,176,106,0.6));
     transition: opacity 1.5s ease-in-out, transform 1.5s ease-in-out, filter 1.5s ease-in-out;
 }
 .zf-ring {
@@ -9470,43 +9452,25 @@ body.zen-active #zen-feta-btn:active .zf-ring { transform: scale(0.92); filter: 
 @media (max-width: 560px) { .zf-ring { width: 32px; height: 32px; } .zf-well svg { width: 18px; height: 18px; } }
 
 #zen-ground-canvas {
-    position: fixed; inset: 0;
-    width: 100vw; height: 100vh;
-    pointer-events: none;
-    z-index: 99997;
-    display: none;
-    will-change: transform;
+    position: fixed; inset: 0; width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 99997; display: none; will-change: transform;
 }
 body.zen-active #zen-ground-canvas { display: block; }
 
 #zen-fire-canvas {
-    position: fixed; inset: 0;
-    width: 100vw; height: 100vh;
-    pointer-events: none;
-    z-index: 99998;
-    display: none;
-    will-change: transform;
+    position: fixed; inset: 0; width: 100vw; height: 100vh;
+    pointer-events: none; z-index: 99998; display: none; will-change: transform;
 }
 body.zen-active #zen-fire-canvas { display: block; }
 
-/* Погодный canvas в зене: поднимаем над костром, чтобы был виден.
-   Вне зена — z-index: 0 как было (словарь над ним). */
-body.zen-active #precip-canvas {
-    z-index: 99999 !important;
-}
+body.zen-active #precip-canvas { z-index: 99999 !important; }
 </style>
 
 <script>
 (function() {
-    /* ===== Мобильный профиль ===== */
     const IS_MOBILE = !window.matchMedia('(pointer: fine)').matches
                       || /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
-
-    /* ===== Правка 2: DPR на телефоне ограничен 1.5 (на компьютерѣ — 2) ===== */
     const DPR_CAP = IS_MOBILE ? 1.5 : 2.0;
-
-    /* ===== Правка 3: ограниченіе FPS =====
-       Чтобы вернуть 60 FPS на телефонѣ — поставьте ZEN_FPS_LIMIT в false */
     const ZEN_FPS_LIMIT = true;
     const TARGET_FPS = (IS_MOBILE && ZEN_FPS_LIMIT) ? 30 : 60;
     const FRAME_MS = 1000 / TARGET_FPS;
@@ -9521,34 +9485,21 @@ body.zen-active #precip-canvas {
     let fireCanvas, fCtx;
     let groundCanvasEl, groundCtx;
 
-    let fireLevel = 0.7;
-    let fireTargetVisual = 0.7;
-    let fireVisual = 0.7;
-    let heatVisual = 1;
-    let coolT = 0;
-    let smokeFadeT = 1;
-    let zeroEnteredAt = 0;
-    let lastDecreaseAt = Date.now();
-
-    let coalsPopped = 0;
-    let nextCoalPopAt = 0;
+    let fireLevel = 0.7, fireTargetVisual = 0.7, fireVisual = 0.7;
+    let heatVisual = 1, coolT = 0, smokeFadeT = 1;
+    let zeroEnteredAt = 0, lastDecreaseAt = Date.now();
+    let coalsPopped = 0, nextCoalPopAt = 0;
 
     let baseChars = [];
-    let lastFireTime = 0;
-    let lastDrawTime = 0;
+    let lastFireTime = 0, lastDrawTime = 0;
 
-    let W = 600, H = 800, CX = 300, CY = 750;
-    let DPR = 1;
+    let W = 600, H = 800, CX = 300, CY = 750, DPR = 1;
 
-    const GROUND_HEIGHT = 65;
-    const GROUND_DEPTH = 30;
-    const MAX_PARTICLES = 5000;
+    const GROUND_HEIGHT = 65, GROUND_DEPTH = 30, MAX_PARTICLES = 5000;
     const FONT = '"Gardenia Decor", "Yeseva One", Georgia, serif';
 
     let bakedW = 0, bakedH = 0, bakedDpr = 0;
-    let bakeState = 'idle';
-    let bakePromise = null;
-    let bakeToken = 0;
+    let bakeState = 'idle', bakePromise = null, bakeToken = 0;
 
     const particlePool = [];
     for (let i = 0; i < MAX_PARTICLES; i++) {
@@ -9561,13 +9512,20 @@ body.zen-active #precip-canvas {
     }
     let particleCount = 0;
 
-    /* ===== Кэшъ спрайтовъ: fillText + shadowBlur → drawImage ===== */
+    /* ===== Кэшъ спрайтовъ ===== */
     const spriteCache = new Map();
     let coalSpriteCache = new Map();
     const SMOKE_BASE_SIZES = [24, 40, 64, 96];
     const SMOKE_SHADES = ['#202020', '#505050', '#909090', '#c0c0c0'];
     const smokeSpriteCache = [];
     let smokeSpritesReady = false;
+
+    /* ===== Діагностика ===== */
+    const spriteStats = { runtime: 0, prewarm: 0 };
+    let prewarmRunning = false;
+    let prewarmDone = false;
+    let prewarmToken = 0;
+    let frameTimeSum = 0, frameTimeCount = 0, lastFpsLog = 0;
 
     function makeSprite(text, size, color, glowColor, glowBlur) {
         const pad = (glowBlur > 0 ? glowBlur + 4 : 4);
@@ -9579,29 +9537,26 @@ body.zen-active #precip-canvas {
         const g = c.getContext('2d');
         g.scale(DPR, DPR);
         g.font = 'normal ' + size + 'px ' + FONT;
-        g.textAlign = 'center';
-        g.textBaseline = 'middle';
+        g.textAlign = 'center'; g.textBaseline = 'middle';
         if (glowBlur > 0 && glowColor) {
-            g.shadowBlur = glowBlur;
-            g.shadowColor = glowColor;
-            g.fillStyle = color;
-            g.fillText(text, w / 2, h / 2);
-            g.shadowBlur = 0;
-            g.shadowColor = 'transparent';
+            g.shadowBlur = glowBlur; g.shadowColor = glowColor;
+            g.fillStyle = color; g.fillText(text, w / 2, h / 2);
+            g.shadowBlur = 0; g.shadowColor = 'transparent';
         }
-        g.fillStyle = color;
-        g.fillText(text, w / 2, h / 2);
+        g.fillStyle = color; g.fillText(text, w / 2, h / 2);
         return { img: c, w: w, h: h };
     }
 
     function getSprite(text, size, color, glowColor, glowBlur) {
-        size = Math.max(1, Math.round(size));
+        /* Огрубленіе до чётнаго размѣра: вдвое меньше уникальныхъ спрайтовъ */
+        size = Math.max(2, Math.round(size / 2) * 2);
         const key = text + '|' + size + '|' + color + '|' + (glowColor || '') + '|' + (glowBlur | 0);
         let s = spriteCache.get(key);
         if (s) return s;
         if (spriteCache.size > 3000) spriteCache.clear();
         s = makeSprite(text, size, color, glowColor, glowBlur);
         spriteCache.set(key, s);
+        if (!prewarmRunning) spriteStats.runtime++;   /* созданъ въ рантаймѣ, а не предгрѣвомъ */
         return s;
     }
 
@@ -9616,9 +9571,7 @@ body.zen-active #precip-canvas {
             return s;
         }
         if (coalSpriteCache.size > 8000) coalSpriteCache.clear();
-
         const shiftQ = Math.round((shift || 0) * 4) / 4;
-
         if (heatLevel < 0.98) {
             const bucket = Math.round(heatLevel * 20) / 20;
             const cr = Math.round((200 + shiftQ * 30) * bucket);
@@ -9633,7 +9586,6 @@ body.zen-active #precip-canvas {
             coalSpriteCache.set(key, s);
             return s;
         }
-
         const glowPower = Math.min(1, 0.35 + (fireLevel === 0 ? 0 : fireVisual / 3) + heatLevel * 0.3);
         const hue = 20 + shiftQ * 15;
         const light = 40 + shiftQ * 20 + glowPower * 20;
@@ -9670,7 +9622,6 @@ body.zen-active #precip-canvas {
         }
         return best;
     }
-
     function pickSmokeShadeIdx(age) {
         if (age < 0.22) return 0;
         if (age < 0.45) return 1;
@@ -9678,11 +9629,82 @@ body.zen-active #precip-canvas {
         return 3;
     }
 
+    /* ===== ПРЕДГЕНЕРАЦІЯ ВСѢХЪ СПРАЙТОВЪ =====
+       Идётъ чанками по 5 штукъ через requestAnimationFrame — рендеръ не блокируется.
+       Вызывается при входѣ въ zen (параллельно съ 2.2-секунднымъ переходомъ) и послѣ resize. */
+    async function prewarmSpriteCache() {
+        if (prewarmRunning) return;
+        const myToken = ++prewarmToken;
+        prewarmRunning = true;
+        prewarmDone = false;
+
+        const nextFrame = () => new Promise(r => requestAnimationFrame(r));
+        let batch = 0;
+        const flush = async () => {
+            batch = 0;
+            await nextFrame();
+            return myToken !== prewarmToken;
+        };
+
+        const FIRE_CHARS = ['о', 'Г', 'н', 'ь'];
+        const CORE_COLORS = ['#ffffff', '#fff0c2', '#ff9d00', '#d83b00'];
+        const SUB_COLORS = ['#fff0c2', '#ff9d00', '#d83b00'];
+        const OUTER_COLORS = ['#fff0c2', '#ff9d00', '#d83b00', '#441100'];
+        const FIRE_SIZES = [];
+        for (let s = 6; s <= 26; s += 2) FIRE_SIZES.push(s);
+
+        for (const ch of FIRE_CHARS) for (const sz of FIRE_SIZES) for (const col of CORE_COLORS) {
+            getSprite(ch, sz, col, null, 0); spriteStats.prewarm++;
+            if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
+        }
+        for (const ch of FIRE_CHARS) for (const sz of FIRE_SIZES) for (const col of SUB_COLORS) {
+            getSprite(ch, sz, col, null, 0); spriteStats.prewarm++;
+            if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
+        }
+        for (const ch of FIRE_CHARS) for (const sz of FIRE_SIZES) for (const col of OUTER_COLORS) {
+            getSprite(ch, sz, col, null, 0); spriteStats.prewarm++;
+            if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
+        }
+
+        const SPARK_CHARS = ['и', 'с', 'к', 'р', 'ы'];
+        const SPARK_COLORS = ['#ffdd44', '#ff6600'];
+        const SPARK_SIZES = [6, 8, 10, 12];
+        for (const ch of SPARK_CHARS) for (const sz of SPARK_SIZES) for (const col of SPARK_COLORS) {
+            getSprite(ch, sz, col, col, 8); spriteStats.prewarm++;
+            if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
+        }
+
+        const EMBER_CHARS = ['у', 'Г', 'л', 'и'];
+        const EMBER_SIZES = [8, 10, 12, 14];
+        const COALPOP_COLORS = ['#ff9933', '#cc5522', '#442211'];
+        for (const ch of EMBER_CHARS) for (const sz of EMBER_SIZES) for (const col of COALPOP_COLORS) {
+            getSprite(ch, sz, col, col, 8); spriteStats.prewarm++;
+            if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
+        }
+
+        /* Угли — для текущаго (горячаго) состоянія */
+        for (const ch of EMBER_CHARS) for (let sz = 8; sz <= 16; sz += 2) for (let si = 0; si < 8; si++) {
+            const shift = (si - 4) / 4;
+            getCoalSprite(ch, sz, true, 1.0, shift); spriteStats.prewarm++;
+            if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
+        }
+
+        initSmokeSprites();
+        prewarmRunning = false;
+        prewarmDone = true;
+        console.log('[zen prewarm] готово, создано спрайтовъ: ' + spriteStats.prewarm);
+    }
+
     function clearSpriteCaches() {
         spriteCache.clear();
         coalSpriteCache.clear();
         smokeSpritesReady = false;
         initSmokeSprites();
+        spriteStats.runtime = 0;
+        spriteStats.prewarm = 0;
+        prewarmToken++;
+        prewarmRunning = false;
+        prewarmDone = false;
     }
 
     const WORD_FIRE   = ['о', 'Г', 'о', 'н', 'ь'];
@@ -9692,9 +9714,7 @@ body.zen-active #precip-canvas {
     const WORD_SPARKS = ['и', 'с', 'к', 'р', 'ы'];
     const WORD_GROUND = ['т', 'в', 'е', 'р', 'д', 'ь'];
 
-    let weatherLastFetch = 0;
-    let windXWorld = 0;
-    let isRainOrSnow = false;
+    let weatherLastFetch = 0, windXWorld = 0, isRainOrSnow = false;
     let flameTipX = 0, flameTipY = 0, flameTipInit = false;
 
     function refreshWeather() {
@@ -9715,15 +9735,8 @@ body.zen-active #precip-canvas {
 
     function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
     function randSize(min, max) { return Math.round(min + Math.random() * (max - min)); }
-
-    function groundTopAt(x) {
-        const t = (x - CX) / CX;
-        return H - GROUND_HEIGHT + t * t * GROUND_DEPTH;
-    }
-
-    function getDecreaseInterval() {
-        return isRainOrSnow ? 60000 : 120000;
-    }
+    function groundTopAt(x) { const t = (x - CX) / CX; return H - GROUND_HEIGHT + t * t * GROUND_DEPTH; }
+    function getDecreaseInterval() { return isRainOrSnow ? 60000 : 120000; }
 
     function addParticle(p) {
         if (particleCount >= MAX_PARTICLES) return;
@@ -9735,216 +9748,145 @@ body.zen-active #precip-canvas {
     function initBaseChars() {
         baseChars = [];
         for (let i = 0; i < 200; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const r = Math.sqrt(Math.random());
+            const angle = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random());
             const sinA = Math.sin(angle);
             baseChars.push({
-                type: 'log',
-                x: Math.cos(angle) * r * 80,
-                y: sinA * r * (sinA > 0 ? 26 : 14),
-                letter: pick(WORD_LOGS),
-                size: randSize(12, 24),
+                type: 'log', x: Math.cos(angle) * r * 80, y: sinA * r * (sinA > 0 ? 26 : 14),
+                letter: pick(WORD_LOGS), size: randSize(12, 24),
                 rot: (Math.random() - 0.5) * 1.5,
                 color: Math.random() < 0.8 ? '#120500' : '#2a1000'
             });
         }
         for (let i = 0; i < 250; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const r = Math.sqrt(Math.random()) * 0.7;
-            let y = Math.sin(angle) * r * 15;
-            if (y < -10) y = -10;
+            const angle = Math.random() * Math.PI * 2, r = Math.sqrt(Math.random()) * 0.7;
+            let y = Math.sin(angle) * r * 15; if (y < -10) y = -10;
             baseChars.push({
-                type: 'coal',
-                x: Math.cos(angle) * r * 80,
-                y: y,
-                letter: pick(WORD_EMBERS),
-                size: randSize(8, 16),
+                type: 'coal', x: Math.cos(angle) * r * 80, y: y,
+                letter: pick(WORD_EMBERS), size: randSize(8, 16),
                 rot: (Math.random() - 0.5) * 1.5,
-                dist: r,
-                phase: Math.random() * Math.PI * 2
+                dist: r, phase: Math.random() * Math.PI * 2
             });
         }
         baseChars.sort((a, b) => a.y - b.y);
     }
 
     function beginBake() {
-        if (bakeState === 'done' && bakedW === W && bakedH === H && bakedDpr === DPR) {
-            return Promise.resolve();
-        }
+        if (bakeState === 'done' && bakedW === W && bakedH === H && bakedDpr === DPR) return Promise.resolve();
         if (bakeState === 'running') return bakePromise;
-
         bakeState = 'running';
         const myToken = ++bakeToken;
         const targetW = W, targetH = H, targetDpr = DPR;
-
         bakePromise = (async () => {
             groundCanvasEl.width  = Math.floor(targetW * targetDpr);
             groundCanvasEl.height = Math.floor(targetH * targetDpr);
-            groundCanvasEl.style.width  = targetW + 'px';
-            groundCanvasEl.style.height = targetH + 'px';
+            groundCanvasEl.style.width = targetW + 'px'; groundCanvasEl.style.height = targetH + 'px';
             groundCtx.setTransform(targetDpr, 0, 0, targetDpr, 0, 0);
             groundCtx.imageSmoothingEnabled = false;
-            groundCtx.textAlign = 'center';
-            groundCtx.textBaseline = 'middle';
+            groundCtx.textAlign = 'center'; groundCtx.textBaseline = 'middle';
             groundCtx.clearRect(0, 0, targetW, targetH);
-
-            groundCtx.beginPath();
-            groundCtx.moveTo(-10, targetH + 10);
-            for (let x = -10; x <= targetW + 10; x += 20) {
-                groundCtx.lineTo(x, groundTopAt(x));
-            }
-            groundCtx.lineTo(targetW + 10, targetH + 10);
-            groundCtx.closePath();
-            groundCtx.fillStyle = '#1a1535';
-            groundCtx.fill();
-
+            groundCtx.beginPath(); groundCtx.moveTo(-10, targetH + 10);
+            for (let x = -10; x <= targetW + 10; x += 20) groundCtx.lineTo(x, groundTopAt(x));
+            groundCtx.lineTo(targetW + 10, targetH + 10); groundCtx.closePath();
+            groundCtx.fillStyle = '#1a1535'; groundCtx.fill();
             const nextFrame = () => new Promise(r => requestAnimationFrame(r));
-
             let counter = 0;
             for (let x = -20; x < targetW + 20; x += 5) {
                 if (myToken !== bakeToken) return;
-                const topY = groundTopAt(x);
-                const layers = 10 + Math.floor(Math.random() * 6);
-                const distFromCenter = Math.min(1, Math.abs(x - CX) / (targetW / 2));
-                const baseGray = 52 - distFromCenter * 34;
+                const topY = groundTopAt(x), layers = 10 + Math.floor(Math.random() * 6);
+                const dfc = Math.min(1, Math.abs(x - CX) / (targetW / 2));
+                const baseGray = 52 - dfc * 34;
                 for (let i = 0; i < layers; i++) {
-                    const y = topY + i * 7 + Math.random() * 9;
-                    if (y > targetH + 20) continue;
+                    const y = topY + i * 7 + Math.random() * 9; if (y > targetH + 20) continue;
                     const gray = Math.max(8, Math.round(baseGray + (Math.random() - 0.5) * 12));
                     const size = Math.random() < 0.55 ? randSize(6, 10) : randSize(11, 20);
-                    groundCtx.save();
-                    groundCtx.translate(x + (Math.random() - 0.5) * 8, y);
+                    groundCtx.save(); groundCtx.translate(x + (Math.random() - 0.5) * 8, y);
                     groundCtx.rotate((Math.random() - 0.5) * 0.6);
                     groundCtx.font = 'normal ' + size + 'px ' + FONT;
                     groundCtx.fillStyle = `rgb(${gray}, ${gray}, ${gray+5})`;
                     groundCtx.globalAlpha = 0.95;
-                    groundCtx.fillText(pick(WORD_GROUND), 0, 0);
-                    groundCtx.restore();
+                    groundCtx.fillText(pick(WORD_GROUND), 0, 0); groundCtx.restore();
                 }
                 if (++counter % 20 === 0) await nextFrame();
             }
-
             counter = 0;
             for (let x = -20; x < targetW + 20; x += 3) {
                 if (myToken !== bakeToken) return;
-                const t = Math.abs((x - CX) / CX);
-                if (t < 0.55) continue;
-                const topY = groundTopAt(x);
-                const layers = 8 + Math.floor(Math.random() * 5);
-                const distFromCenter = Math.min(1, Math.abs(x - CX) / (targetW / 2));
-                const baseGray = 26 - distFromCenter * 20;
+                if (Math.abs((x - CX) / CX) < 0.55) continue;
+                const topY = groundTopAt(x), layers = 8 + Math.floor(Math.random() * 5);
+                const dfc = Math.min(1, Math.abs(x - CX) / (targetW / 2));
+                const baseGray = 26 - dfc * 20;
                 for (let i = 0; i < layers; i++) {
-                    const y = topY + i * 6 + Math.random() * 8;
-                    if (y > targetH + 20) continue;
+                    const y = topY + i * 6 + Math.random() * 8; if (y > targetH + 20) continue;
                     const gray = Math.max(5, Math.round(baseGray + (Math.random() - 0.5) * 8));
                     const size = randSize(4, 8);
-                    groundCtx.save();
-                    groundCtx.translate(x + (Math.random() - 0.5) * 6, y);
+                    groundCtx.save(); groundCtx.translate(x + (Math.random() - 0.5) * 6, y);
                     groundCtx.rotate((Math.random() - 0.5) * 0.7);
                     groundCtx.font = 'normal ' + size + 'px ' + FONT;
                     groundCtx.fillStyle = `rgb(${gray}, ${gray}, ${gray+4})`;
                     groundCtx.globalAlpha = 0.9;
-                    groundCtx.fillText(pick(WORD_GROUND), 0, 0);
-                    groundCtx.restore();
+                    groundCtx.fillText(pick(WORD_GROUND), 0, 0); groundCtx.restore();
                 }
                 if (++counter % 20 === 0) await nextFrame();
             }
-
             if (myToken !== bakeToken) return;
-
-            groundCtx.save();
-            groundCtx.translate(CX, CY);
+            groundCtx.save(); groundCtx.translate(CX, CY);
             for (let i = 0; i < baseChars.length; i++) {
-                const c = baseChars[i];
-                if (c.type !== 'log') continue;
-                groundCtx.save();
-                groundCtx.translate(c.x, c.y);
-                groundCtx.rotate(c.rot);
+                const c = baseChars[i]; if (c.type !== 'log') continue;
+                groundCtx.save(); groundCtx.translate(c.x, c.y); groundCtx.rotate(c.rot);
                 groundCtx.font = 'normal ' + c.size + 'px ' + FONT;
-                groundCtx.fillStyle = c.color;
-                groundCtx.fillText(c.letter, 0, 0);
-                groundCtx.restore();
+                groundCtx.fillStyle = c.color; groundCtx.fillText(c.letter, 0, 0); groundCtx.restore();
             }
             groundCtx.restore();
-
             if (myToken === bakeToken) {
-                bakedW = targetW;
-                bakedH = targetH;
-                bakedDpr = targetDpr;
-                bakeState = 'done';
+                bakedW = targetW; bakedH = targetH; bakedDpr = targetDpr; bakeState = 'done';
             }
         })();
         return bakePromise;
     }
 
     function updateCanvasDimensions() {
-        /* ===== Правка 2: DPR ограничен DPR_CAP (1.5 на телефонѣ, 2 на компьютерѣ) ===== */
         DPR = Math.min(window.devicePixelRatio || 1, DPR_CAP);
-        W = window.innerWidth;
-        H = window.innerHeight;
-        CX = W / 2;
-        CY = H - GROUND_HEIGHT + 8;
-
+        W = window.innerWidth; H = window.innerHeight;
+        CX = W / 2; CY = H - GROUND_HEIGHT + 8;
         fireCanvas.width  = Math.floor(W * DPR);
         fireCanvas.height = Math.floor(H * DPR);
-        fireCanvas.style.width  = W + 'px';
-        fireCanvas.style.height = H + 'px';
+        fireCanvas.style.width = W + 'px'; fireCanvas.style.height = H + 'px';
         fCtx.setTransform(DPR, 0, 0, DPR, 0, 0);
         fCtx.imageSmoothingEnabled = false;
-        fCtx.textAlign = 'center';
-        fCtx.textBaseline = 'middle';
-
-        particleCount = 0;
-        flameTipInit = false;
-        flameTipX = CX;
-        flameTipY = CY - 80;
+        fCtx.textAlign = 'center'; fCtx.textBaseline = 'middle';
+        particleCount = 0; flameTipInit = false;
+        flameTipX = CX; flameTipY = CY - 80;
         initBaseChars();
     }
 
-    function smokeVyBase(vis)      { return -(60 + vis * 14); }
-    function smokeGrow(vis)        { return 2 + vis * 0.7; }
-    function vertSparkVyBase(vis)  { return -(70 + vis * 22); }
+    function smokeVyBase(vis)     { return -(60 + vis * 14); }
+    function smokeGrow(vis)       { return 2 + vis * 0.7; }
+    function vertSparkVyBase(vis) { return -(70 + vis * 22); }
 
     function spawnSidewaysSparks(count, intensity) {
         intensity = Math.max(1, Math.min(5, intensity || 1));
-        const EDGE_X = 80;
-        const MAX_REACH = EDGE_X + intensity * 22;
+        const EDGE_X = 80, MAX_REACH = EDGE_X + intensity * 22;
         for (let i = 0; i < count; i++) {
             const dir = Math.random() > 0.5 ? 1 : -1;
-            const isRare = Math.random() < 0.15;
-            let targetDelta;
-            if (isRare) targetDelta = EDGE_X + Math.random() * (MAX_REACH - EDGE_X);
-            else        targetDelta = EDGE_X + (Math.random() - 0.5) * 30;
-
+            const targetDelta = (Math.random() < 0.15)
+                ? EDGE_X + Math.random() * (MAX_REACH - EDGE_X)
+                : EDGE_X + (Math.random() - 0.5) * 30;
             const baseVy = (130 + Math.random() * 60) * 0.35;
             const gravity = (240 + Math.random() * 60) * 0.35;
-            const tLand = 2 * baseVy / gravity;
-            const vx = targetDelta / tLand;
-
+            const vx = targetDelta / (2 * baseVy / gravity);
             addParticle({
-                type: 'spark',
-                x: CX + (Math.random() - 0.5) * 20,
-                y: CY - 35,
-                vx: vx * dir,
-                vy: -baseVy,
-                gravity: gravity,
-                life: 1,
-                maxLife: 1.8 + Math.random() * 0.8,
-                text: pick(WORD_SPARKS),
+                type: 'spark', x: CX + (Math.random() - 0.5) * 20, y: CY - 35,
+                vx: vx * dir, vy: -baseVy, gravity: gravity, life: 1,
+                maxLife: 1.8 + Math.random() * 0.8, text: pick(WORD_SPARKS),
                 color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
                 size: randSize(7, 11),
                 fontStr: 'normal ' + randSize(7, 11) + 'px ' + FONT
             });
-
             addParticle({
-                type: 'spark',
-                x: CX + (Math.random() - 0.5) * 40,
+                type: 'spark', x: CX + (Math.random() - 0.5) * 40,
                 y: CY - 20 - Math.random() * 30,
-                vx: (Math.random() - 0.5) * 10,
-                vy: -(150 + Math.random() * 50),
-                gravity: 50,
-                life: 1,
-                maxLife: 2.0 + Math.random() * 0.8,
+                vx: (Math.random() - 0.5) * 10, vy: -(150 + Math.random() * 50),
+                gravity: 50, life: 1, maxLife: 2.0 + Math.random() * 0.8,
                 text: pick(WORD_SPARKS),
                 color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
                 size: randSize(7, 11),
@@ -9956,20 +9898,12 @@ body.zen-active #precip-canvas {
     function popCoal(time) {
         const dir = Math.random() > 0.5 ? 1 : -1;
         addParticle({
-            type: 'coal-pop',
-            x: CX + (Math.random() - 0.5) * 40,
-            y: CY - 5,
-            vx: dir * (40 + Math.random() * 60),
-            vy: -(180 + Math.random() * 80),
-            gravity: 380,
-            life: 1,
-            maxLife: 1.6 + Math.random() * 0.6,
-            text: pick(WORD_EMBERS),
-            size: randSize(8, 13),
+            type: 'coal-pop', x: CX + (Math.random() - 0.5) * 40, y: CY - 5,
+            vx: dir * (40 + Math.random() * 60), vy: -(180 + Math.random() * 80),
+            gravity: 380, life: 1, maxLife: 1.6 + Math.random() * 0.6,
+            text: pick(WORD_EMBERS), size: randSize(8, 13),
             fontStr: 'normal ' + randSize(8, 13) + 'px ' + FONT,
-            rot: (Math.random() - 0.5) * 2,
-            rotSpeed: (Math.random() - 0.5) * 8,
-            angle: 0
+            rot: (Math.random() - 0.5) * 2, rotSpeed: (Math.random() - 0.5) * 8, angle: 0
         });
     }
 
@@ -9985,26 +9919,14 @@ body.zen-active #precip-canvas {
         if (!isZen) return;
         const was = fireLevel;
         fireLevel = nextLevel(was);
-
         if (fireLevel === 0) {
-            fireTargetVisual = 0;
-            zeroEnteredAt = Date.now();
-            coolT = 0;
-            smokeFadeT = 1;
+            fireTargetVisual = 0; zeroEnteredAt = Date.now(); coolT = 0; smokeFadeT = 1;
         } else if (fireLevel === 0.5) {
-            fireTargetVisual = 0;
-            coalsPopped = 0;
+            fireTargetVisual = 0; coalsPopped = 0;
             nextCoalPopAt = performance.now() + 800 + Math.random() * 1200;
-        } else {
-            fireTargetVisual = fireLevel;
-        }
-
+        } else fireTargetVisual = fireLevel;
         if (was === 0) { coolT = 0; smokeFadeT = 0; }
-
-        if (fireLevel >= 1) {
-            const burstN = Math.min(3, 1 + Math.ceil(fireLevel / 2));
-            spawnSidewaysSparks(burstN, fireLevel);
-        }
+        if (fireLevel >= 1) spawnSidewaysSparks(Math.min(3, 1 + Math.ceil(fireLevel / 2)), fireLevel);
         lastDecreaseAt = Date.now();
     }
 
@@ -10013,158 +9935,108 @@ body.zen-active #precip-canvas {
         groundCanvasEl.id = 'zen-ground-canvas';
         document.body.appendChild(groundCanvasEl);
         groundCtx = groundCanvasEl.getContext('2d');
-
         fireCanvas = document.createElement('canvas');
         fireCanvas.id = 'zen-fire-canvas';
         document.body.appendChild(fireCanvas);
         fCtx = fireCanvas.getContext('2d');
-
         updateCanvasDimensions();
-
         if (document.fonts && document.fonts.ready && document.fonts.ready.then) {
             document.fonts.ready.then(function () {
-                spriteCache.clear();
-                coalSpriteCache.clear();
-                smokeSpritesReady = false;
-                initSmokeSprites();
+                clearSpriteCaches();
+                if (isZen) prewarmSpriteCache();
             });
         }
         initSmokeSprites();
-
-        if ('requestIdleCallback' in window) {
-            requestIdleCallback(beginBake, { timeout: 4000 });
-        } else {
-            setTimeout(beginBake, 1500);
-        }
-
+        if ('requestIdleCallback' in window) requestIdleCallback(beginBake, { timeout: 4000 });
+        else setTimeout(beginBake, 1500);
         window.addEventListener('resize', onResize);
-
         document.addEventListener('pointerdown', function(e) {
             if (!isZen) return;
             if (e.target.closest('#zen-feta-btn')) return;
-            const distX = Math.abs(e.clientX - window.innerWidth / 2);
-            const distY = window.innerHeight - e.clientY;
-            if (distX < 200 && distY < 220) onTap();
+            if (Math.abs(e.clientX - window.innerWidth / 2) < 200 && window.innerHeight - e.clientY < 220) onTap();
         }, true);
-
         requestAnimationFrame(fireLoop);
     }
 
     function onResize() {
         updateCanvasDimensions();
         clearSpriteCaches();
-        bakeToken++;
-        bakeState = 'idle';
-        bakedW = 0; bakedH = 0; bakedDpr = 0;
-        if ('requestIdleCallback' in window) {
-            requestIdleCallback(beginBake, { timeout: 4000 });
-        } else {
-            setTimeout(beginBake, 1500);
-        }
+        bakeToken++; bakeState = 'idle'; bakedW = 0; bakedH = 0; bakedDpr = 0;
+        if (isZen) prewarmSpriteCache();
+        if ('requestIdleCallback' in window) requestIdleCallback(beginBake, { timeout: 4000 });
+        else setTimeout(beginBake, 1500);
     }
 
     function spawnSmoke(x, y, vyBase, growRate, opts) {
         opts = opts || {};
         const startSize = opts.startSize || randSize(8, 14);
         addParticle({
-            type: 'smoke',
-            x: x,
-            y: y,
-            vx: (Math.random() - 0.5) * 10,
-            vy: vyBase - Math.random() * 20,
-            life: 1,
+            type: 'smoke', x: x, y: y, vx: (Math.random() - 0.5) * 10,
+            vy: vyBase - Math.random() * 20, life: 1,
             maxLife: (5 + Math.random() * 3) * (opts.lifeMul || 1),
-            text: pick(WORD_SMOKE),
-            size: startSize,
-            fontStr: 'normal ' + startSize + 'px ' + FONT,
-            age: 0,
-            seed: Math.random() * Math.PI * 2,
-            growRate: growRate,
-            dim: opts.dim
+            text: pick(WORD_SMOKE), size: startSize,
+            fontStr: 'normal ' + startSize + 'px ' + FONT, age: 0,
+            seed: Math.random() * Math.PI * 2, growRate: growRate, dim: opts.dim
         });
     }
 
     function spawnParticles(dt, time) {
         if (fireLevel === 0 && smokeFadeT > 0) {
             if (Math.random() < dt * (4 * smokeFadeT)) {
-                spawnSmoke(
-                    CX + (Math.random() - 0.5) * 20,
-                    CY - 3,
-                    -35,
-                    1.5,
-                    { startSize: randSize(4, 7), dim: smokeFadeT }
-                );
+                spawnSmoke(CX + (Math.random() - 0.5) * 20, CY - 3, -35, 1.5,
+                    { startSize: randSize(4, 7), dim: smokeFadeT });
             }
         }
-
         if (fireLevel === 0.5) {
             if (Math.random() < dt * 3.5) {
-                spawnSmoke(
-                    CX + (Math.random() - 0.5) * 24,
-                    CY - 4,
-                    -40,
-                    1.6,
-                    { startSize: randSize(4, 8) }
-                );
+                spawnSmoke(CX + (Math.random() - 0.5) * 24, CY - 4, -40, 1.6,
+                    { startSize: randSize(4, 8) });
             }
             if (coalsPopped < 2 && time >= nextCoalPopAt) {
-                popCoal(time);
-                coalsPopped++;
+                popCoal(time); coalsPopped++;
                 nextCoalPopAt = time + 2500 + Math.random() * 3500;
-            } else if (coalsPopped >= 2 && Math.random() < dt * 0.25) {
-                popCoal(time);
-            }
+            } else if (coalsPopped >= 2 && Math.random() < dt * 0.25) popCoal(time);
         }
-
         const lvl = fireVisual;
-        if (lvl <= 0.03) {
-            flameTipInit = false;
-            flameTipX = CX;
-            flameTipY = CY - 80;
-            return;
-        }
-
+        if (lvl <= 0.03) { flameTipInit = false; flameTipX = CX; flameTipY = CY - 80; return; }
         const lvlScale = Math.min(1, Math.max(0.1, lvl));
         const pulse = (Math.sin(time * 0.003) + 1) / 2;
-
         const coreRate = (50 + lvl * 20) * (0.7 + 0.3 * pulse);
         let coreCount = coreRate * dt;
         while (coreCount > 0) {
             if (Math.random() < coreCount) {
                 const sz = randSize(16, 24) * lvlScale;
                 addParticle({
-                    type: 'fire-core',
-                    x: CX + (Math.random() - 0.5) * 35,
-                    y: CY - 5,
+                    type: 'fire-core', x: CX + (Math.random() - 0.5) * 35, y: CY - 5,
                     vx: (Math.random() - 0.5) * 4,
                     vy: -100 - Math.random() * 50 - pulse * lvl * 15,
-                    life: 1,
-                    maxLife: 0.7 + Math.random() * 0.4,
-                    text: pick(WORD_FIRE),
-                    size: sz,
+                    life: 1, maxLife: 0.7 + Math.random() * 0.4,
+                    text: pick(WORD_FIRE), size: sz,
                     fontStr: 'normal ' + sz + 'px ' + FONT,
                     swaySeed: Math.random() * Math.PI * 2
                 });
             }
             coreCount -= 1;
         }
-
         if (Math.random() < dt * (20 + lvl * 10)) {
             const sz = randSize(12, 18) * lvlScale;
             addParticle({
                 type: 'fire-sub', x: CX - 22 + (Math.random() - 0.5) * 15, y: CY - 32,
                 vx: -20 - Math.random() * 20, vy: -80 - Math.random() * 40,
                 life: 1, maxLife: 0.5 + Math.random() * 0.3,
-                text: pick(WORD_FIRE), size: sz, fontStr: 'normal ' + sz + 'px ' + FONT, swaySeed: Math.random() * Math.PI * 2
+                text: pick(WORD_FIRE), size: sz,
+                fontStr: 'normal ' + sz + 'px ' + FONT,
+                swaySeed: Math.random() * Math.PI * 2
             });
             addParticle({
                 type: 'fire-sub', x: CX + 22 + (Math.random() - 0.5) * 15, y: CY - 32,
                 vx: 20 + Math.random() * 20, vy: -80 - Math.random() * 40,
                 life: 1, maxLife: 0.5 + Math.random() * 0.3,
-                text: pick(WORD_FIRE), size: sz, fontStr: 'normal ' + sz + 'px ' + FONT, swaySeed: Math.random() * Math.PI * 2
+                text: pick(WORD_FIRE), size: sz,
+                fontStr: 'normal ' + sz + 'px ' + FONT,
+                swaySeed: Math.random() * Math.PI * 2
             });
         }
-
         const outerRate = (60 + lvl * 30) * (0.6 + 0.4 * pulse);
         let outerCount = outerRate * dt;
         const spread = 60;
@@ -10174,208 +10046,149 @@ body.zen-active #precip-canvas {
                 const spawnX = CX + u * spread / 2;
                 const sz = randSize(12, 20) * lvlScale;
                 addParticle({
-                    type: 'fire-outer',
-                    x: spawnX, y: CY - 5 + u * u * 15,
+                    type: 'fire-outer', x: spawnX, y: CY - 5 + u * u * 15,
                     vx: 0, vy: -60 - Math.random() * 30 - pulse * lvl * 10,
-                    initDX: spawnX - CX,
-                    life: 1, maxLife: 0.7 + Math.random() * 0.6 + pulse * 0.2,
-                    text: pick(WORD_FIRE), size: sz, fontStr: 'normal ' + sz + 'px ' + FONT,
+                    initDX: spawnX - CX, life: 1,
+                    maxLife: 0.7 + Math.random() * 0.6 + pulse * 0.2,
+                    text: pick(WORD_FIRE), size: sz,
+                    fontStr: 'normal ' + sz + 'px ' + FONT,
                     swaySeed: Math.random() * Math.PI * 2
                 });
             }
             outerCount -= 1;
         }
-
         const smokeRate = 4 + lvl * 10;
         let smokeCount = smokeRate * dt;
-        const smokeVyB = smokeVyBase(lvl);
-        const smokeGrowV = smokeGrow(lvl);
+        const smokeVyB = smokeVyBase(lvl), smokeGrowV = smokeGrow(lvl);
         const tipX = flameTipInit ? flameTipX : CX;
         const tipY = (flameTipInit ? flameTipY : (CY - 80)) + 40;
         while (smokeCount > 0) {
             if (Math.random() < smokeCount) {
-                spawnSmoke(
-                    tipX + (Math.random() - 0.5) * 4,
-                    tipY - Math.random() * 4,
-                    smokeVyB,
-                    smokeGrowV,
-                    { startSize: randSize(6, 10) }
-                );
+                spawnSmoke(tipX + (Math.random() - 0.5) * 4, tipY - Math.random() * 4,
+                    smokeVyB, smokeGrowV, { startSize: randSize(6, 10) });
             }
             smokeCount -= 1;
         }
-
         if (Math.random() < dt * (8 + lvl * 5)) {
-            const vyB = vertSparkVyBase(lvl);
-            const sz = randSize(6, 12);
+            const vyB = vertSparkVyBase(lvl), sz = randSize(6, 12);
             addParticle({
-                type: 'spark',
-                x: CX + (Math.random() - 0.5) * 40,
+                type: 'spark', x: CX + (Math.random() - 0.5) * 40,
                 y: CY - 20 - Math.random() * 30,
-                vx: (Math.random() - 0.5) * 20,
-                vy: vyB + (Math.random() - 0.5) * 40,
-                gravity: 50,
-                life: 1,
-                maxLife: 1.5 + Math.random() * 1.0,
+                vx: (Math.random() - 0.5) * 20, vy: vyB + (Math.random() - 0.5) * 40,
+                gravity: 50, life: 1, maxLife: 1.5 + Math.random() * 1.0,
                 text: pick(WORD_SPARKS),
                 color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
-                size: sz,
-                fontStr: 'normal ' + sz + 'px ' + FONT
+                size: sz, fontStr: 'normal ' + sz + 'px ' + FONT
             });
         }
-
         const sparkRate = 0.15 + lvl * lvl * 0.06;
-        if (lvl > 0.5 && Math.random() < dt * sparkRate) {
-            spawnSidewaysSparks(1, lvl);
-        }
+        if (lvl > 0.5 && Math.random() < dt * sparkRate) spawnSidewaysSparks(1, lvl);
     }
 
     function drawCoals(time) {
         const heatLevel = heatVisual;
-        fCtx.save();
-        fCtx.translate(CX, CY);
+        fCtx.save(); fCtx.translate(CX, CY);
         for (let i = 0; i < baseChars.length; i++) {
-            const c = baseChars[i];
-            if (c.type !== 'coal') continue;
-
+            const c = baseChars[i]; if (c.type !== 'coal') continue;
             let sprite;
-            if (heatLevel < 0.05) {
-                sprite = getCoalSprite(c.letter, c.size, false, 0, 0);
-            } else if (c.dist < 0.6) {
+            if (heatLevel < 0.05) sprite = getCoalSprite(c.letter, c.size, false, 0, 0);
+            else if (c.dist < 0.6) {
                 const shift = Math.sin(time * 0.004 + c.phase);
                 sprite = getCoalSprite(c.letter, c.size, true, heatLevel, shift);
             } else {
                 const dim = Math.max(0.1, heatLevel);
-                const cr = Math.round(18 * dim);
-                const cg = Math.round(5 * dim);
-                const color = 'rgb(' + cr + ',' + cg + ',0)';
+                const color = 'rgb(' + Math.round(18 * dim) + ',' + Math.round(5 * dim) + ',0)';
                 const key = c.letter + '|' + Math.round(c.size) + '|dark|' + color;
                 sprite = coalSpriteCache.get(key);
-                if (!sprite) {
-                    sprite = makeSprite(c.letter, c.size, color, null, 0);
-                    coalSpriteCache.set(key, sprite);
-                }
+                if (!sprite) { sprite = makeSprite(c.letter, c.size, color, null, 0); coalSpriteCache.set(key, sprite); }
             }
-
-            fCtx.save();
-            fCtx.translate(c.x, c.y);
-            fCtx.rotate(c.rot);
+            fCtx.save(); fCtx.translate(c.x, c.y); fCtx.rotate(c.rot);
             fCtx.drawImage(sprite.img, -sprite.w / 2, -sprite.h / 2, sprite.w, sprite.h);
             fCtx.restore();
         }
-        fCtx.restore();
-        fCtx.globalAlpha = 1;
+        fCtx.restore(); fCtx.globalAlpha = 1;
     }
 
     function fireLoop(time) {
         if (!isZen) { lastFireTime = 0; lastDrawTime = 0; requestAnimationFrame(fireLoop); return; }
-
         if (!lastFireTime) lastFireTime = time;
         const dt = Math.min(0.05, (time - lastFireTime) / 1000);
 
-        /* ===== Правка 3: ограниченіе FPS.
-           Физика обновляется только когда рисуемъ — dt копится межъ кадрами,
-           движеніе остаётся пропорціональнымъ времени. */
-        if (time - lastDrawTime < FRAME_MS - 1) {
-            requestAnimationFrame(fireLoop);
-            return;
-        }
+        if (time - lastDrawTime < FRAME_MS - 1) { requestAnimationFrame(fireLoop); return; }
         lastFireTime = time;
         lastDrawTime = time;
 
-        refreshWeather();
+        /* Діагностика: средній кадръ за 5 сек */
+        frameTimeSum += dt * 1000; frameTimeCount++;
+        if (time - lastFpsLog > 5000) {
+            lastFpsLog = time;
+            if (frameTimeCount > 0) {
+                const avg = frameTimeSum / frameTimeCount;
+                console.log('[zen] FPS: ' + (1000 / avg).toFixed(1) +
+                            ', кадръ: ' + avg.toFixed(1) + ' мс' +
+                            ', частицъ: ' + particleCount +
+                            ', спрайтовъ: ' + spriteCache.size +
+                            ', создано въ рантаймѣ: ' + spriteStats.runtime);
+            }
+            frameTimeSum = 0; frameTimeCount = 0;
+        }
 
+        refreshWeather();
         const diff = fireTargetVisual - fireVisual;
         let visualRate;
-        if (diff > 0) {
-            if (fireVisual < 0.9) visualRate = 0.5;
-            else                  visualRate = 2.5;
-        } else {
-            visualRate = 0.15;
-        }
+        if (diff > 0) visualRate = (fireVisual < 0.9) ? 0.5 : 2.5;
+        else visualRate = 0.15;
         fireVisual += diff * Math.min(1, dt * visualRate);
         if (Math.abs(diff) < 0.01) fireVisual = fireTargetVisual;
-
         const heatTarget = (fireLevel === 0) ? (1 - coolT) : 1;
         heatVisual += (heatTarget - heatVisual) * Math.min(1, dt * 0.1);
         if (Math.abs(heatTarget - heatVisual) < 0.01) heatVisual = heatTarget;
-
         if (fireLevel === 0 && zeroEnteredAt > 0) {
             const elapsed = Date.now() - zeroEnteredAt;
             coolT = Math.min(1, elapsed / 60000);
             smokeFadeT = Math.max(0, 1 - elapsed / 30000);
         }
-
         if (fireLevel > 0 && fireLevel !== 0.7 && Date.now() - lastDecreaseAt > getDecreaseInterval()) {
             lastDecreaseAt = Date.now();
             if (fireLevel === 1 || fireLevel === 0.5) {
-                fireLevel = 0;
-                fireTargetVisual = 0;
-                zeroEnteredAt = Date.now();
-                coolT = 0;
-                smokeFadeT = 1;
-            } else {
-                fireLevel -= 1;
-                fireTargetVisual = fireLevel;
-            }
+                fireLevel = 0; fireTargetVisual = 0;
+                zeroEnteredAt = Date.now(); coolT = 0; smokeFadeT = 1;
+            } else { fireLevel -= 1; fireTargetVisual = fireLevel; }
         }
-
         fCtx.clearRect(0, 0, W, H);
-
         drawCoals(time);
-
         spawnParticles(dt, time);
-
         const windNoise = Math.sin(time * 0.001) * 15 + Math.sin(time * 0.003) * 5;
         const windTotal = windNoise + windXWorld;
-
         for (let i = particleCount - 1; i >= 0; i--) {
             const p = particlePool[i];
-
             if (p.type === 'coal-pop') {
                 const gt = groundTopAt(p.x);
                 if (p.y >= gt) {
-                    p.y = gt;
-                    p.type = 'smolder';
-                    p.vx = 0; p.vy = 0;
-                    p.landedAt = time;
-                    p.maxLife = 2.5 + Math.random() * 2;
-                    p.life = 1;
-                    p.color = '#ff9933';
-                    p.alpha = 1;
+                    p.y = gt; p.type = 'smolder'; p.vx = 0; p.vy = 0;
+                    p.landedAt = time; p.maxLife = 2.5 + Math.random() * 2; p.life = 1;
+                    p.color = '#ff9933'; p.alpha = 1;
                 }
-            }
-            else if (p.type === 'spark') {
+            } else if (p.type === 'spark') {
                 const gt = groundTopAt(p.x);
                 if (p.y >= gt) {
-                    p.type = 'smolder';
-                    p.y = gt;
-                    p.vx = 0; p.vy = 0;
-                    p.landedAt = time;
-                    p.maxLife = 1.2 + Math.random() * 1.0;
-                    p.life = 1;
+                    p.type = 'smolder'; p.y = gt; p.vx = 0; p.vy = 0;
+                    p.landedAt = time; p.maxLife = 1.2 + Math.random() * 1.0; p.life = 1;
                     p.size = Math.max(6, p.size - 2);
                     p.fontStr = 'normal ' + p.size + 'px ' + FONT;
-                    p.alpha = 1;
-                    p.color = '#ffaa33';
+                    p.alpha = 1; p.color = '#ffaa33';
                 }
             }
-
             p.life -= dt / p.maxLife;
-
             if (p.life <= 0) {
                 const lastP = particlePool[particleCount - 1];
-                particlePool[particleCount - 1] = p;
-                particlePool[i] = lastP;
-                particleCount--;
-                continue;
+                particlePool[particleCount - 1] = p; particlePool[i] = lastP;
+                particleCount--; continue;
             }
-
             if (p.type === 'fire-core') {
                 p.age = 1 - p.life;
                 const sway = Math.sin(time * 0.01 + p.swaySeed) * (2 + p.age * 12) * p.age;
-                p.x += (p.vx + sway + windTotal * 0.55) * dt;
-                p.y += p.vy * dt;
+                p.x += (p.vx + sway + windTotal * 0.55) * dt; p.y += p.vy * dt;
                 if (p.life > 0.8) p.color = '#ffffff';
                 else if (p.life > 0.5) p.color = '#fff0c2';
                 else if (p.life > 0.2) p.color = '#ff9d00';
@@ -10388,101 +10201,73 @@ body.zen-active #precip-canvas {
                         flameTipY += (p.y - flameTipY) * 0.12;
                     }
                 }
-            }
-            else if (p.type === 'fire-sub') {
+            } else if (p.type === 'fire-sub') {
                 p.age = 1 - p.life;
                 const sway = Math.sin(time * 0.02 + p.swaySeed) * 20 * p.age;
-                p.x += (p.vx + sway + windTotal * 0.55) * dt;
-                p.y += p.vy * dt;
+                p.x += (p.vx + sway + windTotal * 0.55) * dt; p.y += p.vy * dt;
                 if (p.life > 0.85) p.color = '#fff0c2';
                 else if (p.life > 0.5) p.color = '#ff9d00';
                 else p.color = '#d83b00';
                 p.alpha = Math.min(1, p.life * 2.5);
-            }
-            else if (p.type === 'fire-outer') {
+            } else if (p.type === 'fire-outer') {
                 p.age = 1 - p.life;
                 const factor = 1 + 0.8 * Math.sin(p.age * Math.PI) - p.age * 0.8;
                 const desiredX = CX + p.initDX * factor;
-                p.x += ((desiredX - p.x) * 3 + windTotal * 0.55) * dt;
-                p.y += p.vy * dt;
+                p.x += ((desiredX - p.x) * 3 + windTotal * 0.55) * dt; p.y += p.vy * dt;
                 if (p.life > 0.85) p.color = '#fff0c2';
                 else if (p.life > 0.6) p.color = '#ff9d00';
                 else if (p.life > 0.25) p.color = '#d83b00';
                 else p.color = '#441100';
                 p.alpha = Math.min(1, p.life * 2);
-            }
-            else if (p.type === 'smoke') {
+            } else if (p.type === 'smoke') {
                 p.age = 1 - p.life;
-                p.vy *= (1 - dt * 0.08);
-                p.y += p.vy * dt;
+                p.vy *= (1 - dt * 0.08); p.y += p.vy * dt;
                 const curl = Math.sin(time * 0.002 + p.seed) * (6 + p.age * 8);
                 p.vx += (windTotal * 1.4 + curl - p.vx) * dt * 0.55;
                 const midBulge = Math.sin(Math.PI * p.age);
                 const spreadBulge = 1 + midBulge * 1.0;
-                const distFromCenter = p.x - CX;
-                p.x += distFromCenter * 0.25 * spreadBulge * p.age * dt;
-                p.x += p.vx * dt;
+                p.x += (p.x - CX) * 0.25 * spreadBulge * p.age * dt + p.vx * dt;
                 const grow = (p.growRate !== undefined) ? p.growRate : 3;
-                const sizeBulge = 1 + midBulge * 1.2;
-                p.size += dt * grow * sizeBulge;
+                p.size += dt * grow * (1 + midBulge * 1.2);
                 let baseA;
                 if (p.age < 0.10) baseA = (p.age / 0.10) * 0.35;
                 else if (p.age > 0.5) baseA = Math.max(0, (1 - p.age) / 0.5) * 0.35;
                 else baseA = 0.35;
                 p.alpha = baseA * (p.dim !== undefined ? p.dim : 1);
-            }
-            else if (p.type === 'spark') {
-                p.vx += windTotal * 1.2 * dt;
-                p.y += p.vy * dt;
-                p.x += p.vx * dt;
-                p.vy += (p.gravity || 15) * dt;
-                p.vx *= (1 - dt * 0.2);
+            } else if (p.type === 'spark') {
+                p.vx += windTotal * 1.2 * dt; p.y += p.vy * dt; p.x += p.vx * dt;
+                p.vy += (p.gravity || 15) * dt; p.vx *= (1 - dt * 0.2);
                 p.alpha = p.life;
-            }
-            else if (p.type === 'coal-pop') {
-                p.x += p.vx * dt;
-                p.y += p.vy * dt;
-                p.vy += p.gravity * dt;
+            } else if (p.type === 'coal-pop') {
+                p.x += p.vx * dt; p.y += p.vy * dt; p.vy += p.gravity * dt;
                 p.angle += p.rotSpeed * dt;
                 p.color = p.life > 0.6 ? '#ff9933' : (p.life > 0.3 ? '#cc5522' : '#442211');
                 p.alpha = Math.min(1, p.life * 1.5);
-            }
-            else if (p.type === 'smolder') {
+            } else if (p.type === 'smolder') {
                 p.alpha = Math.pow(p.life, 1.2) * (0.7 + 0.3 * Math.sin(time * 0.015 + p.landedAt * 0.0005));
                 p.color = p.life > 0.4 ? '#ff9933' : '#cc3300';
             }
-
             if (p.x < -80 || p.x > W + 80 || p.y < -60 || p.y > H + 60) continue;
-
             fCtx.globalAlpha = (p.alpha !== undefined) ? p.alpha : Math.max(0, Math.min(1, p.life));
-
             if (p.type === 'smoke') {
                 if (!smokeSpritesReady) initSmokeSprites();
-                const bIdx = pickSmokeBaseIdx(p.size);
-                const sIdx = pickSmokeShadeIdx(p.age);
+                const bIdx = pickSmokeBaseIdx(p.size), sIdx = pickSmokeShadeIdx(p.age);
                 const sprite = smokeSpriteCache[bIdx][sIdx];
                 const drawW = p.size * (sprite.w / SMOKE_BASE_SIZES[bIdx]);
                 const drawH = p.size * (sprite.h / SMOKE_BASE_SIZES[bIdx]);
                 fCtx.drawImage(sprite.img, p.x - drawW / 2, p.y - drawH / 2, drawW, drawH);
-            }
-            else {
+            } else {
                 let glowColor = null, glowBlur = 0;
                 if (p.type === 'spark' || p.type === 'coal-pop') { glowColor = p.color; glowBlur = 8; }
                 else if (p.type === 'smolder') { glowColor = p.color; glowBlur = 6; }
                 const sprite = getSprite(p.text, p.size, p.color || '#fff', glowColor, glowBlur);
-
                 if (p.type === 'coal-pop') {
-                    fCtx.save();
-                    fCtx.translate(p.x, p.y);
-                    fCtx.rotate(p.angle);
+                    fCtx.save(); fCtx.translate(p.x, p.y); fCtx.rotate(p.angle);
                     fCtx.drawImage(sprite.img, -sprite.w / 2, -sprite.h / 2, sprite.w, sprite.h);
                     fCtx.restore();
-                } else {
-                    fCtx.drawImage(sprite.img, p.x - sprite.w / 2, p.y - sprite.h / 2, sprite.w, sprite.h);
-                }
+                } else fCtx.drawImage(sprite.img, p.x - sprite.w / 2, p.y - sprite.h / 2, sprite.w, sprite.h);
             }
         }
-
         fCtx.globalAlpha = 1;
         requestAnimationFrame(fireLoop);
     }
@@ -10500,45 +10285,34 @@ body.zen-active #precip-canvas {
 
     window.addEventListener('load', function() {
         initFireCanvas();
-
         floatBtn = document.createElement('div');
         floatBtn.id = 'zen-feta-btn';
-        floatBtn.innerHTML =
-            '<div class="zf-ring"><div class="zf-well">' +
+        floatBtn.innerHTML = '<div class="zf-ring"><div class="zf-well">' +
             '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true">' +
             '<path d="M15.5 4 C13 4 12 5.6 12 8 L12 16 C12 18.4 10.8 19.8 8.5 20"/>' +
-            '<circle cx="12" cy="12" r="4.4"/>' +
-            '</svg></div></div>';
+            '<circle cx="12" cy="12" r="4.4"/></svg></div></div>';
         document.body.appendChild(floatBtn);
-
         document.addEventListener('pointerdown', function(e) {
             if (e.target.closest('.key-spec')) pressStart = Date.now();
         }, true);
-
         document.addEventListener('pointerup', function(e) {
             if (pressStart === 0) return;
-            const duration = Date.now() - pressStart;
-            pressStart = 0;
+            const duration = Date.now() - pressStart; pressStart = 0;
             if (e.target.closest('.key-spec') && duration < 250 && typeof telegraphOn !== 'undefined' && !telegraphOn) {
                 toggleZenMode(true);
             }
         });
         document.addEventListener('pointercancel', function() { pressStart = 0; });
-
         floatBtn.addEventListener('mousedown', function() {
             floatBtn.dataset.wasSleeping = !floatBtn.classList.contains('active') ? '1' : '0';
         });
         floatBtn.addEventListener('touchstart', function() {
             floatBtn.dataset.wasSleeping = !floatBtn.classList.contains('active') ? '1' : '0';
         }, { passive: true });
-
         floatBtn.addEventListener('click', function(e) {
             e.stopPropagation();
-            if (isZen && floatBtn.classList.contains('active') && floatBtn.dataset.wasSleeping === '0') {
-                toggleZenMode(false);
-            }
+            if (isZen && floatBtn.classList.contains('active') && floatBtn.dataset.wasSleeping === '0') toggleZenMode(false);
         });
-
         const wakeUp = function() {
             if (!isZen) return;
             if (!floatBtn.classList.contains('active')) floatBtn.classList.add('active');
@@ -10554,21 +10328,16 @@ body.zen-active #precip-canvas {
     window.addEventListener('keydown', function(e) {
         if (document.body.classList.contains('zen-active')) {
             if (e.key === 'Escape') { toggleZenMode(false); return; }
-            e.preventDefault();
-            e.stopImmediatePropagation();
+            e.preventDefault(); e.stopImmediatePropagation();
         }
     }, true);
     window.addEventListener('keyup', function(e) {
-        if (document.body.classList.contains('zen-active')) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
-        }
+        if (document.body.classList.contains('zen-active')) { e.preventDefault(); e.stopImmediatePropagation(); }
     }, true);
 
     function toggleZenMode(enable) {
         if (enable === isZen || zenTransitioning) return;
         zenTransitioning = true;
-
         if (enable) {
             isZen = true;
             document.documentElement.classList.add('zen-lock');
@@ -10576,36 +10345,26 @@ body.zen-active #precip-canvas {
             document.body.classList.remove('zen-returning');
             document.body.classList.add('zen-active');
             requestWakeLock();
-
-            fireLevel = 0.7;
-            fireTargetVisual = 0.7;
-            fireVisual = 0.7;
-            heatVisual = 1;
-            coolT = 0;
-            smokeFadeT = 0;
-            zeroEnteredAt = 0;
-            coalsPopped = 0;
-            particleCount = 0;
-            flameTipInit = false;
-            flameTipX = CX;
-            flameTipY = CY - 80;
-            lastDecreaseAt = Date.now();
-            lastDrawTime = 0;
-
+            fireLevel = 0.7; fireTargetVisual = 0.7; fireVisual = 0.7;
+            heatVisual = 1; coolT = 0; smokeFadeT = 0;
+            zeroEnteredAt = 0; coalsPopped = 0; particleCount = 0;
+            flameTipInit = false; flameTipX = CX; flameTipY = CY - 80;
+            lastDecreaseAt = Date.now(); lastDrawTime = 0;
+            frameTimeSum = 0; frameTimeCount = 0; lastFpsLog = 0;
             fireCanvas.style.transition = 'none';
             groundCanvasEl.style.transition = 'none';
             fireCanvas.style.transform = 'translateY(100vh)';
             groundCanvasEl.style.transform = 'translateY(100vh)';
             fireCanvas.style.display = 'block';
             groundCanvasEl.style.display = 'block';
-
             if (floatBtn) {
                 floatBtn.classList.remove('active');
                 floatBtn.classList.add('active');
                 clearTimeout(wakeTimer);
                 wakeTimer = setTimeout(function() { floatBtn.classList.remove('active'); }, 1200);
             }
-
+            /* Предгрѣвъ спрайтовъ — параллельно съ переходомъ */
+            prewarmSpriteCache();
             Promise.all([
                 new Promise(function(res) { setTimeout(res, 2200); }),
                 beginBake()
@@ -10617,28 +10376,20 @@ body.zen-active #precip-canvas {
                 groundCanvasEl.style.transform = 'translateY(0)';
                 setTimeout(function() { zenTransitioning = false; }, 1350);
             });
-
         } else {
-            releaseWakeLock();
-            window.scrollTo(0, 0);
-
+            releaseWakeLock(); window.scrollTo(0, 0);
             if (floatBtn) floatBtn.classList.remove('active');
             clearTimeout(wakeTimer);
-
             fireCanvas.style.transition = 'transform 1.1s cubic-bezier(0.4, 0, 0.6, 1)';
             groundCanvasEl.style.transition = 'transform 1.1s cubic-bezier(0.4, 0, 0.6, 1)';
             fireCanvas.style.transform = 'translateY(100vh)';
             groundCanvasEl.style.transform = 'translateY(100vh)';
-
             setTimeout(function() {
                 fireCanvas.style.display = 'none';
                 groundCanvasEl.style.display = 'none';
-                fireCanvas.style.transform = '';
-                groundCanvasEl.style.transform = '';
-                fireCanvas.style.transition = '';
-                groundCanvasEl.style.transition = '';
+                fireCanvas.style.transform = ''; groundCanvasEl.style.transform = '';
+                fireCanvas.style.transition = ''; groundCanvasEl.style.transition = '';
                 isZen = false;
-
                 document.body.classList.remove('zen-active');
                 document.body.classList.add('zen-returning');
                 setTimeout(function() {
@@ -10650,6 +10401,72 @@ body.zen-active #precip-canvas {
             }, 1120);
         }
     }
+
+    /* Діагностика снаружи: откройте консоль и введите __zenStats() */
+    window.__zenStats = function() {
+        return {
+            isZen: isZen,
+            spritesTotal: spriteCache.size,
+            spritesRuntime: spriteStats.runtime,
+            spritesPrewarm: spriteStats.prewarm,
+            particlesActive: particleCount,
+            prewarmRunning: prewarmRunning,
+            prewarmDone: prewarmDone,
+            DPR: DPR,
+            targetFPS: TARGET_FPS
+        };
+    };
+})();
+</script>
+<div id="zen-hud" aria-hidden="true"></div>
+<style>
+#zen-hud{
+  position:fixed;top:8px;left:8px;z-index:2147483647;
+  background:rgba(0,0,0,.8);color:#e9daaf;
+  font:11px/1.4 monospace;
+  padding:8px 10px;border-radius:6px;
+  max-width:92vw;max-height:40vh;overflow:hidden;
+  white-space:pre-wrap;pointer-events:none;
+  display:none;box-shadow:0 0 0 1px #8a6d3b;
+}
+body.zen-active #zen-hud{display:block}
+#zen-hud .ln{display:block}
+</style>
+<script>
+(function(){
+  var hud = document.getElementById('zen-hud');
+  if (!hud) return;
+  var MAX = 12;
+  function push(line){
+    var d = document.createElement('div');
+    d.className = 'ln';
+    d.textContent = line;
+    hud.appendChild(d);
+    while (hud.children.length > MAX) hud.removeChild(hud.firstChild);
+  }
+  /* Перехватываем console.log — только сообщенія [zen ...] и [zen prewarm ...] */
+  var origLog = console.log.bind(console);
+  console.log = function(){
+    try { origLog.apply(console, arguments); } catch(e){}
+    var parts = [];
+    for (var i=0;i<arguments.length;i++){
+      var a = arguments[i];
+      parts.push(typeof a === 'object' ? JSON.stringify(a) : String(a));
+    }
+    var s = parts.join(' ');
+    if (/\[zen/.test(s)) push(s);
+  };
+  /* Разъ въ 5 секундъ — краткая сводка черезъ __zenStats(), если она есть */
+  setInterval(function(){
+    if (!document.body.classList.contains('zen-active')) return;
+    if (typeof window.__zenStats !== 'function') return;
+    var st = window.__zenStats();
+    push('stats: FPS≈' + (st.targetFPS||'?') +
+         ' | частицъ ' + st.particlesActive +
+         ' | спрайтовъ ' + st.spritesTotal +
+         ' | рантаймъ ' + st.spritesRuntime +
+         ' | prewarm ' + (st.prewarmDone ? 'OK' : '…'));
+  }, 5000);
 })();
 </script>
 <!-- ===== КОНЕЦ БЛОКА ZEN MODE ===== -->

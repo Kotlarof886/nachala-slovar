@@ -10261,15 +10261,33 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         requestAnimationFrame(fireLoop);
     }
 
-    async function requestWakeLock() {
+        async function requestWakeLock() {
         if (!('wakeLock' in navigator)) return;
-        try { screenWakeLock = await navigator.wakeLock.request('screen'); } catch (err) {}
+        /* если прежний сентинел ещё «жив» — сначала отпустить, затем запросить заново */
+        if (screenWakeLock) {
+            try { screenWakeLock.release(); } catch (err) {}
+            screenWakeLock = null;
+        }
+        try {
+            screenWakeLock = await navigator.wakeLock.request('screen');
+            /* когда система снимет блокировку (уход с вкладки, разряд и т.п.),
+               обнулить переменную — иначе при возврате повторный запрос не сработает */
+            screenWakeLock.addEventListener('release', function () {
+                screenWakeLock = null;
+            });
+        } catch (err) {
+            screenWakeLock = null;   /* запрос не удался — например, нет secure context */
+        }
     }
     function releaseWakeLock() {
-        if (screenWakeLock !== null) { screenWakeLock.release(); screenWakeLock = null; }
+        if (screenWakeLock) {
+            try { screenWakeLock.release(); } catch (err) {}
+            screenWakeLock = null;
+        }
     }
     document.addEventListener('visibilitychange', async function() {
-        if (document.visibilityState === 'visible' && isZen && screenWakeLock === null) await requestWakeLock();
+        /* при возврате на вкладку блокировку всегда запрашиваем заново — без проверки на null */
+        if (document.visibilityState === 'visible' && isZen) await requestWakeLock();
     });
 
     window.addEventListener('load', function() {

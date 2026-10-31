@@ -9640,7 +9640,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         const FIRE_SIZES = [];
         for (let s = 6; s <= 26; s += 2) FIRE_SIZES.push(s);
 
-        // Теперь свечение запекается для всех устройств
         for (const ch of FIRE_CHARS) for (const sz of FIRE_SIZES) for (const col of CORE_COLORS) {
             getSprite(ch, sz, col, col, 4);
             if (++batch >= 5) await flush();
@@ -9654,7 +9653,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             if (++batch >= 5) await flush();
         }
 
-        // 1. Искры в воздухе
         const SPARK_CHARS = ['и', 'с', 'к', 'р', 'ы'];
         const SPARK_COLORS = ['#ffdd44', '#ff6600'];
         const SPARK_SIZES = [6, 8, 10, 12];
@@ -9663,7 +9661,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             if (++batch >= 5) await flush();
         }
 
-        // 2. Тлеющие угольки (smolder) - используют буквы и от искр, и от углей
         const EMBER_CHARS = ['у', 'Г', 'л', 'и', 'с', 'к', 'р', 'ы'];
         const EMBER_SIZES = [6, 8, 10, 12, 14];
         for (const ch of EMBER_CHARS) for (const sz of EMBER_SIZES) for (const col of ['#ff9933', '#cc3300']) {
@@ -9671,14 +9668,12 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             if (++batch >= 5) await flush();
         }
 
-        // 3. Вылетающие угольки (coal-pop)
         const COALPOP_COLORS = ['#ff9933', '#cc5522', '#442211'];
         for (const ch of EMBER_CHARS) for (const sz of EMBER_SIZES) for (const col of COALPOP_COLORS) {
             getSprite(ch, sz, col, col, 8);
             if (++batch >= 5) await flush();
         }
 
-        // 4. Угли на земле
         for (const ch of EMBER_CHARS) for (let sz = 8; sz <= 16; sz += 2) for (let si = 0; si < 8; si++) {
             const shift = (si - 4) / 4;
             getCoalSprite(ch, sz, true, 1.0, shift);
@@ -10016,11 +10011,12 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             coreCount -= 1;
         }
         
+        // Изменено: боковые факелы теперь стремятся внутрь
         if (Math.random() < dt * (20 + lvl * 10)) {
             const sz = randSize(12, 18) * lvlScale;
             addParticle({
                 type: 'fire-sub', x: CX - 22 + (Math.random() - 0.5) * 15, y: CY - 32,
-                vx: -20 - Math.random() * 20, vy: (-80 - Math.random() * 40) * heightMul,
+                vx: 15 + Math.random() * 15, vy: (-80 - Math.random() * 40) * heightMul, // vx > 0 (вправо к центру)
                 life: 1, maxLife: 0.5 + Math.random() * 0.3,
                 text: pick(WORD_FIRE), size: sz,
                 fontStr: 'normal ' + sz + 'px ' + FONT,
@@ -10028,7 +10024,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             });
             addParticle({
                 type: 'fire-sub', x: CX + 22 + (Math.random() - 0.5) * 15, y: CY - 32,
-                vx: 20 + Math.random() * 20, vy: (-80 - Math.random() * 40) * heightMul,
+                vx: -15 - Math.random() * 15, vy: (-80 - Math.random() * 40) * heightMul, // vx < 0 (влево к центру)
                 life: 1, maxLife: 0.5 + Math.random() * 0.3,
                 text: pick(WORD_FIRE), size: sz,
                 fontStr: 'normal ' + sz + 'px ' + FONT,
@@ -10188,7 +10184,8 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
                 }
             } else if (p.type === 'fire-sub') {
                 p.age = 1 - p.life;
-                const sway = Math.sin(time * 0.02 + p.swaySeed) * 20 * p.age;
+                // Изменено: уменьшено качание, чтобы не выпирали наружу
+                const sway = Math.sin(time * 0.02 + p.swaySeed) * 10 * p.age; 
                 p.x += (p.vx + sway + windTotal * 0.55) * dt; p.y += p.vy * dt;
                 if (p.life > 0.85) p.color = '#fff0c2';
                 else if (p.life > 0.5) p.color = '#ff9d00';
@@ -10248,7 +10245,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
                 if (p.type === 'spark' || p.type === 'coal-pop') { glowColor = p.color; glowBlur = 8; }
                 else if (p.type === 'smolder') { glowColor = p.color; glowBlur = 6; }
                 
-                // Теперь свечение применяется на всех устройствах
                 if (p.type === 'fire-core' || p.type === 'fire-sub' || p.type === 'fire-outer') {
                     glowColor = p.color; glowBlur = 4;
                 }

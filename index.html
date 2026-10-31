@@ -9384,7 +9384,7 @@ window.__weather = {
   else init();
 })();
 </script>
-<!-- ===== НАЧАЛО БЛОКА ZEN MODE (С ПРЕДГЕНЕРАЦИЕЙ) ===== -->
+<!-- ===== НАЧАЛО БЛОКА ZEN MODE ===== -->
 <style>
 @keyframes zenFlyUp { 0% { transform: translateY(0); } 100% { transform: translateY(-150vh); } }
 @keyframes zenFlyDown { 0% { transform: translateY(0); } 100% { transform: translateY(150vh); } }
@@ -9521,13 +9521,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     const smokeSpriteCache = {};
     let smokeSpritesReady = false;
 
-    /* ===== Діагностика ===== */
-    const spriteStats = { runtime: 0, prewarm: 0 };
-    let prewarmRunning = false;
-    let prewarmDone = false;
-    let prewarmToken = 0;
-    let frameTimeSum = 0, frameTimeCount = 0, lastFpsLog = 0;
-
     function makeSprite(text, size, color, glowColor, glowBlur) {
         const pad = (glowBlur > 0 ? glowBlur + 4 : 4);
         const w = Math.ceil(size * 1.1 + pad * 2);
@@ -9556,7 +9549,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         if (spriteCache.size > 3000) spriteCache.clear();
         s = makeSprite(text, size, color, glowColor, glowBlur);
         spriteCache.set(key, s);
-        if (!prewarmRunning) spriteStats.runtime++;
         return s;
     }
 
@@ -9634,17 +9626,11 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
 
     /* ===== ПРЕДГЕНЕРАЦІЯ ВСѢХЪ СПРАЙТОВЪ ===== */
     async function prewarmSpriteCache() {
-        if (prewarmRunning) return;
-        const myToken = ++prewarmToken;
-        prewarmRunning = true;
-        prewarmDone = false;
-
         const nextFrame = () => new Promise(r => requestAnimationFrame(r));
         let batch = 0;
         const flush = async () => {
             batch = 0;
             await nextFrame();
-            return myToken !== prewarmToken;
         };
 
         const FIRE_CHARS = ['о', 'Г', 'н', 'ь'];
@@ -9654,62 +9640,52 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         const FIRE_SIZES = [];
         for (let s = 6; s <= 26; s += 2) FIRE_SIZES.push(s);
 
-        // Запекаем свечение для мобильных
+        // Теперь свечение запекается для всех устройств
         for (const ch of FIRE_CHARS) for (const sz of FIRE_SIZES) for (const col of CORE_COLORS) {
-            if (IS_MOBILE) {
-                getSprite(ch, sz, col, col, 4);
-            } else {
-                getSprite(ch, sz, col, null, 0);
-            }
-            spriteStats.prewarm++;
-            if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
+            getSprite(ch, sz, col, col, 4);
+            if (++batch >= 5) await flush();
         }
         for (const ch of FIRE_CHARS) for (const sz of FIRE_SIZES) for (const col of SUB_COLORS) {
-            if (IS_MOBILE) {
-                getSprite(ch, sz, col, col, 4);
-            } else {
-                getSprite(ch, sz, col, null, 0);
-            }
-            spriteStats.prewarm++;
-            if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
+            getSprite(ch, sz, col, col, 4);
+            if (++batch >= 5) await flush();
         }
         for (const ch of FIRE_CHARS) for (const sz of FIRE_SIZES) for (const col of OUTER_COLORS) {
-            if (IS_MOBILE) {
-                getSprite(ch, sz, col, col, 4);
-            } else {
-                getSprite(ch, sz, col, null, 0);
-            }
-            spriteStats.prewarm++;
-            if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
+            getSprite(ch, sz, col, col, 4);
+            if (++batch >= 5) await flush();
         }
 
+        // 1. Искры в воздухе
         const SPARK_CHARS = ['и', 'с', 'к', 'р', 'ы'];
         const SPARK_COLORS = ['#ffdd44', '#ff6600'];
         const SPARK_SIZES = [6, 8, 10, 12];
         for (const ch of SPARK_CHARS) for (const sz of SPARK_SIZES) for (const col of SPARK_COLORS) {
-            getSprite(ch, sz, col, col, 8); spriteStats.prewarm++;
-            if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
+            getSprite(ch, sz, col, col, 8);
+            if (++batch >= 5) await flush();
         }
 
-        const EMBER_CHARS = ['у', 'Г', 'л', 'и'];
-        const EMBER_SIZES = [8, 10, 12, 14];
-        // Добавлен цвет #cc3300 для тлеющих углей
-        const COALPOP_COLORS = ['#ff9933', '#cc5522', '#442211', '#cc3300'];
+        // 2. Тлеющие угольки (smolder) - используют буквы и от искр, и от углей
+        const EMBER_CHARS = ['у', 'Г', 'л', 'и', 'с', 'к', 'р', 'ы'];
+        const EMBER_SIZES = [6, 8, 10, 12, 14];
+        for (const ch of EMBER_CHARS) for (const sz of EMBER_SIZES) for (const col of ['#ff9933', '#cc3300']) {
+            getSprite(ch, sz, col, col, 6);
+            if (++batch >= 5) await flush();
+        }
+
+        // 3. Вылетающие угольки (coal-pop)
+        const COALPOP_COLORS = ['#ff9933', '#cc5522', '#442211'];
         for (const ch of EMBER_CHARS) for (const sz of EMBER_SIZES) for (const col of COALPOP_COLORS) {
-            getSprite(ch, sz, col, col, 8); spriteStats.prewarm++;
-            if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
+            getSprite(ch, sz, col, col, 8);
+            if (++batch >= 5) await flush();
         }
 
+        // 4. Угли на земле
         for (const ch of EMBER_CHARS) for (let sz = 8; sz <= 16; sz += 2) for (let si = 0; si < 8; si++) {
             const shift = (si - 4) / 4;
-            getCoalSprite(ch, sz, true, 1.0, shift); spriteStats.prewarm++;
-            if (++batch >= 5 && await flush()) { prewarmRunning = false; return; }
+            getCoalSprite(ch, sz, true, 1.0, shift);
+            if (++batch >= 5) await flush();
         }
 
         initSmokeSprites();
-        prewarmRunning = false;
-        prewarmDone = true;
-        console.log('[zen prewarm] готово, создано спрайтовъ: ' + spriteStats.prewarm);
     }
 
     function clearSpriteCaches() {
@@ -9717,11 +9693,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         coalSpriteCache.clear();
         smokeSpritesReady = false;
         initSmokeSprites();
-        spriteStats.runtime = 0;
-        spriteStats.prewarm = 0;
-        prewarmToken++;
-        prewarmRunning = false;
-        prewarmDone = false;
     }
 
     const WORD_FIRE   = ['о', 'Г', 'о', 'н', 'ь'];
@@ -9882,14 +9853,17 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
 
     function spawnSidewaysSparks(count, intensity) {
         intensity = Math.max(1, Math.min(5, intensity || 1));
-        const EDGE_X = 80, MAX_REACH = EDGE_X + intensity * 22;
+        const EDGE_X = IS_MOBILE ? 40 : 80; 
+        const MAX_REACH = EDGE_X + intensity * (IS_MOBILE ? 8 : 22);
         for (let i = 0; i < count; i++) {
             const dir = Math.random() > 0.5 ? 1 : -1;
             const targetDelta = (Math.random() < 0.15)
                 ? EDGE_X + Math.random() * (MAX_REACH - EDGE_X)
-                : EDGE_X + (Math.random() - 0.5) * 30;
-            const baseVy = (130 + Math.random() * 60) * 0.35;
-            const gravity = (240 + Math.random() * 60) * 0.35;
+                : EDGE_X + (Math.random() - 0.5) * (IS_MOBILE ? 15 : 30);
+            
+            const baseVy = (IS_MOBILE ? 80 : 130) + Math.random() * (IS_MOBILE ? 30 : 60);
+            const gravity = (IS_MOBILE ? 300 : 240) + Math.random() * 60;
+            
             const vx = targetDelta / (2 * baseVy / gravity);
             addParticle({
                 type: 'spark', x: CX + (Math.random() - 0.5) * 20, y: CY - 35,
@@ -10144,20 +10118,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         lastFireTime = time;
         lastDrawTime = time;
 
-        frameTimeSum += dt * 1000; frameTimeCount++;
-        if (time - lastFpsLog > 5000) {
-            lastFpsLog = time;
-            if (frameTimeCount > 0) {
-                const avg = frameTimeSum / frameTimeCount;
-                console.log('[zen] FPS: ' + (1000 / avg).toFixed(1) +
-                            ', кадръ: ' + avg.toFixed(1) + ' мс' +
-                            ', частицъ: ' + particleCount +
-                            ', спрайтовъ: ' + spriteCache.size +
-                            ', создано въ рантаймѣ: ' + spriteStats.runtime);
-            }
-            frameTimeSum = 0; frameTimeCount = 0;
-        }
-
         refreshWeather();
         const diff = fireTargetVisual - fireVisual;
         let visualRate;
@@ -10288,7 +10248,8 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
                 if (p.type === 'spark' || p.type === 'coal-pop') { glowColor = p.color; glowBlur = 8; }
                 else if (p.type === 'smolder') { glowColor = p.color; glowBlur = 6; }
                 
-                if (IS_MOBILE && (p.type === 'fire-core' || p.type === 'fire-sub' || p.type === 'fire-outer')) {
+                // Теперь свечение применяется на всех устройствах
+                if (p.type === 'fire-core' || p.type === 'fire-sub' || p.type === 'fire-outer') {
                     glowColor = p.color; glowBlur = 4;
                 }
                 
@@ -10382,7 +10343,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             zeroEnteredAt = 0; coalsPopped = 0; particleCount = 0;
             flameTipInit = false; flameTipX = CX; flameTipY = CY - 80;
             lastDecreaseAt = Date.now(); lastDrawTime = 0;
-            frameTimeSum = 0; frameTimeCount = 0; lastFpsLog = 0;
             fireCanvas.style.transition = 'none';
             groundCanvasEl.style.transition = 'none';
             fireCanvas.style.transform = 'translateY(100vh)';
@@ -10432,70 +10392,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             }, 1120);
         }
     }
-
-    window.__zenStats = function() {
-        return {
-            isZen: isZen,
-            spritesTotal: spriteCache.size,
-            spritesRuntime: spriteStats.runtime,
-            spritesPrewarm: spriteStats.prewarm,
-            particlesActive: particleCount,
-            prewarmRunning: prewarmRunning,
-            prewarmDone: prewarmDone,
-            DPR: DPR,
-            targetFPS: TARGET_FPS
-        };
-    };
-})();
-</script>
-
-<div id="zen-hud" aria-hidden="true"></div>
-<style>
-#zen-hud{
-  position:fixed;top:8px;left:8px;z-index:2147483647;
-  background:rgba(0,0,0,.8);color:#e9daaf;
-  font:11px/1.4 monospace;
-  padding:8px 10px;border-radius:6px;
-  max-width:92vw;max-height:40vh;overflow:hidden;
-  white-space:pre-wrap;pointer-events:none;
-  display:none;box-shadow:0 0 0 1px #8a6d3b;
-}
-body.zen-active #zen-hud{display:block}
-#zen-hud .ln{display:block}
-</style>
-<script>
-(function(){
-  var hud = document.getElementById('zen-hud');
-  if (!hud) return;
-  var MAX = 12;
-  function push(line){
-    var d = document.createElement('div');
-    d.className = 'ln';
-    d.textContent = line;
-    hud.appendChild(d);
-    while (hud.children.length > MAX) hud.removeChild(hud.firstChild);
-  }
-  var origLog = console.log.bind(console);
-  console.log = function(){
-    try { origLog.apply(console, arguments); } catch(e){}
-    var parts = [];
-    for (var i=0;i<arguments.length;i++){
-      var a = arguments[i];
-      parts.push(typeof a === 'object' ? JSON.stringify(a) : String(a));
-    }
-    var s = parts.join(' ');
-    if (/\[zen/.test(s)) push(s);
-  };
-  setInterval(function(){
-    if (!document.body.classList.contains('zen-active')) return;
-    if (typeof window.__zenStats !== 'function') return;
-    var st = window.__zenStats();
-    push('stats: FPS≈' + (st.targetFPS||'?') +
-         ' | частицъ ' + st.particlesActive +
-         ' | спрайтовъ ' + st.spritesTotal +
-         ' | рантаймъ ' + st.spritesRuntime +
-         ' | prewarm ' + (st.prewarmDone ? 'OK' : '…'));
-  }, 5000);
 })();
 </script>
 <!-- ===== КОНЕЦ БЛОКА ZEN MODE ===== -->

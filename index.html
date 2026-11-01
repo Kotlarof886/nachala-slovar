@@ -7667,6 +7667,13 @@ window.addEventListener('error', function (e) {
   var sprites = {}, glows = {}, starSprites = {}, starGlows = {};
 
   var lastTime = 0, animId = null, lastDraw = 0;
+  /* ===== ZEN: запекание звёзд ===== */
+  var zenBaked = false;
+  var zenBakeCanvas = null;
+  var zenBakeCtx = null;
+  var zenFreezeStart = 0;
+  var crossfadeStart = 0;
+  var CROSSFADE_MS = 1100;
 
     /* Разные буквы для разных явлений */
   var SNOW_LETTERS = ['с','н','ѣ','Г','ъ'];
@@ -8665,6 +8672,8 @@ var FOG_CODES = [45,48];
         if (s.alpha > 0.02) visibleCount++;
         continue;
       }
+      /* ZEN: обычные звёзды заморожены, метеоры продолжают жить */
+      if (zenBaked) continue;
       if (!s.visible) {
         if (inten > 0 && now >= s.nextAppearAt) startStarAppearance(s, now);
       } else {
@@ -8705,6 +8714,8 @@ var FOG_CODES = [45,48];
       }
       if (s.visible && s.alpha > 0.02) visibleCount++;
     }
+    /* ZEN: guards и добор видимых не запускаем, пока небо запечено */
+    if (zenBaked) return;
     if (inten > 0.5 && visibleCount < STAR_MIN_VISIBLE) {
       var sleepers = [];
       for (var j = 0; j < stars.length; j++) if (!stars[j].visible) sleepers.push(stars[j]);
@@ -9151,7 +9162,29 @@ var FOG_CODES = [45,48];
     ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.globalCompositeOperation = 'source-over';
-    drawStars(now);
+        if (zenBaked) {
+      /* ZEN: запечённые звёзды с «дыханием» */
+      var breathe = 0.92 + 0.08 * Math.sin(now * 0.0012);
+      ctx.globalAlpha = breathe;
+      if (zenBakeCanvas) ctx.drawImage(zenBakeCanvas, 0, 0);
+      ctx.globalAlpha = 1;
+    } else {
+      drawStars(now);
+
+      /* Кроссфейд после выхода из Zen: baked поверх живых звёзд тает */
+      if (crossfadeStart > 0 && zenBakeCanvas) {
+        var cf = (now - crossfadeStart) / CROSSFADE_MS;
+        if (cf < 1) {
+          ctx.globalAlpha = 1 - cf;
+          ctx.drawImage(zenBakeCanvas, 0, 0);
+          ctx.globalAlpha = 1;
+        } else {
+          crossfadeStart = 0;
+          zenBakeCanvas = null;
+          zenBakeCtx = null;
+        }
+      }
+    }
     drawMoon(now);
     drawMeteors(now);
     for (var i = 0; i < particles.length; i++) {
@@ -9362,7 +9395,7 @@ window.addEventListener('resize', function () {
         particles[i].y = particles[i].y / oldH * H;
       }
       _glyphRectsCache = null; _glyphDirty = true;
-      initStars();
+              if (!zenBaked) initStars();
       updateMoonPos();
     }, 150);
 });
@@ -9397,6 +9430,55 @@ window.__weather = {
     get mode()      { return mode; },
     get level()     { return level; }
 };
+  /* ===== ZEN: публичный API для Zen-режима ===== */
+  window.__zenStarBake = {
+    start: function () {
+      if (zenBaked) return;
+
+      if (!zenBakeCanvas) {
+        zenBakeCanvas = document.createElement('canvas');
+        zenBakeCtx = zenBakeCanvas.getContext('2d');
+      }
+      zenBakeCanvas.width  = canvas.width;
+      zenBakeCanvas.height = canvas.height;
+      zenBakeCtx.setTransform(1, 0, 0, 1, 0, 0);
+      zenBakeCtx.clearRect(0, 0, zenBakeCanvas.width, zenBakeCanvas.height);
+
+      var now = performance.now();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawStars(now);                 /* метеоры drawStars пропускает сам */
+      zenBakeCtx.drawImage(canvas, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      zenBaked = true;
+      zenFreezeStart = now;
+      crossfadeStart = 0;
+    },
+
+    stop: function () {
+      if (!zenBaked) return;
+      var now = performance.now();
+      var delta = now - zenFreezeStart;
+
+      /* Сдвигаем время ТОЛЬКО замороженных звёзд и guards.
+         Метеоры жили своим ходом — их не трогаем. */
+      for (var i = 0; i < stars.length; i++) {
+        var s = stars[i];
+        if (s.meteor) continue;
+        if (s.visible) s.appearStart += delta;
+        else           s.nextAppearAt += delta;
+      }
+      for (var i = 0; i < guards.length; i++) {
+        guards[i].timeOffset -= delta;
+      }
+      /* nextMeteorAt НЕ сдвигаем — метеоры жили нормальным ходом */
+
+      zenBaked = false;
+      zenFreezeStart = 0;
+      crossfadeStart = now;
+    }
+  };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
@@ -9503,7 +9585,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     let groundCanvasEl, groundCtx;
 
     let fireLevel = 1, fireTargetVisual = 1, fireVisual = 1;
-let fireTouched = false;   /* false — дежурный вѣченъ; true — живётъ 10 минутъ */
+    let fireTouched = false;   /* false — дежурный вѣченъ; true — живётъ 10 минутъ */
     let heatVisual = 1, coolT = 0, smokeFadeT = 1;
     let zeroEnteredAt = 0, lastDecreaseAt = Date.now();
     let coalsPopped = 0, nextCoalPopAt = 0;
@@ -9511,7 +9593,7 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
     let baseChars = [];
     let lastFireTime = 0, lastDrawTime = 0;
 
-        let W = 600, H = 800, layoutH = 800, CX = 300, CY = 750, DPR = 1;
+    let W = 600, H = 800, layoutH = 800, CX = 300, CY = 750, DPR = 1;
 
     const GROUND_HEIGHT = 65, GROUND_DEPTH = 30, MAX_PARTICLES = 5000;
     const FONT = '"Gardenia Decor", "Yeseva One", Georgia, serif';
@@ -9737,9 +9819,11 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
     function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
     function randSize(min, max) { return Math.round(min + Math.random() * (max - min)); }
     function groundTopAt(x) { const t = (x - CX) / CX; return H - GROUND_HEIGHT + t * t * GROUND_DEPTH; }
-    function getDecreaseInterval() { if (fireLevel === 1 && !fireTouched) return Infinity;   /* нетронутый — вѣчный */
-    if (fireLevel === 1) return 10 * 60 * 1000;             /* тронутый — 10 минутъ */
-    return isRainOrSnow ? 60000 : 120000;}
+    function getDecreaseInterval() {
+        if (fireLevel === 1 && !fireTouched) return Infinity;
+        if (fireLevel === 1) return 10 * 60 * 1000;
+        return isRainOrSnow ? 60000 : 120000;
+    }
 
     function addParticle(p) {
         if (particleCount >= MAX_PARTICLES) return;
@@ -9866,77 +9950,70 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
     function smokeGrow(vis)       { return IS_MOBILE ? (1.2 + vis * 0.4) : (2 + vis * 0.7); }
     function vertSparkVyBase(vis) { return -(70 + vis * 22); }
 
-        function spawnSidewaysSparks(count, intensity) {
-    intensity = Math.max(1, Math.min(5, intensity || 1));
-    const lvl = Math.min(1, fireVisual);
-    for (let i = 0; i < count; i++) {
-        const r = Math.random();
-        let vx, vy, gravity, startY, fg, targetY;
+    function spawnSidewaysSparks(count, intensity) {
+        intensity = Math.max(1, Math.min(5, intensity || 1));
+        const lvl = Math.min(1, fireVisual);
+        for (let i = 0; i < count; i++) {
+            const r = Math.random();
+            let vx, vy, gravity, startY, fg, targetY;
 
-        if (r < 0.25) {
-            // 1. ВВЕРХЪ
-            vx = (Math.random() - 0.5) * 100;
-            vy = -(120 + Math.random() * 100);
-            gravity = 200 + Math.random() * 50;
-            startY = CY - 5 - Math.random() * 10;
-            fg = false;
-            targetY = 0;
-        } else if (r < 0.60) {
-            // 2. ВЪ СТОРОНЫ
-            const side = Math.random() < 0.5 ? 1 : -1;
-            vx = side * (140 + Math.random() * 120);
-            vy = -(60 + Math.random() * 80);
-            gravity = 280 + Math.random() * 70;
-            startY = CY - 5 - Math.random() * 10;
-            fg = false;
-            targetY = 0;
-        } else {
-            // 3. ВПЕРЁДЪ НА ЗРИТЕЛЯ (вѣеръ на 180 градусовъ)
-            const angle = (Math.PI * 0.08) + Math.random() * (Math.PI * 0.84); 
-            const speed = 50 + Math.random() * 250; 
-            vx = Math.cos(angle) * speed; 
-            vy = Math.sin(angle) * speed; 
-            gravity = 80 + Math.random() * 220; 
-            startY = CY - 10 - Math.random() * 70; 
-            fg = true; 
-            
-            // Случайная точка приземленія от H-10 (самый низъ) до H-60 (чуть дальше)
-            // Это создаст разброс по глубине перед костром
-            targetY = H - 10 - Math.random() * 50; 
+            if (r < 0.25) {
+                vx = (Math.random() - 0.5) * 100;
+                vy = -(120 + Math.random() * 100);
+                gravity = 200 + Math.random() * 50;
+                startY = CY - 5 - Math.random() * 10;
+                fg = false;
+                targetY = 0;
+            } else if (r < 0.60) {
+                const side = Math.random() < 0.5 ? 1 : -1;
+                vx = side * (140 + Math.random() * 120);
+                vy = -(60 + Math.random() * 80);
+                gravity = 280 + Math.random() * 70;
+                startY = CY - 5 - Math.random() * 10;
+                fg = false;
+                targetY = 0;
+            } else {
+                const angle = (Math.PI * 0.08) + Math.random() * (Math.PI * 0.84);
+                const speed = 50 + Math.random() * 250;
+                vx = Math.cos(angle) * speed;
+                vy = Math.sin(angle) * speed;
+                gravity = 80 + Math.random() * 220;
+                startY = CY - 10 - Math.random() * 70;
+                fg = true;
+                targetY = H - 10 - Math.random() * 50;
+            }
+
+            const sz = randSize(7, 11);
+            addParticle({
+                type: 'spark',
+                x: CX + (Math.random() - 0.5) * 40,
+                y: startY,
+                vx: vx, vy: vy, gravity: gravity,
+                foreground: fg,
+                targetY: targetY,
+                life: 1, maxLife: 2.0 + Math.random() * 1.0,
+                text: pick(WORD_SPARKS),
+                color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
+                size: sz,
+                fontStr: 'normal ' + sz + 'px ' + FONT
+            });
+
+            const szV = randSize(7, 11);
+            addParticle({
+                type: 'spark',
+                x: CX + (Math.random() - 0.5) * 40,
+                y: CY - 20 - Math.random() * 30,
+                vx: (Math.random() - 0.5) * 10,
+                vy: -(150 + Math.random() * 50),
+                gravity: 50,
+                life: 1, maxLife: 2.0 + Math.random() * 0.8,
+                text: pick(WORD_SPARKS),
+                color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
+                size: szV,
+                fontStr: 'normal ' + szV + 'px ' + FONT
+            });
         }
-
-        const sz = randSize(7, 11);
-        addParticle({
-            type: 'spark',
-            x: CX + (Math.random() - 0.5) * 40,
-            y: startY,
-            vx: vx, vy: vy, gravity: gravity,
-            foreground: fg,
-            targetY: targetY, // <--- Передаем точку приземления
-            life: 1, maxLife: 2.0 + Math.random() * 1.0,
-            text: pick(WORD_SPARKS),
-            color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
-            size: sz,
-            fontStr: 'normal ' + sz + 'px ' + FONT
-        });
-
-        // Догоняющая вертикальная искра (эффект тапа) — без изменений
-        const szV = randSize(7, 11);
-        addParticle({
-            type: 'spark',
-            x: CX + (Math.random() - 0.5) * 40,
-            y: CY - 20 - Math.random() * 30,
-            vx: (Math.random() - 0.5) * 10,
-            vy: -(150 + Math.random() * 50),
-            gravity: 50,
-            life: 1, maxLife: 2.0 + Math.random() * 0.8,
-            text: pick(WORD_SPARKS),
-            color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
-            size: szV,
-            fontStr: 'normal ' + szV + 'px ' + FONT
-        });
     }
-}
 
     function popCoal(time) {
         const dir = Math.random() > 0.5 ? 1 : -1;
@@ -9951,17 +10028,17 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
     }
 
     function nextLevel(cur) {
-    if (cur === 0) return 0.5;
-    if (cur === 0.5) return 1;
-    if (cur === 0.7) return 1;
-    if (cur >= 5) return 1;
-    return cur + 1;
-}
+        if (cur === 0) return 0.5;
+        if (cur === 0.5) return 1;
+        if (cur === 0.7) return 1;
+        if (cur >= 5) return 1;
+        return cur + 1;
+    }
 
     function onTap() {
-    if (!isZen) return;
-    fireTouched = true;   /* ← добавить: любое прикосновеніе снимаетъ вѣчность */
-    const was = fireLevel;
+        if (!isZen) return;
+        fireTouched = true;
+        const was = fireLevel;
         fireLevel = nextLevel(was);
         if (fireLevel === 0) {
             fireTargetVisual = 0; zeroEnteredAt = Date.now(); coolT = 0; smokeFadeT = 1;
@@ -10043,12 +10120,12 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
                 nextCoalPopAt = time + 2500 + Math.random() * 3500;
             } else if (coalsPopped >= 2 && Math.random() < dt * 0.25) popCoal(time);
         }
-        
+
         const lvl = fireVisual;
         if (lvl <= 0.03) { flameTipInit = false; flameTipX = CX; flameTipY = CY - 80; return; }
-        
+
         const heightMul = IS_MOBILE ? 0.85 : 1.0;
-        
+
         const lvlScale = Math.min(1, Math.max(0.1, lvl));
         const pulse = (Math.sin(time * 0.003) + 1) / 2;
         const coreRate = (50 + lvl * 20) * (0.7 + 0.3 * pulse);
@@ -10068,13 +10145,12 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
             }
             coreCount -= 1;
         }
-        
-                // Изменено: боковые факелы раздвинуты чуть шире
+
         if (Math.random() < dt * (20 + lvl * 10)) {
             const sz = randSize(12, 18) * lvlScale;
             addParticle({
                 type: 'fire-sub', x: CX - 30 + (Math.random() - 0.5) * 15, y: CY - 32,
-                vx: 10 + Math.random() * 10, vy: (-80 - Math.random() * 40) * heightMul, // vx > 0 (вправо к центру)
+                vx: 10 + Math.random() * 10, vy: (-80 - Math.random() * 40) * heightMul,
                 life: 1, maxLife: 0.5 + Math.random() * 0.3,
                 text: pick(WORD_FIRE), size: sz,
                 fontStr: 'normal ' + sz + 'px ' + FONT,
@@ -10082,14 +10158,14 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
             });
             addParticle({
                 type: 'fire-sub', x: CX + 30 + (Math.random() - 0.5) * 15, y: CY - 32,
-                vx: -10 - Math.random() * 10, vy: (-80 - Math.random() * 40) * heightMul, // vx < 0 (влево к центру)
+                vx: -10 - Math.random() * 10, vy: (-80 - Math.random() * 40) * heightMul,
                 life: 1, maxLife: 0.5 + Math.random() * 0.3,
                 text: pick(WORD_FIRE), size: sz,
                 fontStr: 'normal ' + sz + 'px ' + FONT,
                 swaySeed: Math.random() * Math.PI * 2
             });
         }
-        
+
         const outerRate = (60 + lvl * 30) * (0.6 + 0.4 * pulse);
         let outerCount = outerRate * dt;
         const spread = 60;
@@ -10110,7 +10186,7 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
             }
             outerCount -= 1;
         }
-        
+
         const smokeRate = 4 + lvl * 10;
         let smokeCount = smokeRate * dt;
         const smokeVyB = smokeVyBase(lvl), smokeGrowV = smokeGrow(lvl);
@@ -10188,20 +10264,20 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
             smokeFadeT = Math.max(0, 1 - elapsed / 30000);
         }
         if (fireLevel !== 0 && Date.now() - lastDecreaseAt > getDecreaseInterval()) {
-    lastDecreaseAt = Date.now();
-    if (fireLevel === 0.5) {
-        fireLevel = 0; fireTargetVisual = 0;
-        zeroEnteredAt = Date.now(); coolT = 0; smokeFadeT = 1;
-    } else if (fireLevel === 1) {
-        fireLevel = 0.7; fireTargetVisual = 0.7;             /* 1 → 0.7 — только если тронутъ */
-    } else if (fireLevel === 0.7) {
-        fireLevel = 0.5; fireTargetVisual = 0;
-        coalsPopped = 0;
-        nextCoalPopAt = performance.now() + 800 + Math.random() * 1200;
-    } else {
-        fireLevel -= 1; fireTargetVisual = fireLevel;
-    }
-}
+            lastDecreaseAt = Date.now();
+            if (fireLevel === 0.5) {
+                fireLevel = 0; fireTargetVisual = 0;
+                zeroEnteredAt = Date.now(); coolT = 0; smokeFadeT = 1;
+            } else if (fireLevel === 1) {
+                fireLevel = 0.7; fireTargetVisual = 0.7;
+            } else if (fireLevel === 0.7) {
+                fireLevel = 0.5; fireTargetVisual = 0;
+                coalsPopped = 0;
+                nextCoalPopAt = performance.now() + 800 + Math.random() * 1200;
+            } else {
+                fireLevel -= 1; fireTargetVisual = fireLevel;
+            }
+        }
         fCtx.clearRect(0, 0, W, H);
         drawCoals(time);
         spawnParticles(dt, time);
@@ -10217,19 +10293,17 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
                     p.color = '#ff9933'; p.alpha = 1;
                 }
             } else if (p.type === 'spark') {
-    // Если искра на переднем плане, она падает на свою уникальную высоту
-    const gt = p.foreground ? (p.targetY || H - 15) : groundTopAt(p.x);
-    
-    if (p.y >= gt) {
-        p.type = 'smolder'; p.y = gt; p.vx = 0; p.vy = 0;
-        p.landedAt = time; 
-        p.maxLife = 2.5 + Math.random() * 2.0;
-        p.life = 1;
-        p.size = Math.max(8, p.size);
-        p.fontStr = 'normal ' + p.size + 'px ' + FONT;
-        p.alpha = 1; p.color = '#ffaa33';
-    }
-}
+                const gt = p.foreground ? (p.targetY || H - 15) : groundTopAt(p.x);
+                if (p.y >= gt) {
+                    p.type = 'smolder'; p.y = gt; p.vx = 0; p.vy = 0;
+                    p.landedAt = time;
+                    p.maxLife = 2.5 + Math.random() * 2.0;
+                    p.life = 1;
+                    p.size = Math.max(8, p.size);
+                    p.fontStr = 'normal ' + p.size + 'px ' + FONT;
+                    p.alpha = 1; p.color = '#ffaa33';
+                }
+            }
             p.life -= dt / p.maxLife;
             if (p.life <= 0) {
                 const lastP = particlePool[particleCount - 1];
@@ -10254,8 +10328,7 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
                 }
             } else if (p.type === 'fire-sub') {
                 p.age = 1 - p.life;
-                // Изменено: уменьшено качание, чтобы не выпирали наружу
-                const sway = Math.sin(time * 0.02 + p.swaySeed) * 10 * p.age; 
+                const sway = Math.sin(time * 0.02 + p.swaySeed) * 10 * p.age;
                 p.x += (p.vx + sway + windTotal * 0.55) * dt; p.y += p.vy * dt;
                 if (p.life > 0.85) p.color = '#fff0c2';
                 else if (p.life > 0.5) p.color = '#ff9d00';
@@ -10301,7 +10374,7 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
             }
             if (p.x < -80 || p.x > W + 80 || p.y < -60 || p.y > H + 60) continue;
             fCtx.globalAlpha = (p.alpha !== undefined) ? p.alpha : Math.max(0, Math.min(1, p.life));
-            
+
             if (p.type === 'smoke') {
                 if (!smokeSpritesReady) initSmokeSprites();
                 const bIdx = pickSmokeBaseIdx(p.size), sIdx = pickSmokeShadeIdx(p.age);
@@ -10314,11 +10387,11 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
                 let glowColor = null, glowBlur = 0;
                 if (p.type === 'spark' || p.type === 'coal-pop') { glowColor = p.color; glowBlur = 8; }
                 else if (p.type === 'smolder') { glowColor = p.color; glowBlur = 6; }
-                
+
                 if (p.type === 'fire-core' || p.type === 'fire-sub' || p.type === 'fire-outer') {
                     glowColor = p.color; glowBlur = 4;
                 }
-                
+
                 const sprite = getSprite(p.text, p.size, p.color || '#fff', glowColor, glowBlur);
                 if (p.type === 'coal-pop') {
                     fCtx.save(); fCtx.translate(p.x, p.y); fCtx.rotate(p.angle);
@@ -10331,22 +10404,19 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
         requestAnimationFrame(fireLoop);
     }
 
-        async function requestWakeLock() {
+    async function requestWakeLock() {
         if (!('wakeLock' in navigator)) return;
-        /* если прежний сентинел ещё «жив» — сначала отпустить, затем запросить заново */
         if (screenWakeLock) {
             try { screenWakeLock.release(); } catch (err) {}
             screenWakeLock = null;
         }
         try {
             screenWakeLock = await navigator.wakeLock.request('screen');
-            /* когда система снимет блокировку (уход с вкладки, разряд и т.п.),
-               обнулить переменную — иначе при возврате повторный запрос не сработает */
             screenWakeLock.addEventListener('release', function () {
                 screenWakeLock = null;
             });
         } catch (err) {
-            screenWakeLock = null;   /* запрос не удался — например, нет secure context */
+            screenWakeLock = null;
         }
     }
     function releaseWakeLock() {
@@ -10356,7 +10426,6 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
         }
     }
     document.addEventListener('visibilitychange', async function() {
-        /* при возврате на вкладку блокировку всегда запрашиваем заново — без проверки на null */
         if (document.visibilityState === 'visible' && isZen) await requestWakeLock();
     });
 
@@ -10417,6 +10486,11 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
         zenTransitioning = true;
         if (enable) {
             isZen = true;
+
+            /* ZEN: запекаем звёзды в тот же миг, что стартует вход.
+               Бейк совпадает с текущим визуальным состоянием — шва на входе нет. */
+            if (window.__zenStarBake) window.__zenStarBake.start();
+
             document.documentElement.classList.add('zen-lock');
             document.body.classList.add('zen-lock');
             document.body.classList.remove('zen-returning');
@@ -10424,7 +10498,7 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
             requestWakeLock();
             fireLevel = 1; fireTargetVisual = 1; fireVisual = 1;
             heatVisual = 1; coolT = 0; smokeFadeT = 0;
-fireTouched = false;   /* при входѣ дежурный снова вѣченъ */
+            fireTouched = false;   /* при входѣ дежурный снова вѣченъ */
             zeroEnteredAt = 0; coalsPopped = 0; particleCount = 0;
             flameTipInit = false; flameTipX = CX; flameTipY = CY - 80;
             lastDecreaseAt = Date.now(); lastDrawTime = 0;
@@ -10453,6 +10527,11 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
                 setTimeout(function() { zenTransitioning = false; }, 1350);
             });
         } else {
+            /* ZEN: сдвигаем время замороженных звёзд и запускаем кроссфейд.
+               Оба процесса идут параллельно с уездом костра (1.1 s) и завершаются
+               ровно к моменту, когда огонь уходит за экран. */
+            if (window.__zenStarBake) window.__zenStarBake.stop();
+
             releaseWakeLock(); window.scrollTo(0, 0);
             if (floatBtn) floatBtn.classList.remove('active');
             clearTimeout(wakeTimer);
@@ -10480,7 +10559,6 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
 })();
 </script>
 <!-- ===== КОНЕЦ БЛОКА ZEN MODE ===== -->
-
 <!-- ===== Созвездие Большая Медведица (Защита от дерганья при прокрутке) ===== -->
 <canvas id="ursa-major-canvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:99990;opacity:0;transition:opacity 0.8s ease-in-out;will-change:transform;transform:translateZ(0);backface-visibility:hidden;contain:strict;"></canvas>
 <script>

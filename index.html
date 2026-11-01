@@ -129,7 +129,6 @@ body::before {
   background-size: cover; /* №257: растяжение пропорцiонально на весьъ экранъ, безъ швовъ */
   background-repeat: no-repeat;
   background-position: center;
-  background-attachment: fixed;
   z-index: -2;
 }
 body::after {
@@ -10410,7 +10409,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
 </script>
 <!-- ===== КОНЕЦ БЛОКА ZEN MODE ===== -->
 
-<!-- ===== Созвездие Большая Медведица (Приподнято вверх) ===== -->
+<!-- ===== Созвездие Большая Медведица (Появляется только ночью) ===== -->
 <canvas id="ursa-major-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99990; opacity: 0; transition: opacity 0.8s ease-in-out;"></canvas>
 <script>
 (function() {
@@ -10419,7 +10418,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     let isZen = false;
     let animationId = null;
 
-    // Координаты звёзд. 
     const starsData = [
         { x: 100, y: 100, speed1: 0.12, speed2: 0.35, phase1: 0.0, phase2: 1.5, twSpeed: 4.2, twPhase: 1.1, letter: 'з' }, // 1
         { x: 340, y: 150, speed1: 0.15, speed2: 0.41, phase1: 2.1, phase2: 0.8, twSpeed: 3.8, twPhase: 2.3, letter: 'в' }, // 2
@@ -10434,7 +10432,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     let offsetX = 0;
     let offsetY = 0;
     let dpr = 1;
-
     let starSprites = {};
     let starGlows = {};
 
@@ -10495,15 +10492,14 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         const modelH = 720; 
         let minX_pct, maxX_pct, minY_pct, maxY_pct;
 
-        // ИЗМЕНЕНО: Уменьшены координаты Y, чтобы приподнять созвездие вверх
         if (window.innerWidth < 600) {
             minX_pct = 0.247; maxX_pct = 0.700; 
-            minY_pct = 0.185; // было 0.215
-            maxY_pct = 0.364; // было 0.394
+            minY_pct = 0.185; 
+            maxY_pct = 0.364; 
         } else {
             minX_pct = 0.345; maxX_pct = 0.637; 
-            minY_pct = 0.118; // было 0.148
-            maxY_pct = 0.312; // было 0.342
+            minY_pct = 0.118; 
+            maxY_pct = 0.312; 
         }
 
         const targetW = window.innerWidth * (maxX_pct - minX_pct);
@@ -10519,12 +10515,44 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     window.addEventListener('resize', resize);
     resize();
 
+    // Проверка: ночь ли сейчас?
+    function isNightNow() {
+        // Если основной скрипт погоды уже загружен, берем данные оттуда
+        if (window.__precipStatus && typeof window.__precipStatus === 'function') {
+            return window.__precipStatus().isNight;
+        }
+        // Резервный расчет (если погода еще не прогрузилась)
+        var date = new Date();
+        var lat = 53.35, lon = 83.78;
+        var start = new Date(Date.UTC(date.getUTCFullYear(), 0, 0));
+        var dayOfYear = Math.floor((date - start) / 86400000);
+        var gamma = 2 * Math.PI / 365 * (dayOfYear - 1 + (date.getUTCHours() - 12) / 24);
+        var eqtime = 229.18 * (0.000075 + 0.001868 * Math.cos(gamma) - 0.032077 * Math.sin(gamma) - 0.014615 * Math.cos(2 * gamma) - 0.040849 * Math.sin(2 * gamma));
+        var decl = 0.006918 - 0.399912 * Math.cos(gamma) + 0.070257 * Math.sin(gamma) - 0.006758 * Math.cos(2 * gamma) + 0.000907 * Math.sin(2 * gamma) - 0.002697 * Math.cos(3 * gamma) + 0.001480 * Math.sin(3 * gamma);
+        var utcMin = date.getUTCHours() * 60 + date.getUTCMinutes() + date.getUTCSeconds() / 60;
+        var tst = utcMin + eqtime + 4 * lon;
+        tst = ((tst % 1440) + 1440) % 1440;
+        var ha = ((tst / 4) - 180) * Math.PI / 180;
+        var latRad = lat * Math.PI / 180;
+        var cosZen = Math.sin(latRad) * Math.sin(decl) + Math.cos(latRad) * Math.cos(decl) * Math.cos(ha);
+        var zen = Math.acos(Math.max(-1, Math.min(1, cosZen)));
+        var alt = 90 - zen * 180 / Math.PI;
+        return alt < -6; // Ночь, если солнце ниже -6 градусов
+    }
+
     function draw() {
         if (!isZen) return;
         const t = Date.now() * 0.001; 
 
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Если сейчас день, просто очищаем экран и ждем следующего кадра
+        if (!isNightNow()) {
+            animationId = requestAnimationFrame(draw);
+            return;
+        }
+
         ctx.scale(dpr, dpr);
 
         starsData.forEach(star => {

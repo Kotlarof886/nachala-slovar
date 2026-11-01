@@ -7449,6 +7449,124 @@ body.glow-baked .card-frame:hover .fr-line::after {
   filter: none !important;
 }
 </style>
+<style id="glow-bake-398">
+/* ===== №398 — Тач-устройства: убираем мерцание и перегрузку кадров =====
+   Причина регресса №396 на телефоне — три источника перерисовки,
+   накладывающиеся при тапе:
+     1) .flick-run animation — 5 резких скачков opacity за 2.6с, при быстрых
+        тапах накапливается на нескольких карточках (ignite не снимает
+        flick-run со старых);
+     2) transition: opacity 3s на 16 линиях × 2 псевдоэлемента = 32 слоя
+        с box-shadow — при раскрытии слота layout пересчитывается каждые
+        16мс и слои пересоздаются → мигание;
+     3) fr-burst подмена background-image → перерастеризация PNG в кадре
+        тапа, одновременно с анимацией.
+   Лѣкъ: на тач-устройствах (hover: none) отключаем мерцание насовсѣмъ,
+   transition оставляемъ только на 4 уголкахъ (8 слоёвъ вмѣсто 40),
+   линіи переключаются мгновенно (box-shadow безъ transition дёшевъ
+   для сплошной полосы). Transition на уголкахъ короче — 1.5s / 1s. */
+
+@media (hover: none) {
+  /* 1) Никакого мерцания на тачѣ — ни от ignite, ни от flash. */
+  body.glow-baked .card-frame.flick-run .fr-corner::after,
+  body.glow-baked .card-frame.flick-run .fr-line::after,
+  body.glow-baked .card-frame.flick-run .fr-corner::before,
+  body.glow-baked .card-frame.flick-run .fr-line::before {
+    animation: none !important;
+  }
+
+  /* 2) Линіи — безъ transition: opacity скачетъ 0/1 мгновенно.
+        Для сплошной полосы съ box-shadow это дёшево и глазу пріятно. */
+  body.glow-baked .fr-line::before,
+  body.glow-baked .fr-line::after,
+  body.glow-baked .card-frame:hover .fr-line::before,
+  body.glow-baked .card-frame:hover .fr-line::after {
+    transition: none !important;
+  }
+
+  /* 3) Уголки — плавно, но короче (1.5s / 1s вмѣсто 3s / 1.5s). */
+  body.glow-baked .fr-corner::before {
+    transition: opacity 1.5s ease;
+  }
+  body.glow-baked .fr-corner::after {
+    transition: opacity 1s ease;
+  }
+  body.glow-baked .card-frame:hover .fr-corner::before {
+    transition: opacity 1.5s ease;
+  }
+  body.glow-baked .card-frame:hover .fr-corner::after {
+    transition: opacity 1s ease;
+  }
+
+  /* 4) Burst по тапу — безъ подмѣны спрайта (никакой перерастеризаціи PNG). */
+  body.glow-baked .card-frame.fr-burst .fr-corner::before,
+  body.glow-baked .card-frame.fr-burst .fr-corner::after {
+    background: inherit;   /* берёмъ тотъ же спрайт, что и на hover */
+  }
+
+  /* 5) Пока карточка раздвигается — свѣтъ молчитъ. Классъ .card-anim
+        ставитъ JS изъ glow-bake-398-js ниже. */
+  body.glow-baked .card-frame.card-anim .fr-corner::before,
+  body.glow-baked .card-frame.card-anim .fr-corner::after,
+  body.glow-baked .card-frame.card-anim .fr-line::before,
+  body.glow-baked .card-frame.card-anim .fr-line::after {
+    transition: none !important;
+    animation: none !important;
+    opacity: 0 !important;
+  }
+}
+</style>
+<script id="glow-bake-398-js">
+/* ===== №398 — Пауза свѣта на время анимаціи слота =====
+   Пока .online-results раскрывается (height 0 → full, 0.28s), layout карточки
+   пересчитывается каждые 16мс, и композитные слои 32 псевдоэлементовъ съ
+   box-shadow пересоздаются — на телефонѣ это видно какъ миганіе. Классъ
+   .card-anim гаситъ свѣтъ (opacity: 0 !important) на время анимаціи —
+   пересчитывать нечего, кадры ровные. По окончаніи (360мс) классъ снимается,
+   свѣтъ возвращается — разгорается за обычные 1.5s / 1s на тачѣ. */
+(function () {
+  if (!window.matchMedia || !window.matchMedia('(hover: none)').matches) return;   /* только тачъ */
+
+  function pauseLight(card) {
+    if (!card || !card.classList.contains('card-frame')) return;
+    card.classList.add('card-anim');
+    if (card._animTimer) clearTimeout(card._animTimer);
+    card._animTimer = setTimeout(function () {
+      card.classList.remove('card-anim');
+      card._animTimer = null;
+    }, 360);
+  }
+
+  /* MutationObserver на .online-results: раскрытіе/сжатіе — по style.height */
+  function watchSlot(slot) {
+    if (slot._glowWatch) return;
+    slot._glowWatch = true;
+    var obs = new MutationObserver(function (muts) {
+      for (var i = 0; i < muts.length; i++) {
+        if (muts[i].attributeName !== 'style') continue;
+        var h = slot.style.height;
+        if (h && h !== 'auto' && h !== '') { pauseLight(slot.closest('.card-frame')); break; }
+      }
+    });
+    obs.observe(slot, { attributes: true, attributeFilter: ['style'] });
+  }
+
+  function wire() {
+    document.querySelectorAll('.online-results').forEach(watchSlot);
+    /* DOM пересобирается (ленивая отрисовка, пересборка списка) — подхватываем новые слоты */
+    var list = document.getElementById('results');
+    if (list && !list._glowObs) {
+      list._glowObs = true;
+      new MutationObserver(function () {
+        document.querySelectorAll('.online-results').forEach(watchSlot);
+      }).observe(list, { childList: true, subtree: true });
+    }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', wire);
+  else wire();
+})();
+</script>
 <!-- №154: перо возврата къ клавиатурѣ (введено въ №141) — всплываетъ при прокруткѣ снизу вверхъ,
      таетъ скольженіемъ вверхъ; въ №144 исправлено направленіе, въ №145 устранено морганье,
      въ №146 порогъ и инерція, въ №147 сглаженная инерція, въ №148 ходъ на композиторѣ,

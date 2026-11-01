@@ -10410,7 +10410,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
 </script>
 <!-- ===== КОНЕЦ БЛОКА ZEN MODE ===== -->
 
-<!-- ===== Созвездие Большая Медведица (Сдвинуто левее на ПК) ===== -->
+<!-- ===== Созвездие Большая Медведица (Приподнято вверх) ===== -->
 <canvas id="ursa-major-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99990; opacity: 0; transition: opacity 0.8s ease-in-out;"></canvas>
 <script>
 (function() {
@@ -10419,129 +10419,148 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     let isZen = false;
     let animationId = null;
 
+    // Координаты звёзд. 
     const starsData = [
-        { x: 100, y: 100, phase: 0.0, letter: 'з' }, // 1. Конец ручки
-        { x: 280, y: 180, phase: 1.2, letter: 'в' }, // 2. Середина ручки
-        { x: 450, y: 350, phase: 2.1, letter: 'ѣ' }, // 3. Основание ручки
-        { x: 620, y: 520, phase: 0.5, letter: 'д' }, // 4. Верхний левый угол ковша
-        { x: 670, y: 750, phase: 3.1, letter: 'ы' }, // 5. Нижний левый угол ковша
-        { x: 950, y: 820, phase: 1.8, letter: 'з' }, // 6. Нижний правый угол ковша
-        { x: 980, y: 580, phase: 4.0, letter: 'в' }  // 7. Верхний правый угол ковша
-    ];
-
-    const lines = [
-        [0, 1], [1, 2], [2, 3], // Ручка
-        [3, 4], [4, 5], [5, 6], [6, 3] // Ковш
+        { x: 100, y: 100, speed1: 0.12, speed2: 0.35, phase1: 0.0, phase2: 1.5, twSpeed: 4.2, twPhase: 1.1, letter: 'з' }, // 1
+        { x: 340, y: 150, speed1: 0.15, speed2: 0.41, phase1: 2.1, phase2: 0.8, twSpeed: 3.8, twPhase: 2.3, letter: 'в' }, // 2
+        { x: 450, y: 350, speed1: 0.09, speed2: 0.28, phase1: 4.2, phase2: 3.1, twSpeed: 5.1, twPhase: 0.4, letter: 'ѣ' }, // 3
+        { x: 620, y: 520, speed1: 0.14, speed2: 0.33, phase1: 1.1, phase2: 2.7, twSpeed: 4.5, twPhase: 3.8, letter: 'з' }, // 4
+        { x: 670, y: 750, speed1: 0.18, speed2: 0.45, phase1: 3.5, phase2: 0.2, twSpeed: 3.2, twPhase: 1.7, letter: 'д' }, // 5
+        { x: 950, y: 820, speed1: 0.11, speed2: 0.31, phase1: 5.1, phase2: 1.9, twSpeed: 4.9, twPhase: 2.9, letter: 'ы' }, // 6
+        { x: 1005, y: 580, speed1: 0.16, speed2: 0.38, phase1: 0.4, phase2: 4.4, twSpeed: 3.5, twPhase: 0.8, letter: 'з' }  // 7
     ];
 
     let scale = 1;
     let offsetX = 0;
     let offsetY = 0;
+    let dpr = 1;
+
+    let starSprites = {};
+    let starGlows = {};
+
+    function makeStarLetterSprite(ch, size, dprScale) {
+        var pad = Math.ceil(size * 0.7), d = size + pad * 2;
+        var c = document.createElement('canvas');
+        c.width = Math.ceil(d * dprScale); c.height = Math.ceil(d * dprScale);
+        var g = c.getContext('2d');
+        g.scale(dprScale, dprScale);
+        g.font = 'normal ' + size + 'px "Gardenia Decor", "Yeseva One", Georgia, serif';
+        g.textAlign = 'center'; g.textBaseline = 'middle';
+        g.translate(d / 2, d / 2); g.rotate(-Math.PI / 4); g.translate(-d / 2, -d / 2);
+        g.shadowColor = 'rgba(160, 195, 255, 0.9)'; g.shadowBlur = size * 0.7;
+        g.fillStyle = 'rgba(190, 215, 255, 0.55)'; g.fillText(ch, d/2, d/2); g.fillText(ch, d/2, d/2);
+        g.shadowBlur = size * 0.35; g.fillStyle = 'rgba(215, 230, 255, 0.85)'; g.fillText(ch, d/2, d/2);
+        g.shadowBlur = size * 0.15; g.fillStyle = '#f0f6ff'; g.fillText(ch, d/2, d/2);
+        return c;
+    }
+
+    function makeGlowSprite(size, dprScale) {
+        var d = size * 1.6;
+        var c = document.createElement('canvas');
+        c.width = Math.ceil(d * dprScale); c.height = Math.ceil(d * dprScale);
+        var g = c.getContext('2d');
+        g.scale(dprScale, dprScale);
+        var grd = g.createRadialGradient(d/2, d/2, 0, d/2, d/2, d/2);
+        grd.addColorStop(0, 'rgba(255, 255, 255, 0.90)');
+        grd.addColorStop(0.25, 'rgba(240, 248, 255, 0.55)');
+        grd.addColorStop(0.55, 'rgba(220, 235, 255, 0.22)');
+        grd.addColorStop(1, 'rgba(200, 220, 240, 0)');
+        g.fillStyle = grd; g.beginPath(); g.arc(d/2, d/2, d/2, 0, Math.PI*2); g.fill();
+        return c;
+    }
+
+    function prepareSprites() {
+        starSprites = {}; starGlows = {};
+        const isMobile = window.innerWidth < 600;
+        const maxStarSize = isMobile ? 10.4 : 19; 
+        
+        starsData.forEach(star => {
+            if (!starSprites[star.letter]) {
+                starSprites[star.letter] = makeStarLetterSprite(star.letter, maxStarSize, dpr);
+                starGlows[star.letter] = makeGlowSprite(maxStarSize, dpr);
+            }
+        });
+    }
 
     function resize() {
-        const dpr = window.devicePixelRatio || 1;
+        dpr = window.devicePixelRatio || 1;
         canvas.width = window.innerWidth * dpr;
         canvas.height = window.innerHeight * dpr;
         canvas.style.width = window.innerWidth + 'px';
         canvas.style.height = window.innerHeight + 'px';
-        ctx.scale(dpr, dpr);
+        
+        prepareSprites(); 
 
-        const modelW = 880; 
+        const modelW = 900; 
         const modelH = 720; 
-
         let minX_pct, maxX_pct, minY_pct, maxY_pct;
 
+        // ИЗМЕНЕНО: Уменьшены координаты Y, чтобы приподнять созвездие вверх
         if (window.innerWidth < 600) {
-            // Телефон (оставляем как было)
-            minX_pct = 0.247;
-            maxX_pct = 0.700;
-            minY_pct = 0.215;
-            maxY_pct = 0.394;
+            minX_pct = 0.247; maxX_pct = 0.700; 
+            minY_pct = 0.185; // было 0.215
+            maxY_pct = 0.364; // было 0.394
         } else {
-            // ПК (сдвигаем левее, уменьшая проценты)
-            minX_pct = 0.345; // было 0.385
-            maxX_pct = 0.637; // было 0.677
-            minY_pct = 0.148;
-            maxY_pct = 0.342;
+            minX_pct = 0.345; maxX_pct = 0.637; 
+            minY_pct = 0.118; // было 0.148
+            maxY_pct = 0.312; // было 0.342
         }
 
         const targetW = window.innerWidth * (maxX_pct - minX_pct);
         const targetH = window.innerHeight * (maxY_pct - minY_pct);
-
         scale = Math.min(targetW / modelW, targetH / modelH);
 
         const targetCenterX = window.innerWidth * (minX_pct + maxX_pct) / 2;
         const targetCenterY = window.innerHeight * (minY_pct + maxY_pct) / 2;
 
-        offsetX = targetCenterX - (540 * scale); 
+        offsetX = targetCenterX - (550 * scale); 
         offsetY = targetCenterY - (460 * scale); 
     }
     window.addEventListener('resize', resize);
     resize();
 
-    function drawLetterStar(x, y, size, opacity, letter) {
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.rotate(-Math.PI / 4);
-        ctx.font = 'normal ' + size + 'px "Gardenia Decor", "Yeseva One", Georgia, serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.globalAlpha = opacity;
-
-        ctx.shadowColor = 'rgba(160, 195, 255, 0.9)'; 
-        ctx.shadowBlur = size * 0.7;
-        ctx.fillStyle = 'rgba(190, 215, 255, 0.55)'; 
-        ctx.fillText(letter, 0, 0); 
-        ctx.fillText(letter, 0, 0);
-
-        ctx.shadowBlur = size * 0.35; 
-        ctx.fillStyle = 'rgba(215, 230, 255, 0.85)'; 
-        ctx.fillText(letter, 0, 0);
-
-        ctx.shadowBlur = size * 0.15; 
-        ctx.fillStyle = '#f0f6ff'; 
-        ctx.fillText(letter, 0, 0);
-
-        ctx.restore();
-    }
-
     function draw() {
         if (!isZen) return;
-        const time = Date.now() * 0.002;
+        const t = Date.now() * 0.001; 
 
-        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
-
-        ctx.beginPath();
-        ctx.strokeStyle = 'rgba(100, 180, 255, 0.35)'; 
-        ctx.lineWidth = Math.max(1, 2 * scale);
-        ctx.shadowColor = 'rgba(100, 180, 255, 0.8)';
-        ctx.shadowBlur = 8 * scale;
-        
-        lines.forEach(line => {
-            const p1 = starsData[line[0]];
-            const p2 = starsData[line[1]];
-            const x1 = offsetX + p1.x * scale;
-            const y1 = offsetY + p1.y * scale;
-            const x2 = offsetX + p2.x * scale;
-            const y2 = offsetY + p2.y * scale;
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-        });
-        ctx.stroke();
-        ctx.shadowBlur = 0;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.scale(dpr, dpr);
 
         starsData.forEach(star => {
             const x = offsetX + star.x * scale;
             const y = offsetY + star.y * scale;
             
-            const pulse = (Math.sin(time + star.phase) + 1) / 2; 
-            const opacity = 0.5 + (pulse * 0.5);
+            const wave1 = Math.sin(t * star.speed1 + star.phase1);
+            const wave2 = Math.sin(t * star.speed2 + star.phase2);
+            const breath = (wave1 * 0.6 + 0.5) * 0.5 + (wave2 * 0.4 + 0.5) * 0.5;
             
-            const baseSize = 85 * scale; 
-            const size = baseSize + (pulse * 4 * scale);
+            const twinkle = Math.sin(t * star.twSpeed + star.twPhase) * 0.05;
+            
+            let alpha = 0.3 + (breath * 0.7) + twinkle;
+            alpha = Math.max(0.3, Math.min(1.0, alpha));
+            
+            const sizeFactor = 0.7 + (breath * 0.3);
 
-            drawLetterStar(x, y, size, opacity, star.letter);
+            if (alpha > 0.02) {
+                const glowSprite = starGlows[star.letter];
+                const gScale = (1 + 0.6 * alpha) * (0.7 + 0.3 * breath) * sizeFactor;
+                
+                ctx.setTransform(gScale, 0, 0, gScale, x * dpr, y * dpr);
+                ctx.globalAlpha = alpha * 0.85;
+                ctx.drawImage(glowSprite, -glowSprite.width / 2, -glowSprite.height / 2);
+            }
+
+            const sprite = starSprites[star.letter];
+            const sScale = sizeFactor;
+            
+            ctx.setTransform(sScale, 0, 0, sScale, x * dpr, y * dpr);
+            ctx.globalAlpha = alpha;
+            ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
         });
+
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.globalAlpha = 1;
 
         animationId = requestAnimationFrame(draw);
     }
@@ -10564,7 +10583,8 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         }
         setTimeout(() => {
             if (!isZen) {
-                ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
         }, 800);
     }
@@ -10573,18 +10593,13 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         mutations.forEach((mutation) => {
             if (mutation.attributeName === 'class') {
                 const active = document.body.classList.contains('zen-active');
-                if (active && !isZen) {
-                    start();
-                } else if (!active && isZen) {
-                    stop();
-                }
+                if (active && !isZen) start();
+                else if (!active && isZen) stop();
             }
         });
     });
     observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
-    if (document.body.classList.contains('zen-active')) {
-        start();
-    }
+    if (document.body.classList.contains('zen-active')) start();
 })();
 </script>

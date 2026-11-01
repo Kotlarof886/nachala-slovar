@@ -9502,7 +9502,8 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     let fireCanvas, fCtx;
     let groundCanvasEl, groundCtx;
 
-    let fireLevel = 0.7, fireTargetVisual = 0.7, fireVisual = 0.7;
+    let fireLevel = 1, fireTargetVisual = 1, fireVisual = 1;
+let fireTouched = false;   /* false — дежурный вѣченъ; true — живётъ 10 минутъ */
     let heatVisual = 1, coolT = 0, smokeFadeT = 1;
     let zeroEnteredAt = 0, lastDecreaseAt = Date.now();
     let coalsPopped = 0, nextCoalPopAt = 0;
@@ -9736,7 +9737,9 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
     function randSize(min, max) { return Math.round(min + Math.random() * (max - min)); }
     function groundTopAt(x) { const t = (x - CX) / CX; return H - GROUND_HEIGHT + t * t * GROUND_DEPTH; }
-    function getDecreaseInterval() { return isRainOrSnow ? 60000 : 120000; }
+    function getDecreaseInterval() { if (fireLevel === 1 && !fireTouched) return Infinity;   /* нетронутый — вѣчный */
+    if (fireLevel === 1) return 10 * 60 * 1000;             /* тронутый — 10 минутъ */
+    return isRainOrSnow ? 60000 : 120000;}
 
     function addParticle(p) {
         if (particleCount >= MAX_PARTICLES) return;
@@ -9863,40 +9866,77 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     function smokeGrow(vis)       { return IS_MOBILE ? (1.2 + vis * 0.4) : (2 + vis * 0.7); }
     function vertSparkVyBase(vis) { return -(70 + vis * 22); }
 
-    function spawnSidewaysSparks(count, intensity) {
-        intensity = Math.max(1, Math.min(5, intensity || 1));
-        const EDGE_X = IS_MOBILE ? 40 : 80; 
-        const MAX_REACH = EDGE_X + intensity * (IS_MOBILE ? 8 : 22);
-        for (let i = 0; i < count; i++) {
-            const dir = Math.random() > 0.5 ? 1 : -1;
-            const targetDelta = (Math.random() < 0.15)
-                ? EDGE_X + Math.random() * (MAX_REACH - EDGE_X)
-                : EDGE_X + (Math.random() - 0.5) * (IS_MOBILE ? 15 : 30);
+        function spawnSidewaysSparks(count, intensity) {
+    intensity = Math.max(1, Math.min(5, intensity || 1));
+    const lvl = Math.min(1, fireVisual);
+    for (let i = 0; i < count; i++) {
+        const r = Math.random();
+        let vx, vy, gravity, startY, fg, targetY;
+
+        if (r < 0.25) {
+            // 1. ВВЕРХЪ
+            vx = (Math.random() - 0.5) * 100;
+            vy = -(120 + Math.random() * 100);
+            gravity = 200 + Math.random() * 50;
+            startY = CY - 5 - Math.random() * 10;
+            fg = false;
+            targetY = 0;
+        } else if (r < 0.60) {
+            // 2. ВЪ СТОРОНЫ
+            const side = Math.random() < 0.5 ? 1 : -1;
+            vx = side * (140 + Math.random() * 120);
+            vy = -(60 + Math.random() * 80);
+            gravity = 280 + Math.random() * 70;
+            startY = CY - 5 - Math.random() * 10;
+            fg = false;
+            targetY = 0;
+        } else {
+            // 3. ВПЕРЁДЪ НА ЗРИТЕЛЯ (вѣеръ на 180 градусовъ)
+            const angle = (Math.PI * 0.08) + Math.random() * (Math.PI * 0.84); 
+            const speed = 50 + Math.random() * 250; 
+            vx = Math.cos(angle) * speed; 
+            vy = Math.sin(angle) * speed; 
+            gravity = 80 + Math.random() * 220; 
+            startY = CY - 10 - Math.random() * 70; 
+            fg = true; 
             
-            const baseVy = (IS_MOBILE ? 80 : 130) + Math.random() * (IS_MOBILE ? 30 : 60);
-            const gravity = (IS_MOBILE ? 300 : 240) + Math.random() * 60;
-            
-            const vx = targetDelta / (2 * baseVy / gravity);
-            addParticle({
-                type: 'spark', x: CX + (Math.random() - 0.5) * 20, y: CY - 35,
-                vx: vx * dir, vy: -baseVy, gravity: gravity, life: 1,
-                maxLife: 1.8 + Math.random() * 0.8, text: pick(WORD_SPARKS),
-                color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
-                size: randSize(7, 11),
-                fontStr: 'normal ' + randSize(7, 11) + 'px ' + FONT
-            });
-            addParticle({
-                type: 'spark', x: CX + (Math.random() - 0.5) * 40,
-                y: CY - 20 - Math.random() * 30,
-                vx: (Math.random() - 0.5) * 10, vy: -(150 + Math.random() * 50),
-                gravity: 50, life: 1, maxLife: 2.0 + Math.random() * 0.8,
-                text: pick(WORD_SPARKS),
-                color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
-                size: randSize(7, 11),
-                fontStr: 'normal ' + randSize(7, 11) + 'px ' + FONT
-            });
+            // Случайная точка приземленія от H-10 (самый низъ) до H-60 (чуть дальше)
+            // Это создаст разброс по глубине перед костром
+            targetY = H - 10 - Math.random() * 50; 
         }
+
+        const sz = randSize(7, 11);
+        addParticle({
+            type: 'spark',
+            x: CX + (Math.random() - 0.5) * 40,
+            y: startY,
+            vx: vx, vy: vy, gravity: gravity,
+            foreground: fg,
+            targetY: targetY, // <--- Передаем точку приземления
+            life: 1, maxLife: 2.0 + Math.random() * 1.0,
+            text: pick(WORD_SPARKS),
+            color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
+            size: sz,
+            fontStr: 'normal ' + sz + 'px ' + FONT
+        });
+
+        // Догоняющая вертикальная искра (эффект тапа) — без изменений
+        const szV = randSize(7, 11);
+        addParticle({
+            type: 'spark',
+            x: CX + (Math.random() - 0.5) * 40,
+            y: CY - 20 - Math.random() * 30,
+            vx: (Math.random() - 0.5) * 10,
+            vy: -(150 + Math.random() * 50),
+            gravity: 50,
+            life: 1, maxLife: 2.0 + Math.random() * 0.8,
+            text: pick(WORD_SPARKS),
+            color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
+            size: szV,
+            fontStr: 'normal ' + szV + 'px ' + FONT
+        });
     }
+}
 
     function popCoal(time) {
         const dir = Math.random() > 0.5 ? 1 : -1;
@@ -9911,16 +9951,17 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     }
 
     function nextLevel(cur) {
-        if (cur === 0.7) return 1;
-        if (cur === 0) return 0.5;
-        if (cur === 0.5) return 1;
-        if (cur >= 5) return 1;
-        return cur + 1;
-    }
+    if (cur === 0) return 0.5;
+    if (cur === 0.5) return 1;
+    if (cur === 0.7) return 1;
+    if (cur >= 5) return 1;
+    return cur + 1;
+}
 
     function onTap() {
-        if (!isZen) return;
-        const was = fireLevel;
+    if (!isZen) return;
+    fireTouched = true;   /* ← добавить: любое прикосновеніе снимаетъ вѣчность */
+    const was = fireLevel;
         fireLevel = nextLevel(was);
         if (fireLevel === 0) {
             fireTargetVisual = 0; zeroEnteredAt = Date.now(); coolT = 0; smokeFadeT = 1;
@@ -10088,7 +10129,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
                 type: 'spark', x: CX + (Math.random() - 0.5) * 40,
                 y: CY - 20 - Math.random() * 30,
                 vx: (Math.random() - 0.5) * 20, vy: (vyB + (Math.random() - 0.5) * 40) * heightMul,
-                gravity: 50, life: 1, maxLife: 1.5 + Math.random() * 1.0,
+                gravity: 40, life: 1, maxLife: 1.5 + Math.random() * 1.0,
                 text: pick(WORD_SPARKS),
                 color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
                 size: sz, fontStr: 'normal ' + sz + 'px ' + FONT
@@ -10146,13 +10187,21 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             coolT = Math.min(1, elapsed / 60000);
             smokeFadeT = Math.max(0, 1 - elapsed / 30000);
         }
-        if (fireLevel > 0 && fireLevel !== 0.7 && Date.now() - lastDecreaseAt > getDecreaseInterval()) {
-            lastDecreaseAt = Date.now();
-            if (fireLevel === 1 || fireLevel === 0.5) {
-                fireLevel = 0; fireTargetVisual = 0;
-                zeroEnteredAt = Date.now(); coolT = 0; smokeFadeT = 1;
-            } else { fireLevel -= 1; fireTargetVisual = fireLevel; }
-        }
+        if (fireLevel !== 0 && Date.now() - lastDecreaseAt > getDecreaseInterval()) {
+    lastDecreaseAt = Date.now();
+    if (fireLevel === 0.5) {
+        fireLevel = 0; fireTargetVisual = 0;
+        zeroEnteredAt = Date.now(); coolT = 0; smokeFadeT = 1;
+    } else if (fireLevel === 1) {
+        fireLevel = 0.7; fireTargetVisual = 0.7;             /* 1 → 0.7 — только если тронутъ */
+    } else if (fireLevel === 0.7) {
+        fireLevel = 0.5; fireTargetVisual = 0;
+        coalsPopped = 0;
+        nextCoalPopAt = performance.now() + 800 + Math.random() * 1200;
+    } else {
+        fireLevel -= 1; fireTargetVisual = fireLevel;
+    }
+}
         fCtx.clearRect(0, 0, W, H);
         drawCoals(time);
         spawnParticles(dt, time);
@@ -10168,15 +10217,19 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
                     p.color = '#ff9933'; p.alpha = 1;
                 }
             } else if (p.type === 'spark') {
-                const gt = groundTopAt(p.x);
-                if (p.y >= gt) {
-                    p.type = 'smolder'; p.y = gt; p.vx = 0; p.vy = 0;
-                    p.landedAt = time; p.maxLife = 1.2 + Math.random() * 1.0; p.life = 1;
-                    p.size = Math.max(6, p.size - 2);
-                    p.fontStr = 'normal ' + p.size + 'px ' + FONT;
-                    p.alpha = 1; p.color = '#ffaa33';
-                }
-            }
+    // Если искра на переднем плане, она падает на свою уникальную высоту
+    const gt = p.foreground ? (p.targetY || H - 15) : groundTopAt(p.x);
+    
+    if (p.y >= gt) {
+        p.type = 'smolder'; p.y = gt; p.vx = 0; p.vy = 0;
+        p.landedAt = time; 
+        p.maxLife = 2.5 + Math.random() * 2.0;
+        p.life = 1;
+        p.size = Math.max(8, p.size);
+        p.fontStr = 'normal ' + p.size + 'px ' + FONT;
+        p.alpha = 1; p.color = '#ffaa33';
+    }
+}
             p.life -= dt / p.maxLife;
             if (p.life <= 0) {
                 const lastP = particlePool[particleCount - 1];
@@ -10369,8 +10422,9 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             document.body.classList.remove('zen-returning');
             document.body.classList.add('zen-active');
             requestWakeLock();
-            fireLevel = 0.7; fireTargetVisual = 0.7; fireVisual = 0.7;
+            fireLevel = 1; fireTargetVisual = 1; fireVisual = 1;
             heatVisual = 1; coolT = 0; smokeFadeT = 0;
+fireTouched = false;   /* при входѣ дежурный снова вѣченъ */
             zeroEnteredAt = 0; coalsPopped = 0; particleCount = 0;
             flameTipInit = false; flameTipX = CX; flameTipY = CY - 80;
             lastDecreaseAt = Date.now(); lastDrawTime = 0;

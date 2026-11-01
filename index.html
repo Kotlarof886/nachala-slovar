@@ -7507,6 +7507,16 @@ body.glow-baked .card-frame.flick-run .fr-line::after {
   }
 }
 </style>
+<style id="glow-test-off">
+@media (hover: none) {
+  body.glow-baked .fr-corner::before,
+  body.glow-baked .fr-corner::after,
+  body.glow-baked .fr-line::before,
+  body.glow-baked .fr-line::after {
+    display: none !important;
+  }
+}
+</style>
 <!-- №154: перо возврата къ клавиатурѣ (введено въ №141) — всплываетъ при прокруткѣ снизу вверхъ,
      таетъ скольженіемъ вверхъ; въ №144 исправлено направленіе, въ №145 устранено морганье,
      въ №146 порогъ и инерція, въ №147 сглаженная инерція, въ №148 ходъ на композиторѣ,

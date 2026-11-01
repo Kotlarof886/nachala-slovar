@@ -7449,72 +7449,67 @@ body.glow-baked .card-frame:hover .fr-line::after {
   filter: none !important;
 }
 </style>
-<style id="glow-bake-399">
-/* ===== №399 — Композитные слои на время hover =====
-   Регрессъ №396 на телефонѣ: базовое правило сняло слои композитора
-   (will-change: auto !important) — вѣрно въ покоѣ, но при hover transition
-   opacity идётъ черезъ repaint каждые 16 мс. На телефонѣ это рвётъ кадры:
-   мигаютъ уголки, дёргаются линіи, мѣрцаніе при раскрытіи слота.
-   Лѣкъ: въ состояніи hover и flick-run слои возвращаются — opacity-
-   анимація уходитъ на GPU, repaint не нуженъ, transition идётъ плавно.
-   Въ покоѣ will-change снова auto — память не тратится.
-   На тачѣ — transition короче (1.5с золото / 1с пламя): меньше времени
-   держим композитный слой, откликъ живее. */
+<style id="glow-bake-401">
+/* ===== №401 — Тач: явное управление свѣтомъ черезъ классъ =====
+   Причина дёрганья и «резкаго» входа на телефонѣ — :hover ненадёженъ
+   на тач-устройствахъ. iOS Safari и часть Android-браузеровъ применяютъ
+   его после тапа, но transition при первомъ переходе черезъ тапъ не
+   срабатываетъ — свойство меняется мгновенно. Плюсъ :hover «залипаетъ»
+   на прежнихъ карточкахъ, давъ двойное свѣченіе.
+   Лѣкъ: на тачѣ свѣтъ управляется классомъ .card-lit, который ставитъ
+   JS на touchstart. Въ hover-состояніи opacity сбрасывается въ 0
+   (!important перебиваетъ №396), иначе залипаніе :hover даётъ двойной
+   свѣтъ. На .card-lit включается will-change: opacity — слой композитора,
+   transition уходитъ на GPU, ровные кадры. Мерцаніе — выключено. */
 
-/* --- Композитные слои на время анимаціи --- */
-body.glow-baked .card-frame:hover .fr-corner::before,
-body.glow-baked .card-frame:hover .fr-corner::after,
-body.glow-baked .card-frame:hover .fr-line::before,
-body.glow-baked .card-frame:hover .fr-line::after,
-body.glow-baked .card-frame.flick-run .fr-corner::before,
-body.glow-baked .card-frame.flick-run .fr-corner::after,
-body.glow-baked .card-frame.flick-run .fr-line::before,
-body.glow-baked .card-frame.flick-run .fr-line::after {
-  will-change: opacity !important;
-}
-
-/* --- Тачъ: чуть короче, чтобы не держать слой 3 секунды --- */
 @media (hover: none) {
+
+  /* :hover больше не зажигаетъ свѣтъ — иначе iOS-залипаніе даётъ
+     двойное свѣченіе и рывки. !important нуженъ, чтобы перебить №396. */
+  body.glow-baked .card-frame:hover .fr-corner::before,
+  body.glow-baked .card-frame:hover .fr-line::before,
+  body.glow-baked .card-frame:hover .fr-corner::after,
+  body.glow-baked .card-frame:hover .fr-line::after {
+    opacity: 0 !important;
+    transition: none !important;
+  }
+
+  /* База: transition для плавнаго затуханія при снятіи класса */
   body.glow-baked .fr-corner::before,
   body.glow-baked .fr-line::before {
     transition: opacity 1.5s ease;
+    opacity: 0;
   }
   body.glow-baked .fr-corner::after,
   body.glow-baked .fr-line::after {
     transition: opacity 1s ease;
+    opacity: 0;
   }
-  body.glow-baked .card-frame:hover .fr-corner::before,
-  body.glow-baked .card-frame:hover .fr-line::before {
+
+  /* Зажжённая карточка — слой композитора на время жизни класса.
+     transition на GPU, безъ repaint. */
+  body.glow-baked .card-frame.card-lit .fr-corner::before,
+  body.glow-baked .card-frame.card-lit .fr-line::before {
+    opacity: 1;
+    will-change: opacity;
     transition: opacity 1.5s ease;
   }
-  body.glow-baked .card-frame:hover .fr-corner::after,
-  body.glow-baked .card-frame:hover .fr-line::after {
+  body.glow-baked .card-frame.card-lit .fr-corner::after,
+  body.glow-baked .card-frame.card-lit .fr-line::after {
+    opacity: 1;
+    will-change: opacity;
     transition: opacity 1s ease;
   }
-}
 
-/* Стражи: prefers-reduced-motion — безъ анимаціи совсѣмъ */
-@media (prefers-reduced-motion: reduce) {
-  body.glow-baked .fr-corner::before,
-  body.glow-baked .fr-corner::after,
-  body.glow-baked .fr-line::before,
-  body.glow-baked .fr-line::after,
-  body.glow-baked .card-frame:hover .fr-corner::before,
-  body.glow-baked .card-frame:hover .fr-corner::after,
-  body.glow-baked .card-frame:hover .fr-line::before,
-  body.glow-baked .card-frame:hover .fr-line::after {
-    transition: none;
+  /* Burst — только на зажжённой карточкѣ (иначе на неподвижной не виденъ) */
+  body.glow-baked .card-frame.card-lit.fr-burst .fr-corner::before {
+    background: var(--glow-gold-burst) center / 100% 100% no-repeat;
   }
-}
-</style>
-<style id="glow-bake-400">
-/* ===== №400 — Тачъ: убираемъ мерцаніе =====
-   На тач-устройствахъ анимація flicker (5 скачковъ opacity за 2.6s)
-   читается какъ мерцаніе, а не «дрожь пламени». На ПК остаётся —
-   тамъ она мягкая, потому что кегль больше и GPU иначе округляетъ
-   субпиксели. На тачѣ глушимъ её насовсѣмъ: свѣтъ разгорается
-   гладкимъ transition, безъ скачковъ. */
-@media (hover: none) {
+  body.glow-baked .card-frame.card-lit.fr-burst .fr-corner::after {
+    background: var(--glow-flame-burst) center / 100% 100% no-repeat;
+  }
+
+  /* Мерцаніе — насовсѣмъ на тачѣ */
   body.glow-baked .card-frame.flick-run .fr-corner::after,
   body.glow-baked .card-frame.flick-run .fr-line::after,
   body.glow-baked .card-frame.flick-run .fr-corner::before,
@@ -7523,6 +7518,48 @@ body.glow-baked .card-frame.flick-run .fr-line::after {
   }
 }
 </style>
+<script id="glow-bake-401-js">
+/* ===== №401 — Тач: свѣтъ ведётъ JS ===== */
+(function () {
+  if (!window.matchMedia || !window.matchMedia('(hover: none)').matches) return;
+  if (window._glow401) return;
+  window._glow401 = true;
+
+  var current = null;
+
+  function lit(card) {
+    if (current === card) return;
+    if (current) current.classList.remove('card-lit');
+    current = card;
+    if (card) card.classList.add('card-lit');
+  }
+
+  /* тап на карточку — зажечь её, погасить прежнюю */
+  document.addEventListener('touchstart', function (e) {
+    var f = e.target && e.target.closest ? e.target.closest('.card-frame') : null;
+    lit(f);
+  }, { passive: true, capture: true });
+
+  /* тап на кнопку «Уточнить у адъютантовъ» — гасим свѣтъ на время
+     раскрытія слота: пока height пересчитывается, свѣтъ перерисовывать
+     нечего — кадры ровные; по окончаніи анимаціи вернётся съ новымъ тапомъ */
+  document.addEventListener('click', function (e) {
+    if (e.target && e.target.closest && e.target.closest('.wiktionary-btn')) {
+      if (current) { current.classList.remove('card-lit'); current = null; }
+    }
+  }, true);
+
+  /* скролл — снять свѣтъ (карточка ушла изъ фокуса) */
+  var scrollT = null;
+  window.addEventListener('scroll', function () {
+    if (scrollT) return;
+    scrollT = setTimeout(function () {
+      if (current) { current.classList.remove('card-lit'); current = null; }
+      scrollT = null;
+    }, 200);
+  }, { passive: true });
+})();
+</script>
 <!-- №154: перо возврата къ клавиатурѣ (введено въ №141) — всплываетъ при прокруткѣ снизу вверхъ,
      таетъ скольженіемъ вверхъ; въ №144 исправлено направленіе, въ №145 устранено морганье,
      въ №146 порогъ и инерція, въ №147 сглаженная инерція, въ №148 ходъ на композиторѣ,

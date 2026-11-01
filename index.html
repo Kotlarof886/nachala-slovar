@@ -7524,52 +7524,71 @@ body.glow-baked .card-frame:hover .fr-line::after {
   }
 }
 </style>
-<style id="glow-bake-402">
-/* ===== №402 — Тач: уголки — composite, линіи — repaint =====
-   Причина мерцанія и дёрганья буквъ:
-   - .fr-corner имѣетъ фиксированный размѣръ — composite-слой стабиленъ, ок;
-   - .fr-line растягивается при ростѣ карточки (top: 760u, bottom: 760u) —
-     composite-слой пересоздаётся каждый кадръ анимаціи height → мерцаніе,
-     а composite на псевдоэлементѣ заставляетъ браузеръ перерастеризовать
-     сосѣдній текстъ → дёрганье буквъ.
-   Лѣкъ: у линій composite снимается (will-change: auto !important) —
-   repaint дёшевъ для сплошной полосы, мерцанія нѣтъ; transition на линіяхъ
-   короткій (0.15s), чтобы не плодить кадры repaint’а. Уголки сохраняютъ
-   composite — они не растягиваются, плавность безопасна. */
+<style id="glow-bake-403">
+/* ===== №403 — Тач: единый стабилизаторъ кадровъ =====
+   Убираетъ все извѣстные источники мерцанія и микрофризовъ на телефонѣ:
+
+   1) Уголки: `will-change: opacity !important` изъ №401 даётъ iOS пере-
+      создавать data-URL текстуру спрайта при каждомъ скроллѣ = микрофризы.
+      Снимаемъ will-change, сокращаемъ transition до 0.4s/0.3s.
+      Разгораніе всё ещё видно (24/18 кадровъ), но безъ пересозданія слоя.
+
+   2) content-visibility: auto — при прокруткѣ каждая карточка, попадающая
+      въ вьюпортъ, перерисовывается с нуля. На телефонѣ это микрофризы.
+      На тачѣ отключаемъ — экономія меньше, чѣмъ стоитъ подёргиваніе.
+
+   3) Раскрытіе слота: 5 источниковъ перерисовки одновременно —
+      height .online-results, transform+opacity содержимаго (въ bindButtons),
+      translateZ(0) .src-block, will-change: transform .cornet-env,
+      background-size: 100% 100% .cornet-env. Всё пересчитывается 60 разъ
+      въ секунду → конверты мерцаютъ. Лѣкъ: на тачѣ всѣ transition внутри
+      .online-results выключаются (`!important` перебиваетъ inline-style
+      изъ JS), содержимое появляется мгновенно, безъ въѣзда и перерисовки.
+
+   4) Конверты: will-change и hover-wiggle сняты на тачѣ — фонъ не пере-
+      рисовывается, wiggle не залипаетъ послѣ тапа. */
 @media (hover: none) {
 
-  /* Уголки — composite, плавно */
+  /* 1) Уголки — безъ will-change, короткій transition */
   body.glow-baked .card-frame.card-lit .fr-corner::before,
   body.glow-baked .card-frame.card-lit .fr-corner::after {
-    opacity: 1;
-    will-change: opacity !important;
+    will-change: auto !important;
   }
   body.glow-baked .card-frame.card-lit .fr-corner::before {
-    transition: opacity 1.5s ease;
+    transition: opacity 0.4s ease;
   }
   body.glow-baked .card-frame.card-lit .fr-corner::after {
-    transition: opacity 1s ease;
+    transition: opacity 0.3s ease;
   }
 
-  /* Линіи — без composite (repaint), transition очень короткій */
-  body.glow-baked .card-frame.card-lit .fr-line::before,
-  body.glow-baked .card-frame.card-lit .fr-line::after {
-    opacity: 1;
-    will-change: auto !important;
-    transition: opacity 0.15s ease !important;
+  /* 2) content-visibility — отключёнъ, прокрутка безъ фризовъ */
+  .card-frame {
+    content-visibility: visible !important;
   }
 
-  /* Изоляція слота: ростъ height не выходитъ за предѣлы .online-results */
+  /* 3) Раскрытіе слота — мгновенно, безъ мерцанія конвертовъ.
+        !important перебиваетъ inline-style изъ bindButtons. */
   .online-results {
-    contain: layout style paint;
+    transition: none !important;
+  }
+  .online-results > * {
+    transition: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+  .online-results .src-block {
+    transform: none !important;
+    backface-visibility: visible !important;
   }
 
-  /* Burst — подмѣна спрайта (одна растеризація на тап, не критично) */
-  body.glow-baked .card-frame.card-lit.fr-burst .fr-corner::before {
-    background: var(--glow-gold-burst) center / 100% 100% no-repeat;
+  /* 4) Конверты — безъ слоя, безъ перерисовки фона, безъ wiggle */
+  .cornet-env {
+    will-change: auto !important;
+    transition: none !important;
   }
-  body.glow-baked .card-frame.card-lit.fr-burst .fr-corner::after {
-    background: var(--glow-flame-burst) center / 100% 100% no-repeat;
+  .cornet-env:hover {
+    animation: none !important;
+    transform: none !important;
   }
 }
 </style>
@@ -7855,18 +7874,24 @@ window.addEventListener('error', function (e) {
     f.classList.add('flick-run');
   }
   function ignite(f) {
-    if (!f) return;
-    if (burstTimer) clearTimeout(burstTimer);
-    f.classList.remove('flick-run');
+  if (!f) return;
+  document.querySelectorAll('.card-frame.fr-burst').forEach(function (x) {
+    if (x === f) return;
+    x.classList.remove('fr-burst');
+    x.classList.remove('flick-run');
+    if (x._burstTimer) { clearTimeout(x._burstTimer); x._burstTimer = null; }
+  });
+  f.classList.remove('flick-run');
+  f.classList.remove('fr-burst');
+  void f.offsetWidth;
+  f.classList.add('fr-burst');
+  f.classList.add('flick-run');
+  if (f._burstTimer) clearTimeout(f._burstTimer);
+  f._burstTimer = setTimeout(function () {
     f.classList.remove('fr-burst');
-    void f.offsetWidth;
-    f.classList.add('fr-burst');
-    f.classList.add('flick-run');
-    burstTimer = setTimeout(function () {
-      f.classList.remove('fr-burst');
-      burstTimer = null;
-    }, 3700);
-  }
+    f._burstTimer = null;
+  }, 3700);
+}
   document.addEventListener('click', function (e) {
     var t = e.target;
     var f = t && t.closest ? t.closest('.card-frame') : null;

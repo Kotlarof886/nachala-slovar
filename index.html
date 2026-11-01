@@ -7426,6 +7426,29 @@ body.glow-baked .card-frame.fr-burst .fr-line::after {
 body.light .glow-baked .fr-corner::before,
 body.light .glow-baked .fr-corner::after { display: none; }
 </style>
+<style id="glow-bake-397">
+/* ===== №397 — Плавный вход в ховеръ для запечённаго пути =====
+   ...ваш комментарий...
+*/
+body.glow-baked .card-frame:hover .fr-corner::before,
+body.glow-baked .card-frame:hover .fr-line::before {
+  opacity: 1;
+  transition: opacity 3s ease;
+}
+body.glow-baked .card-frame:hover .fr-corner::after,
+body.glow-baked .card-frame:hover .fr-line::after {
+  opacity: 1;
+  transition: opacity 1.5s ease;
+}
+body.glow-baked .card-frame:hover .fr-corner::before,
+body.glow-baked .card-frame:hover .fr-line::before,
+body.glow-baked .card-frame:hover .fr-corner::after,
+body.glow-baked .card-frame:hover .fr-line::after {
+  --c-glow: 0;
+  --c-flame: 0;
+  filter: none !important;
+}
+</style>
 <!-- №154: перо возврата къ клавиатурѣ (введено въ №141) — всплываетъ при прокруткѣ снизу вверхъ,
      таетъ скольженіемъ вверхъ; въ №144 исправлено направленіе, въ №145 устранено морганье,
      въ №146 порогъ и инерція, въ №147 сглаженная инерція, въ №148 ходъ на композиторѣ,

@@ -7524,6 +7524,67 @@ body.glow-baked .card-frame:hover .fr-line::after {
   }
 }
 </style>
+<style id="glow-bake-405">
+/* ===== №405 — Тач: настоящее исправленіе мерцанія линій и конвертовъ =====
+   Причина мерцанія линій найдена: `will-change: opacity !important` на
+   `.fr-line::before/after` изъ №401. Создаётъ композитный слой на 32
+   псевдоэлементахъ (16 линій × 2). При раскрытіи слота высота карточки
+   мѣняется — длина каждой линіи пересчитывается каждый кадръ — слой
+   пересоздаётся → мерцаніе. №402 это перебивалъ, но былъ удалёнъ.
+
+   Причина мерцанія конвертовъ: `.src-block` имѣетъ `transform: translateZ(0)`
+   (изъ №322), создаётъ слой композитора. Плюсъ `will-change: transform`
+   на `.cornet-env` (изъ №316). При выѣздѣ содержимаго (translateY) эти
+   слои пересоздаются → конверты мерцаютъ.
+
+   Лѣкъ: у линій — `will-change: auto` (repaint дешёвъ для сплошной полосы);
+   у `.src-block` — `transform: none`; у `.cornet-env` — `will-change: auto`,
+   но hover-раскачиваніе возвращено какъ было. */
+
+@media (hover: none) {
+
+  /* 1. Линіи — БЕЗЪ композитнаго слоя (настоящая причина мерцанія) */
+  body.glow-baked .card-frame.card-lit .fr-line::before,
+  body.glow-baked .card-frame.card-lit .fr-line::after,
+  body.glow-baked .fr-line::before,
+  body.glow-baked .fr-line::after {
+    will-change: auto !important;
+  }
+
+  /* 2. .src-block — безъ translateZ-слоя (изъ №322) */
+  .online-results .src-block {
+    transform: none !important;
+    backface-visibility: visible !important;
+  }
+
+  /* 3. .cornet-env — безъ will-change (не создаёмъ слой) */
+  .cornet-env {
+    will-change: auto !important;
+  }
+
+  /* 4. Раскачиваніе — вернуть какъ было у васъ (черезъ :hover) */
+  .cornet-env:hover {
+    animation: env-wiggle 0.45s ease-in-out infinite alternate;
+    transform: scale(1.03);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  }
+
+  /* 5. Углы безъ will-change (это уже работало — изъ №404) */
+  body.glow-baked .card-frame.card-lit .fr-corner::before {
+    will-change: auto !important;
+    transition: opacity 0.4s ease;
+  }
+  body.glow-baked .card-frame.card-lit .fr-corner::after {
+    will-change: auto !important;
+    transition: opacity 0.3s ease;
+  }
+
+  /* 6. Прокрутка безъ фризовъ (content-visibility — уже работало) */
+  .card-frame {
+    content-visibility: visible !important;
+  }
+}
+</style>
 <!-- №154: перо возврата къ клавиатурѣ (введено въ №141) — всплываетъ при прокруткѣ снизу вверхъ,
      таетъ скольженіемъ вверхъ; въ №144 исправлено направленіе, въ №145 устранено морганье,
      въ №146 порогъ и инерція, въ №147 сглаженная инерція, въ №148 ходъ на композиторѣ,
@@ -10965,89 +11026,3 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
   }, { passive: true });
 })();
 </script>
-<style id="glow-bake-404">
-/* ===== №404 — Тач: откатъ черезмѣрной зачистки №403 =====
-   №403 убилъ гладкія анимаціи (transition: none на .online-results
-   и на .online-results > *), изъ-за чего конверты появляются
-   мгновенно. И убилъ раскачиваніе (.cornet-env:hover {
-   animation: none !important }). Пользователь справедливо замѣтилъ —
-   это откатъ тѣхъ двухъ ударовъ.
-
-   Реальныя причины мерцанія конвертовъ — не transition, а:
-   - backface-visibility: hidden на .src-block → слой композитора,
-     пересоздаётся при каждомъ кадрѣ раскрытія;
-   - will-change: transform на .cornet-env → 8 слоёвъ на карточку,
-     пересоздаются при измѣненіи высоты.
-   Ихъ убираемъ — мерцаніе уходитъ, transition остаётся.
-
-   Причины мерцанія рамокъ: 3-слойный box-shadow на линіяхъ
-   пересчитывается каждый кадръ при измѣненіи высоты карточки.
-   Сводимъ къ 1 слою — втрое дешевле.
-
-   Раскачиваніе конвертовъ: на тачѣ :hover залипаетъ послѣ тапа
-   (iOS/Android — извѣстная особенность), потому качаемся на :active
-   (пока палецъ нажатъ). Если нуженъ прежній :hover — скажите,
-   помѣняю на него съ предупрежденіемъ о залипаніи. */
-
-@media (hover: none) {
-
-  /* 1. Раскрытіе слота — плавное, какъ въ bindButtons задумано (0.28s) */
-  .online-results {
-    transition: height 0.28s ease-out !important;
-  }
-  /* Слайд контента — JS ставитъ inline-style, но №403 его глушилъ !important’омъ;
-     возвращаемъ ту же скорость */
-  .online-results > * {
-    transition: transform 0.3s ease-out, opacity 0.3s ease-out !important;
-  }
-
-  /* 2. Конверты качаются при нажатіи (:active, не :hover — не залипнетъ) */
-  .cornet-env:hover {
-    animation: none;
-    transform: none;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.35);
-  }
-  .cornet-env:active {
-    animation: env-wiggle 0.45s ease-in-out infinite alternate;
-    transform: scale(1.03);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-  }
-
-  /* 3. Слои-виновники мерцанія конвертовъ — убраны */
-  .online-results .src-block {
-    backface-visibility: visible !important;
-    /* transform: не трогаемъ — JS управляетъ translateY-слайдомъ черезъ inline-style */
-  }
-  .cornet-env {
-    will-change: auto !important;
-  }
-
-  /* 4. Линіямъ — одинъ слой box-shadow вмѣсто трёхъ (втрое дешевле) */
-  body.glow-baked .fr-line::before {
-    box-shadow: 0 0 4px rgba(212,176,106,0.8) !important;
-  }
-  body.glow-baked .fr-line::after {
-    box-shadow: 0 0 6px rgba(240,150,60,0.55) !important;
-  }
-  /* Burst на линіяхъ убираемъ — экономимъ кадры при тапѣ */
-  body.glow-baked .card-frame.fr-burst .fr-line::before,
-  body.glow-baked .card-frame.fr-burst .fr-line::after {
-    box-shadow: none !important;
-  }
-
-  /* 5. Углы безъ will-change (это помогло прокруткѣ, сохраняемъ) */
-  body.glow-baked .card-frame.card-lit .fr-corner::before {
-    will-change: auto !important;
-    transition: opacity 0.4s ease;
-  }
-  body.glow-baked .card-frame.card-lit .fr-corner::after {
-    will-change: auto !important;
-    transition: opacity 0.3s ease;
-  }
-
-  /* 6. Прокрутка безъ фризовъ (content-visibility: auto → visible) */
-  .card-frame {
-    content-visibility: visible !important;
-  }
-}
-</style>

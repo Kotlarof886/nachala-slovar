@@ -7317,7 +7317,196 @@ body.light.telegraph-on .tab.active {
   outline: none !important;
 }
 </style>
+<style id="glow-bake-396">
+/* ===== №396 — Запечённое свечение уголковъ =====
+   Запекаемъ ТОЛЬКО тѣнь — самъ уголокъ остаётся базовымъ фономъ.
+   Никакихъ filter drop-shadow въ рантаймѣ — только готовая PNG.
+   Мерцаніе — голая opacity (композиторъ GPU), безъ @property. */
 
+/* Изоляція уголка: рост карточки не пересчитываетъ спрайтъ */
+body.glow-baked .fr-corner { contain: layout style; }
+
+/* --- Слой золота (прогрѣвъ 3 сек) --- */
+body.glow-baked .fr-corner::before {
+  content: '';
+  position: absolute;
+  top:    var(--glow-offset);
+  left:   var(--glow-offset);
+  right:  auto;                      /* перебиваемъ базовое inset: 0 */
+  bottom: auto;
+  width:  var(--glow-size);
+  height: var(--glow-size);
+  background: var(--glow-gold) center / 100% 100% no-repeat;
+  border: none;
+  border-radius: 0;
+  clip-path: none;
+  pointer-events: none;
+  filter: none !important;           /* ГЛАВНОЕ: снимаемъ GPU-фильтръ */
+  transform: none !important;        /* снимаемъ базовый translateZ(0) */
+  will-change: auto !important;
+  opacity: 0;
+  transition: opacity 3s ease;
+}
+body.glow-baked .card-frame:hover .fr-corner::before { opacity: 1; }
+
+/* --- Слой пламени (прогрѣвъ 1.5 сек) --- */
+body.glow-baked .fr-corner::after {
+  content: '';
+  position: absolute;
+  top:    var(--glow-offset);
+  left:   var(--glow-offset);
+  right:  auto;
+  bottom: auto;
+  width:  var(--glow-size);
+  height: var(--glow-size);
+  background: var(--glow-flame) center / 100% 100% no-repeat;
+  border: none;
+  border-radius: 0;
+  clip-path: none;
+  pointer-events: none;
+  filter: none !important;
+  transform: none !important;
+  will-change: auto !important;
+  opacity: 0;
+  transition: opacity 1.5s ease;
+}
+body.glow-baked .card-frame:hover .fr-corner::after { opacity: 1; }
+
+/* --- Вспышка по тапу: подмѣна спрайта (рѣдко, GPU не страдаетъ) --- */
+body.glow-baked .card-frame.fr-burst .fr-corner::before {
+  background: var(--glow-gold-burst) center / 100% 100% no-repeat;
+}
+body.glow-baked .card-frame.fr-burst .fr-corner::after {
+  background: var(--glow-flame-burst) center / 100% 100% no-repeat;
+}
+
+/* --- Мерцаніе: голая opacity, композиторъ --- */
+@keyframes glow-flicker-baked {
+  0%, 100% { opacity: 1; }
+  8%       { opacity: 0.70; }
+  17%      { opacity: 1; }
+  31%      { opacity: 0.55; }
+  45%      { opacity: 1; }
+  58%      { opacity: 0.75; }
+  74%      { opacity: 0.90; }
+}
+body.glow-baked .card-frame.flick-run .fr-corner::after {
+  animation: glow-flicker-baked 2.6s ease-in-out;
+}
+
+/* --- Линіи: тоже убираемъ @property, оставляемъ box-shadow (дёшево для полосъ) --- */
+body.glow-baked .fr-line::before {
+  opacity: 0;
+  transition: opacity 3s ease;
+}
+body.glow-baked .card-frame:hover .fr-line::before { opacity: 1; }
+body.glow-baked .fr-line::after {
+  opacity: 0;
+  transition: opacity 1.5s ease;
+}
+body.glow-baked .card-frame:hover .fr-line::after { opacity: 1; }
+body.glow-baked .card-frame.flick-run .fr-line::after {
+  animation: glow-flicker-baked 2.6s ease-in-out;
+}
+body.glow-baked .card-frame.fr-burst .fr-line::before {
+  box-shadow: 0 0 4px rgba(212,176,106,0.8),
+              0 0 14px rgba(212,176,106,0.35),
+              0 0 26px rgba(255,205,120,0.5);
+}
+body.glow-baked .card-frame.fr-burst .fr-line::after {
+  box-shadow: 0 0 10px rgba(240,150,60,0.55),
+              0 0 20px rgba(255,170,80,0.45);
+}
+
+/* Стражи: уважаемъ просьбу о неподвижности и лёгкій режимъ */
+@media (prefers-reduced-motion: reduce) {
+  body.glow-baked .card-frame.flick-run .fr-corner::after,
+  body.glow-baked .card-frame.flick-run .fr-line::after { animation: none; }
+}
+body.light .glow-baked .fr-corner::before,
+body.light .glow-baked .fr-corner::after { display: none; }
+</style>
+<style id="glow-bake-397">
+/* ===== №397 — Плавный вход в ховеръ для запечённаго пути =====
+   ...ваш комментарий...
+*/
+body.glow-baked .card-frame:hover .fr-corner::before,
+body.glow-baked .card-frame:hover .fr-line::before {
+  opacity: 1;
+  transition: opacity 3s ease;
+}
+body.glow-baked .card-frame:hover .fr-corner::after,
+body.glow-baked .card-frame:hover .fr-line::after {
+  opacity: 1;
+  transition: opacity 1.5s ease;
+}
+body.glow-baked .card-frame:hover .fr-corner::before,
+body.glow-baked .card-frame:hover .fr-line::before,
+body.glow-baked .card-frame:hover .fr-corner::after,
+body.glow-baked .card-frame:hover .fr-line::after {
+  --c-glow: 0;
+  --c-flame: 0;
+  filter: none !important;
+}
+</style>
+<style id="glow-bake-399">
+/* ===== №399 — Композитные слои на время hover =====
+   Регрессъ №396 на телефонѣ: базовое правило сняло слои композитора
+   (will-change: auto !important) — вѣрно въ покоѣ, но при hover transition
+   opacity идётъ черезъ repaint каждые 16 мс. На телефонѣ это рвётъ кадры:
+   мигаютъ уголки, дёргаются линіи, мѣрцаніе при раскрытіи слота.
+   Лѣкъ: въ состояніи hover и flick-run слои возвращаются — opacity-
+   анимація уходитъ на GPU, repaint не нуженъ, transition идётъ плавно.
+   Въ покоѣ will-change снова auto — память не тратится.
+   На тачѣ — transition короче (1.5с золото / 1с пламя): меньше времени
+   держим композитный слой, откликъ живее. */
+
+/* --- Композитные слои на время анимаціи --- */
+body.glow-baked .card-frame:hover .fr-corner::before,
+body.glow-baked .card-frame:hover .fr-corner::after,
+body.glow-baked .card-frame:hover .fr-line::before,
+body.glow-baked .card-frame:hover .fr-line::after,
+body.glow-baked .card-frame.flick-run .fr-corner::before,
+body.glow-baked .card-frame.flick-run .fr-corner::after,
+body.glow-baked .card-frame.flick-run .fr-line::before,
+body.glow-baked .card-frame.flick-run .fr-line::after {
+  will-change: opacity !important;
+}
+
+/* --- Тачъ: чуть короче, чтобы не держать слой 3 секунды --- */
+@media (hover: none) {
+  body.glow-baked .fr-corner::before,
+  body.glow-baked .fr-line::before {
+    transition: opacity 1.5s ease;
+  }
+  body.glow-baked .fr-corner::after,
+  body.glow-baked .fr-line::after {
+    transition: opacity 1s ease;
+  }
+  body.glow-baked .card-frame:hover .fr-corner::before,
+  body.glow-baked .card-frame:hover .fr-line::before {
+    transition: opacity 1.5s ease;
+  }
+  body.glow-baked .card-frame:hover .fr-corner::after,
+  body.glow-baked .card-frame:hover .fr-line::after {
+    transition: opacity 1s ease;
+  }
+}
+
+/* Стражи: prefers-reduced-motion — безъ анимаціи совсѣмъ */
+@media (prefers-reduced-motion: reduce) {
+  body.glow-baked .fr-corner::before,
+  body.glow-baked .fr-corner::after,
+  body.glow-baked .fr-line::before,
+  body.glow-baked .fr-line::after,
+  body.glow-baked .card-frame:hover .fr-corner::before,
+  body.glow-baked .card-frame:hover .fr-corner::after,
+  body.glow-baked .card-frame:hover .fr-line::before,
+  body.glow-baked .card-frame:hover .fr-line::after {
+    transition: none;
+  }
+}
+</style>
 <!-- №154: перо возврата къ клавиатурѣ (введено въ №141) — всплываетъ при прокруткѣ снизу вверхъ,
      таетъ скольженіемъ вверхъ; въ №144 исправлено направленіе, въ №145 устранено морганье,
      въ №146 порогъ и инерція, въ №147 сглаженная инерція, въ №148 ходъ на композиторѣ,
@@ -10705,5 +10894,105 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
     observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
     if (document.body.classList.contains('zen-active')) start();
+})();
+</script>
+<script id="glow-bake-396-js">
+/* ===== №396 — Запечка тѣни уголка =====
+   Берёмъ images/corner.png, рисуемъ ея drop-shadow на canvas,
+   «стираемъ» самъ уголокъ черезъ destination-out — остаётся только тѣнь,
+   выходящая за контуръ. Результатъ → четыре data-URL → CSS-перемѣнныя.
+   Если не удалось (file:// или ошибка загрузки) — классъ .glow-baked
+   не ставится, работаютъ старые фильтры, ничего не ломается. */
+(function () {
+  'use strict';
+
+  function bakeCornerSprites() {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onerror = function () { resolve(null); };
+      img.onload = function () {
+        try {
+          var IW = img.naturalWidth, IH = img.naturalHeight;
+
+          /* Видимая часть уголка въ оригиналѣ = 760/1431 ширины и 760/1398 высоты
+             (такъ задано въ base CSS: background-size: 1431u × 1398u на элементѣ 760u × 760u) */
+          var srcW = IW * (760 / 1431);
+          var srcH = IH * (760 / 1398);
+
+          var U = 0.055;
+          var RENDER = 760 * U;                 /* ≈ 41.8px — видимый уголокъ */
+          var PAD = 55;                          /* запасъ: 26px burst-ореолъ + 4px кромка + люфтъ */
+          var TOTAL = RENDER + PAD * 2;          /* ≈ 151.8px */
+          var DPR = Math.min(window.devicePixelRatio || 1, 2);
+
+          function bake(blurA, colA, blurB, colB, blurC, colC) {
+            var c = document.createElement('canvas');
+            c.width  = Math.ceil(TOTAL * DPR);
+            c.height = Math.ceil(TOTAL * DPR);
+            var ctx = c.getContext('2d');
+            ctx.scale(DPR, DPR);
+
+            /* 1) Широкій ореолъ (для burst) */
+            if (blurC > 0 && colC) {
+              ctx.shadowColor = colC;
+              ctx.shadowBlur  = blurC;
+              ctx.drawImage(img, 0, 0, srcW, srcH, PAD, PAD, RENDER, RENDER);
+            }
+            /* 2) Средній ореолъ */
+            if (blurB > 0 && colB) {
+              ctx.shadowColor = colB;
+              ctx.shadowBlur  = blurB;
+              ctx.drawImage(img, 0, 0, srcW, srcH, PAD, PAD, RENDER, RENDER);
+            }
+            /* 3) Близкая кромка */
+            if (blurA > 0 && colA) {
+              ctx.shadowColor = colA;
+              ctx.shadowBlur  = blurA;
+              ctx.drawImage(img, 0, 0, srcW, srcH, PAD, PAD, RENDER, RENDER);
+            }
+
+            /* 4) Стираемъ самъ уголокъ — остаётся только тѣнь ЗА контуромъ */
+            ctx.shadowBlur  = 0;
+            ctx.shadowColor = 'transparent';
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.drawImage(img, 0, 0, srcW, srcH, PAD, PAD, RENDER, RENDER);
+            ctx.globalCompositeOperation = 'source-over';
+
+            return c.toDataURL('image/png');
+          }
+
+          resolve({
+            gold:       bake(4, 'rgba(212,176,106,0.80)',
+                             14, 'rgba(212,176,106,0.35)', 0, null),
+            flame:      bake(0, null,
+                             10, 'rgba(240,150,60,0.55)',
+                             20, 'rgba(255,170,80,0.45)'),
+            goldBurst:  bake(4, 'rgba(212,176,106,0.80)',
+                             14, 'rgba(212,176,106,0.35)',
+                             26, 'rgba(255,205,120,0.50)'),
+            flameBurst: bake(0, null,
+                             10, 'rgba(240,150,60,0.55)',
+                             20, 'rgba(255,170,80,0.45)'),
+            total: TOTAL,
+            pad:   PAD
+          });
+        } catch (e) { resolve(null); }
+      };
+      img.src = 'images/corner.png';
+    });
+  }
+
+  bakeCornerSprites().then(function (s) {
+    if (!s) { console.warn('[№396] запечка уголковъ не удалась — фильтры работаютъ'); return; }
+    var r = document.documentElement.style;
+    r.setProperty('--glow-gold',        'url(' + s.gold + ')');
+    r.setProperty('--glow-flame',       'url(' + s.flame + ')');
+    r.setProperty('--glow-gold-burst',  'url(' + s.goldBurst + ')');
+    r.setProperty('--glow-flame-burst', 'url(' + s.flameBurst + ')');
+    r.setProperty('--glow-size',   s.total + 'px');
+    r.setProperty('--glow-offset', '-' + s.pad + 'px');
+    document.body.classList.add('glow-baked');
+    console.log('[№396] запечка уголковъ готова');
+  });
 })();
 </script>

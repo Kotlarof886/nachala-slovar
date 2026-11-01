@@ -7450,48 +7450,38 @@ body.glow-baked .card-frame:hover .fr-line::after {
 }
 </style>
 <style id="glow-bake-401">
-/* ===== №401 (rev.2) — Тач: явное управленіе свѣтомъ черезъ классъ =====
-   Двѣ причины прошлой поломки:
-   1) `!important` на `opacity: 0` въ hover-перебивкѣ — на iOS/Android :hover
-      залипаетъ послѣ тапа, и `!important: 0` бьётъ `.card-lit { opacity: 1 }`
-      (безъ `!important`) → свѣтъ никогда не появлялся;
-   2) `will-change: opacity` на `.card-lit` безъ `!important` — не перебивалъ
-      `will-change: auto !important` изъ №396 → композитнаго слоя нѣтъ,
-      transition черезъ repaint, дёрганье на телефонѣ.
+/* ===== №401 (rev.3) — Тачъ: hover-какъ-fallback, card-lit какъ улучшеніе =====
+   Прошлыя ошибки:
+   1) `:not(.card-lit)` въ hover-правилѣ выбилъ hover какъ fallback: когда
+      JS не работалъ (card-lit не ставился), hover тоже давалъ opacity: 0 —
+      «совсѣмъ не свѣтится»;
+   2) JS строго требовалъ matchMedia('(hover: none)') — на Samsung Internet,
+      iPad, Chrome DevTools безъ touch-эмуляціи возвращаетъ false, скриптъ
+      не запускался вовсе.
 
-   Лѣкъ: `:not(.card-lit)` въ hover-перебивкѣ — она матчится ТОЛЬКО когда
-   card-lit нѣтъ, не конфликтуетъ съ нимъ. `will-change: opacity !important`
-   на `.card-lit` — перебиваетъ базу, слой создаётся, transition идётъ на GPU. */
+   Лѣкъ:
+   - Hover-правило работаетъ какъ fallback (opacity: 1) — даже безъ JS свѣтъ
+     есть, хоть и рѣзкій при первомъ тапѣ (iOS-залипаніе);
+   - Card-lit улучшаетъ до плавнаго (transition 1.5s / 1s) съ will-change
+     для композиторнаго слоя;
+   - JS теперь ставитъ .card-lit всегда, не спрашивая matchMedia — если
+     тачъ-устройства не имѣютъ `(hover: none)`, всё равно получитъ плавность. */
 
 @media (hover: none) {
 
-  /* :hover не зажигает — только .card-lit. :not(.card-lit) не даётъ правилу
-     матчиться на зажжённой карточкѣ — никакой борьбы съ card-lit. */
-  body.glow-baked .card-frame:hover:not(.card-lit) .fr-corner::before,
-  body.glow-baked .card-frame:hover:not(.card-lit) .fr-line::before {
-    opacity: 0;
-    transition: none;
+  /* Hover — fallback: свѣтится, пока JS не поставилъ card-lit */
+  body.glow-baked .card-frame:hover .fr-corner::before,
+  body.glow-baked .card-frame:hover .fr-line::before {
+    opacity: 1;
+    transition: opacity 3s ease;
   }
-  body.glow-baked .card-frame:hover:not(.card-lit) .fr-corner::after,
-  body.glow-baked .card-frame:hover:not(.card-lit) .fr-line::after {
-    opacity: 0;
-    transition: none;
-  }
-
-  /* База: 0, съ transition для плавнаго затуханія при снятіи card-lit */
-  body.glow-baked .fr-corner::before,
-  body.glow-baked .fr-line::before {
-    opacity: 0;
+  body.glow-baked .card-frame:hover .fr-corner::after,
+  body.glow-baked .card-frame:hover .fr-line::after {
+    opacity: 1;
     transition: opacity 1.5s ease;
   }
-  body.glow-baked .fr-corner::after,
-  body.glow-baked .fr-line::after {
-    opacity: 0;
-    transition: opacity 1s ease;
-  }
 
-  /* Зажжённая карточка — плавно, на композиторномъ слоѣ.
-     !important на will-change — перебить `will-change: auto !important` изъ №396. */
+  /* Card-lit — плавное улучшеніе (позже въ файлѣ, перебиваетъ hover при равенствѣ) */
   body.glow-baked .card-frame.card-lit .fr-corner::before,
   body.glow-baked .card-frame.card-lit .fr-line::before {
     opacity: 1;
@@ -7505,11 +7495,23 @@ body.glow-baked .card-frame:hover .fr-line::after {
     will-change: opacity !important;
   }
 
-  /* Burst — на зажжённой, подмѣной спрайта (какъ №396) */
-  body.glow-baked .card-frame.card-lit.fr-burst .fr-corner::before {
+  /* База — 0, когда ни hover, ни card-lit */
+  body.glow-baked .fr-corner::before,
+  body.glow-baked .fr-line::before {
+    opacity: 0;
+    transition: opacity 1.5s ease;
+  }
+  body.glow-baked .fr-corner::after,
+  body.glow-baked .fr-line::after {
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+
+  /* Burst */
+  body.glow-baked .card-frame.fr-burst .fr-corner::before {
     background: var(--glow-gold-burst) center / 100% 100% no-repeat;
   }
-  body.glow-baked .card-frame.card-lit.fr-burst .fr-corner::after {
+  body.glow-baked .card-frame.fr-burst .fr-corner::after {
     background: var(--glow-flame-burst) center / 100% 100% no-repeat;
   }
 
@@ -7521,56 +7523,8 @@ body.glow-baked .card-frame:hover .fr-line::after {
     animation: none !important;
   }
 }
-<script id="glow-bake-401-js">
-(function () {
-  if (!window.matchMedia || !window.matchMedia('(hover: none)').matches) return;
-  if (window._glow401) return;
-  window._glow401 = true;
-
-  var current = null;
-
-  /* Обходъ дерева вручную — не всѣ мобильныя цѣли (SVG, текстъ) имѣютъ closest */
-  function cardOf(el) {
-    while (el && el !== document.body) {
-      if (el.classList && el.classList.contains('card-frame')) return el;
-      el = el.parentElement;
-    }
-    return null;
-  }
-
-  function lit(card) {
-    if (current === card) return;
-    if (current) current.classList.remove('card-lit');
-    current = card;
-    if (card) card.classList.add('card-lit');
-  }
-
-  document.addEventListener('touchstart', function (e) {
-    var f = cardOf(e.target);
-    if (f) lit(f);
-  }, { passive: true, capture: true });
-
-  /* Дубль на click — страховка, если touchstart не дошёлъ */
-  document.addEventListener('click', function (e) {
-    if (e.target && e.target.closest && e.target.closest('.wiktionary-btn')) {
-      if (current) { current.classList.remove('card-lit'); current = null; }
-      return;
-    }
-    var f = cardOf(e.target);
-    if (f) lit(f);
-  }, true);
-
-  /* Скроллъ — снять свѣтъ (карточка ушла изъ фокуса) */
-  var scrollT = null;
-  window.addEventListener('scroll', function () {
-    if (scrollT) return;
-    scrollT = setTimeout(function () {
-      if (current) { current.classList.remove('card-lit'); current = null; }
-      scrollT = null;
-    }, 250);
-  }, { passive: true });
-})();
-</script><!-- №154: перо возврата къ клавиатурѣ (введено въ №141) — всплываетъ при прокруткѣ снизу вверхъ,
+</style>
+<!-- №154: перо возврата къ клавиатурѣ (введено въ №141) — всплываетъ при прокруткѣ снизу вверхъ,
      таетъ скольженіемъ вверхъ; въ №144 исправлено направленіе, въ №145 устранено морганье,
      въ №146 порогъ и инерція, въ №147 сглаженная инерція, въ №148 ходъ на композиторѣ,
      въ №150 отставаніе снято: перо живётъ одними переходами композитора, дёргаться нечему,
@@ -10959,103 +10913,59 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
     if (document.body.classList.contains('zen-active')) start();
 })();
 </script>
-<script id="glow-bake-396-js">
-/* ===== №396 — Запечка тѣни уголка =====
-   Берёмъ images/corner.png, рисуемъ ея drop-shadow на canvas,
-   «стираемъ» самъ уголокъ черезъ destination-out — остаётся только тѣнь,
-   выходящая за контуръ. Результатъ → четыре data-URL → CSS-перемѣнныя.
-   Если не удалось (file:// или ошибка загрузки) — классъ .glow-baked
-   не ставится, работаютъ старые фильтры, ничего не ломается. */
+<script id="glow-bake-401-js">
+/* ===== №401 (rev.3) — Тач: card-lit какъ улучшеніе, работаетъ всегда =====
+   Прошлая ошибка: `matchMedia('(hover: none)').matches` возвращаетъ false
+   на Samsung Internet, iPad и Chrome DevTools безъ touch-эмуляціи — скриптъ
+   не запускался вовсе. Теперь: скриптъ стартуетъ всегда, и ставитъ .card-lit
+   при touchstart. На десктопе touchstart просто не срабатываетъ, такъ что
+   вреда ноль. Проверку matchMedia убралъ. */
 (function () {
-  'use strict';
+  if (window._glow401) return;
+  window._glow401 = true;
 
-  function bakeCornerSprites() {
-    return new Promise(function (resolve) {
-      var img = new Image();
-      img.onerror = function () { resolve(null); };
-      img.onload = function () {
-        try {
-          var IW = img.naturalWidth, IH = img.naturalHeight;
+  console.log('[№401] тач-свѣтъ запущенъ');
 
-          /* Видимая часть уголка въ оригиналѣ = 760/1431 ширины и 760/1398 высоты
-             (такъ задано въ base CSS: background-size: 1431u × 1398u на элементѣ 760u × 760u) */
-          var srcW = IW * (760 / 1431);
-          var srcH = IH * (760 / 1398);
+  var current = null;
 
-          var U = 0.055;
-          var RENDER = 760 * U;                 /* ≈ 41.8px — видимый уголокъ */
-          var PAD = 55;                          /* запасъ: 26px burst-ореолъ + 4px кромка + люфтъ */
-          var TOTAL = RENDER + PAD * 2;          /* ≈ 151.8px */
-          var DPR = Math.min(window.devicePixelRatio || 1, 2);
-
-          function bake(blurA, colA, blurB, colB, blurC, colC) {
-            var c = document.createElement('canvas');
-            c.width  = Math.ceil(TOTAL * DPR);
-            c.height = Math.ceil(TOTAL * DPR);
-            var ctx = c.getContext('2d');
-            ctx.scale(DPR, DPR);
-
-            /* 1) Широкій ореолъ (для burst) */
-            if (blurC > 0 && colC) {
-              ctx.shadowColor = colC;
-              ctx.shadowBlur  = blurC;
-              ctx.drawImage(img, 0, 0, srcW, srcH, PAD, PAD, RENDER, RENDER);
-            }
-            /* 2) Средній ореолъ */
-            if (blurB > 0 && colB) {
-              ctx.shadowColor = colB;
-              ctx.shadowBlur  = blurB;
-              ctx.drawImage(img, 0, 0, srcW, srcH, PAD, PAD, RENDER, RENDER);
-            }
-            /* 3) Близкая кромка */
-            if (blurA > 0 && colA) {
-              ctx.shadowColor = colA;
-              ctx.shadowBlur  = blurA;
-              ctx.drawImage(img, 0, 0, srcW, srcH, PAD, PAD, RENDER, RENDER);
-            }
-
-            /* 4) Стираемъ самъ уголокъ — остаётся только тѣнь ЗА контуромъ */
-            ctx.shadowBlur  = 0;
-            ctx.shadowColor = 'transparent';
-            ctx.globalCompositeOperation = 'destination-out';
-            ctx.drawImage(img, 0, 0, srcW, srcH, PAD, PAD, RENDER, RENDER);
-            ctx.globalCompositeOperation = 'source-over';
-
-            return c.toDataURL('image/png');
-          }
-
-          resolve({
-            gold:       bake(4, 'rgba(212,176,106,0.80)',
-                             14, 'rgba(212,176,106,0.35)', 0, null),
-            flame:      bake(0, null,
-                             10, 'rgba(240,150,60,0.55)',
-                             20, 'rgba(255,170,80,0.45)'),
-            goldBurst:  bake(4, 'rgba(212,176,106,0.80)',
-                             14, 'rgba(212,176,106,0.35)',
-                             26, 'rgba(255,205,120,0.50)'),
-            flameBurst: bake(0, null,
-                             10, 'rgba(240,150,60,0.55)',
-                             20, 'rgba(255,170,80,0.45)'),
-            total: TOTAL,
-            pad:   PAD
-          });
-        } catch (e) { resolve(null); }
-      };
-      img.src = 'images/corner.png';
-    });
+  function cardOf(el) {
+    while (el && el !== document.body) {
+      if (el.classList && el.classList.contains('card-frame')) return el;
+      el = el.parentElement;
+    }
+    return null;
   }
 
-  bakeCornerSprites().then(function (s) {
-    if (!s) { console.warn('[№396] запечка уголковъ не удалась — фильтры работаютъ'); return; }
-    var r = document.documentElement.style;
-    r.setProperty('--glow-gold',        'url(' + s.gold + ')');
-    r.setProperty('--glow-flame',       'url(' + s.flame + ')');
-    r.setProperty('--glow-gold-burst',  'url(' + s.goldBurst + ')');
-    r.setProperty('--glow-flame-burst', 'url(' + s.flameBurst + ')');
-    r.setProperty('--glow-size',   s.total + 'px');
-    r.setProperty('--glow-offset', '-' + s.pad + 'px');
-    document.body.classList.add('glow-baked');
-    console.log('[№396] запечка уголковъ готова');
-  });
+  function lit(card) {
+    if (current === card) return;
+    if (current) current.classList.remove('card-lit');
+    current = card;
+    if (card) card.classList.add('card-lit');
+  }
+
+  document.addEventListener('touchstart', function (e) {
+    var f = cardOf(e.target);
+    if (f) { lit(f); console.log('[№401] touchstart на карточке → card-lit поставлен'); }
+  }, { passive: true, capture: true });
+
+  /* Дубль на click — для десктопа и как страховка */
+  document.addEventListener('click', function (e) {
+    if (e.target && e.target.closest && e.target.closest('.wiktionary-btn')) {
+      if (current) { current.classList.remove('card-lit'); current = null; }
+      return;
+    }
+    var f = cardOf(e.target);
+    if (f) lit(f);
+  }, true);
+
+  /* Скролл — снять свѣтъ */
+  var scrollT = null;
+  window.addEventListener('scroll', function () {
+    if (scrollT) return;
+    scrollT = setTimeout(function () {
+      if (current) { current.classList.remove('card-lit'); current = null; }
+      scrollT = null;
+    }, 250);
+  }, { passive: true });
 })();
 </script>

@@ -2197,7 +2197,20 @@ window.addEventListener('resize', function() {
   fitTabLabels();
   fitTabFrames();
 });
-if (window.visualViewport) window.visualViewport.addEventListener('resize', function() { fitKeyboard(); fitTabLabels(); fitTabFrames(); });
+if (window.visualViewport) {
+  var _vvT = null;
+  window.visualViewport.addEventListener('resize', function () {
+    if (_vvT) clearTimeout(_vvT);
+    _vvT = setTimeout(function () {
+      _vvT = null;
+      /* пересчёт только если реально изменилась ширина — высоту адресной строки игнорируем */
+      if (Math.abs(window.visualViewport.width - (window.__lastVVW || 0)) > 1) {
+        window.__lastVVW = window.visualViewport.width;
+        fitKeyboard(); fitTabLabels(); fitTabFrames();
+      }
+    }, 200);
+  });
+}
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(function() { fitKeyboard(); fitTabLabels(); fitTabFrames(); });
 // Предзагрузка обложки: файл качается в фоне заранее,
 // поэтому окно с книгой открывается без ожидания
@@ -7637,7 +7650,10 @@ window.addEventListener('error', function (e) {
   var canvas = document.createElement('canvas');
   canvas.id = 'precip-canvas';
   canvas.setAttribute('aria-hidden', 'true');
-  canvas.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:0;';
+ canvas.style.cssText =
+  'position:fixed;top:0;left:0;pointer-events:none;z-index:0;' +
+  'will-change:transform;transform:translateZ(0);backface-visibility:hidden;' +
+  'contain:strict;';
   document.body.appendChild(canvas);
 
   var ctx = canvas.getContext('2d', { alpha: true });
@@ -10414,7 +10430,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
 <!-- ===== КОНЕЦ БЛОКА ZEN MODE ===== -->
 
 <!-- ===== Созвездие Большая Медведица (Защита от дерганья при прокрутке) ===== -->
-<canvas id="ursa-major-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99990; opacity: 0; transition: opacity 0.8s ease-in-out;"></canvas>
+<canvas id="ursa-major-canvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:99990;opacity:0;transition:opacity 0.8s ease-in-out;will-change:transform;transform:translateZ(0);backface-visibility:hidden;contain:strict;"></canvas>
 <script>
 (function() {
     const canvas = document.getElementById('ursa-major-canvas');

@@ -7662,7 +7662,7 @@ window.addEventListener('error', function (e) {
   var MODE_NONE = 'none', MODE_SNOW = 'snow', MODE_RAIN = 'rain', MODE_FOG = 'fog';
   var mode = MODE_NONE, level = 0;
 
-  var W = 0, H = 0, dpr = 1;
+   var W = 0, H = 0, dpr = 1, layoutH = 0;
   var particles = [], stars = [], guards = [];
   var sprites = {}, glows = {}, starSprites = {}, starGlows = {};
 
@@ -7851,44 +7851,32 @@ window.addEventListener('error', function (e) {
     return { alt: alt, az: az, phase: phase, sunAlt: sunAlt };
   }
 
-      function updateMoonPos() {
-    moonPos = getMoonData(moonNow());
-    
-    if (moonPos.sunAlt < -6 || loc.indexOf('forceMoon') >= 0 || moonDemoActive) {
-      
-      var isMobile = (window.innerWidth < 600);
-      
-      // 1. Уменьшаем размер луны на телефоне на 10%
-      var baseD = isMobile ? (MOON_D_BASE * 0.9) : MOON_D_BASE;
-      moonRadius = baseD / 2;
-      
-      var x_ratio = moonPos.phase;
-      moonScreenX = (W * 0.1) + (x_ratio * W * 0.8);
-      
-      // t меняется от -1 (левый край) до 1 (правый край)
-      var t = (moonScreenX - (W / 2)) / (W / 2);
-      
-      var baselineY, peakY;
-      
-     if (isMobile) {
-        // Траектория привязана к высоте экрана (H)
-        baselineY = H * 0.22; // Края (опускаются до 25%)
-        peakY = H * 0.17;     // Верхушка (опускается до 19%)
-      } else {
-        // Старая траектория для компьютера
-        baselineY = Math.min(H * 0.4, 310);
-        peakY = Math.min(H * 0.15, 130);
-      }
-      
-      // Формула параболы создает плавную дугу
-      moonScreenY = peakY + (baselineY - peakY) * t * t;
-      
-    } else {
-      moonScreenX = -9999;
-      moonScreenY = -9999;
-      moonRadius = 0;
+          function updateMoonPos() {
+        moonPos = getMoonData(moonNow());
+        
+        if (moonPos.sunAlt < -6 || loc.indexOf('forceMoon') >= 0 || moonDemoActive) {
+            var isMobile = (window.innerWidth < 600);
+            var baseD = isMobile ? (MOON_D_BASE * 0.9) : MOON_D_BASE;
+            moonRadius = baseD / 2;
+            var x_ratio = moonPos.phase;
+            moonScreenX = (W * 0.1) + (x_ratio * W * 0.8);
+            var t = (moonScreenX - (W / 2)) / (W / 2);
+            
+            var baselineY, peakY;
+            if (isMobile) {
+                baselineY = layoutH * 0.22; // <--- ИЗМЕНЕНО H на layoutH
+                peakY = layoutH * 0.17;     // <--- ИЗМЕНЕНО H на layoutH
+            } else {
+                baselineY = Math.min(layoutH * 0.4, 310); // <--- ИЗМЕНЕНО H на layoutH
+                peakY = Math.min(layoutH * 0.15, 130);    // <--- ИЗМЕНЕНО H на layoutH
+            }
+            moonScreenY = peakY + (baselineY - peakY) * t * t;
+        } else {
+            moonScreenX = -9999;
+            moonScreenY = -9999;
+            moonRadius = 0;
+        }
     }
-  }
 
   function isUnderMoon(x, y) {
     if (moonRadius <= 0) return false;
@@ -7952,9 +7940,9 @@ window.addEventListener('error', function (e) {
     return false;
   }
 
-  function starFieldBounds() {
-    return { xMin: 20, xMax: Math.max(60, W - 40), yMin: 30, yMax: Math.max(80, Math.min(320, H * 0.35)) };
-  }
+          function starFieldBounds() {
+        return { xMin: 20, xMax: Math.max(60, W - 40), yMin: 30, yMax: Math.max(80, Math.min(320, layoutH * 0.35)) }; // <--- Должно быть layoutH
+    }
 
   function currentMinDist() {
     var b = starFieldBounds();
@@ -8342,14 +8330,23 @@ var FOG_CODES = [45,48];
     } else { windRatio = 0; windMul = 1; windX = 0; }
   }
 
-  function resize() {
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    W = window.innerWidth; H = window.innerHeight;
-    canvas.width = Math.floor(W * dpr);
-    canvas.height = Math.floor(H * dpr);
-    canvas.style.width = W + 'px';
-    canvas.style.height = H + 'px';
-  }
+         function resize() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const newW = window.innerWidth;
+        const newH = window.innerHeight;
+        
+        // Обновляем layoutH только при смене ширины (поворот экрана)
+        if (newW !== W || layoutH === 0) {
+            W = newW;
+            layoutH = newH; 
+        }
+        H = newH; // H всегда равна реальной высоте для отрисовки холста
+
+        canvas.width = Math.floor(W * dpr);
+        canvas.height = Math.floor(H * dpr);
+        canvas.style.width = W + 'px';
+        canvas.style.height = H + 'px';
+    }
 
   function makeSnowSprite(ch, size, dprScale) {
     var pad = Math.ceil(size * 0.6), d = size + pad * 2;
@@ -9348,7 +9345,8 @@ var FOG_CODES = [45,48];
     });
   }
 
-  var lastPrecipWidth = window.innerWidth;
+    var lastPrecipWidth = window.innerWidth;
+  var resizeTimer = null; // <--- ДОБАВИТЬ ВОТ ЭТУ СТРОКУ
 window.addEventListener('resize', function () {
     if (resizeTimer) clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function () {
@@ -9512,7 +9510,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     let baseChars = [];
     let lastFireTime = 0, lastDrawTime = 0;
 
-    let W = 600, H = 800, CX = 300, CY = 750, DPR = 1;
+        let W = 600, H = 800, layoutH = 800, CX = 300, CY = 750, DPR = 1;
 
     const GROUND_HEIGHT = 65, GROUND_DEPTH = 30, MAX_PARTICLES = 5000;
     const FONT = '"Gardenia Decor", "Yeseva One", Georgia, serif';
@@ -10500,24 +10498,27 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         });
     }
 
-    function resize(force) {
-        // Если ширина не изменилась, а только высота (прокрутка на телефоне) — игнорируем
-        if (!force && window.innerWidth === lastWidth) return;
-        lastWidth = window.innerWidth;
-
-        dpr = window.devicePixelRatio || 1;
-        canvas.width = window.innerWidth * dpr;
-        canvas.height = window.innerHeight * dpr;
-        canvas.style.width = window.innerWidth + 'px';
-        canvas.style.height = window.innerHeight + 'px';
+        function resize(force) {
+        const currentW = window.innerWidth;
+        const currentH = window.innerHeight;
         
+        dpr = window.devicePixelRatio || 1;
+        canvas.width = currentW * dpr;
+        canvas.height = currentH * dpr;
+        canvas.style.width = currentW + 'px';
+        canvas.style.height = currentH + 'px';
+        
+        // Если ширина не изменилась, выходим (предотвращает дергание при скролле)
+        if (!force && currentW === lastWidth) return;
+        lastWidth = currentW;
+
         prepareSprites(); 
 
         const modelW = 900; 
         const modelH = 720; 
         let minX_pct, maxX_pct, minY_pct, maxY_pct;
 
-        if (window.innerWidth < 600) {
+        if (currentW < 600) {
             minX_pct = 0.247; maxX_pct = 0.700; 
             minY_pct = 0.185; 
             maxY_pct = 0.364; 
@@ -10527,12 +10528,12 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
             maxY_pct = 0.312; 
         }
 
-        const targetW = window.innerWidth * (maxX_pct - minX_pct);
-        const targetH = window.innerHeight * (maxY_pct - minY_pct);
+        const targetW = currentW * (maxX_pct - minX_pct);
+        const targetH = currentH * (maxY_pct - minY_pct);
         scale = Math.min(targetW / modelW, targetH / modelH);
 
-        const targetCenterX = window.innerWidth * (minX_pct + maxX_pct) / 2;
-        const targetCenterY = window.innerHeight * (minY_pct + maxY_pct) / 2;
+        const targetCenterX = currentW * (minX_pct + maxX_pct) / 2;
+        const targetCenterY = currentH * (minY_pct + maxY_pct) / 2;
 
         offsetX = targetCenterX - (550 * scale); 
         offsetY = targetCenterY - (460 * scale); 

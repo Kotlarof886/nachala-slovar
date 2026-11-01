@@ -10409,3 +10409,182 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
 })();
 </script>
 <!-- ===== КОНЕЦ БЛОКА ZEN MODE ===== -->
+
+<!-- ===== Созвездие Большая Медведица (Сдвинуто левее на ПК) ===== -->
+<canvas id="ursa-major-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99990; opacity: 0; transition: opacity 0.8s ease-in-out;"></canvas>
+<script>
+(function() {
+    const canvas = document.getElementById('ursa-major-canvas');
+    const ctx = canvas.getContext('2d');
+    let isZen = false;
+    let animationId = null;
+
+    const starsData = [
+        { x: 100, y: 100, phase: 0.0, letter: 'з' }, // 1. Конец ручки
+        { x: 280, y: 180, phase: 1.2, letter: 'в' }, // 2. Середина ручки
+        { x: 450, y: 350, phase: 2.1, letter: 'ѣ' }, // 3. Основание ручки
+        { x: 620, y: 520, phase: 0.5, letter: 'д' }, // 4. Верхний левый угол ковша
+        { x: 670, y: 750, phase: 3.1, letter: 'ы' }, // 5. Нижний левый угол ковша
+        { x: 950, y: 820, phase: 1.8, letter: 'з' }, // 6. Нижний правый угол ковша
+        { x: 980, y: 580, phase: 4.0, letter: 'в' }  // 7. Верхний правый угол ковша
+    ];
+
+    const lines = [
+        [0, 1], [1, 2], [2, 3], // Ручка
+        [3, 4], [4, 5], [5, 6], [6, 3] // Ковш
+    ];
+
+    let scale = 1;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    function resize() {
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = window.innerWidth * dpr;
+        canvas.height = window.innerHeight * dpr;
+        canvas.style.width = window.innerWidth + 'px';
+        canvas.style.height = window.innerHeight + 'px';
+        ctx.scale(dpr, dpr);
+
+        const modelW = 880; 
+        const modelH = 720; 
+
+        let minX_pct, maxX_pct, minY_pct, maxY_pct;
+
+        if (window.innerWidth < 600) {
+            // Телефон (оставляем как было)
+            minX_pct = 0.247;
+            maxX_pct = 0.700;
+            minY_pct = 0.215;
+            maxY_pct = 0.394;
+        } else {
+            // ПК (сдвигаем левее, уменьшая проценты)
+            minX_pct = 0.345; // было 0.385
+            maxX_pct = 0.637; // было 0.677
+            minY_pct = 0.148;
+            maxY_pct = 0.342;
+        }
+
+        const targetW = window.innerWidth * (maxX_pct - minX_pct);
+        const targetH = window.innerHeight * (maxY_pct - minY_pct);
+
+        scale = Math.min(targetW / modelW, targetH / modelH);
+
+        const targetCenterX = window.innerWidth * (minX_pct + maxX_pct) / 2;
+        const targetCenterY = window.innerHeight * (minY_pct + maxY_pct) / 2;
+
+        offsetX = targetCenterX - (540 * scale); 
+        offsetY = targetCenterY - (460 * scale); 
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function drawLetterStar(x, y, size, opacity, letter) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(-Math.PI / 4);
+        ctx.font = 'normal ' + size + 'px "Gardenia Decor", "Yeseva One", Georgia, serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.globalAlpha = opacity;
+
+        ctx.shadowColor = 'rgba(160, 195, 255, 0.9)'; 
+        ctx.shadowBlur = size * 0.7;
+        ctx.fillStyle = 'rgba(190, 215, 255, 0.55)'; 
+        ctx.fillText(letter, 0, 0); 
+        ctx.fillText(letter, 0, 0);
+
+        ctx.shadowBlur = size * 0.35; 
+        ctx.fillStyle = 'rgba(215, 230, 255, 0.85)'; 
+        ctx.fillText(letter, 0, 0);
+
+        ctx.shadowBlur = size * 0.15; 
+        ctx.fillStyle = '#f0f6ff'; 
+        ctx.fillText(letter, 0, 0);
+
+        ctx.restore();
+    }
+
+    function draw() {
+        if (!isZen) return;
+        const time = Date.now() * 0.002;
+
+        ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(100, 180, 255, 0.35)'; 
+        ctx.lineWidth = Math.max(1, 2 * scale);
+        ctx.shadowColor = 'rgba(100, 180, 255, 0.8)';
+        ctx.shadowBlur = 8 * scale;
+        
+        lines.forEach(line => {
+            const p1 = starsData[line[0]];
+            const p2 = starsData[line[1]];
+            const x1 = offsetX + p1.x * scale;
+            const y1 = offsetY + p1.y * scale;
+            const x2 = offsetX + p2.x * scale;
+            const y2 = offsetY + p2.y * scale;
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+        });
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        starsData.forEach(star => {
+            const x = offsetX + star.x * scale;
+            const y = offsetY + star.y * scale;
+            
+            const pulse = (Math.sin(time + star.phase) + 1) / 2; 
+            const opacity = 0.5 + (pulse * 0.5);
+            
+            const baseSize = 85 * scale; 
+            const size = baseSize + (pulse * 4 * scale);
+
+            drawLetterStar(x, y, size, opacity, star.letter);
+        });
+
+        animationId = requestAnimationFrame(draw);
+    }
+
+    function start() {
+        if (!animationId) {
+            isZen = true;
+            resize();
+            canvas.style.opacity = '1';
+            draw();
+        }
+    }
+
+    function stop() {
+        isZen = false;
+        canvas.style.opacity = '0';
+        if (animationId) {
+            cancelAnimationFrame(animationId);
+            animationId = null;
+        }
+        setTimeout(() => {
+            if (!isZen) {
+                ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+            }
+        }, 800);
+    }
+
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'class') {
+                const active = document.body.classList.contains('zen-active');
+                if (active && !isZen) {
+                    start();
+                } else if (!active && isZen) {
+                    stop();
+                }
+            }
+        });
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    if (document.body.classList.contains('zen-active')) {
+        start();
+    }
+})();
+</script>

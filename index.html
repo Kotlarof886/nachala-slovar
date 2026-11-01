@@ -9332,10 +9332,14 @@ var FOG_CODES = [45,48];
     });
   }
 
-  var resizeTimer = null;
-  window.addEventListener('resize', function () {
+  var lastPrecipWidth = window.innerWidth;
+window.addEventListener('resize', function () {
     if (resizeTimer) clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function () {
+      // Если ширина не изменилась (это просто адресная строка выехала) — выходим
+      if (window.innerWidth === lastPrecipWidth) return;
+      lastPrecipWidth = window.innerWidth;
+
       var oldW = W, oldH = H, oldDpr = dpr;
       resize();
       if (Math.abs(dpr - oldDpr) > 0.01) { prepareSprites(mode); prepareStarSprites(); }
@@ -9347,7 +9351,7 @@ var FOG_CODES = [45,48];
       initStars();
       updateMoonPos();
     }, 150);
-  });
+});
 
   window.addEventListener('scroll', function () { _glyphDirty = true; }, { passive: true });
   setInterval(function () {
@@ -10409,7 +10413,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
 </script>
 <!-- ===== КОНЕЦ БЛОКА ZEN MODE ===== -->
 
-<!-- ===== Созвездие Большая Медведица (Появляется только ночью) ===== -->
+<!-- ===== Созвездие Большая Медведица (Защита от дерганья при прокрутке) ===== -->
 <canvas id="ursa-major-canvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 99990; opacity: 0; transition: opacity 0.8s ease-in-out;"></canvas>
 <script>
 (function() {
@@ -10419,13 +10423,13 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     let animationId = null;
 
     const starsData = [
-        { x: 100, y: 100, speed1: 0.12, speed2: 0.35, phase1: 0.0, phase2: 1.5, twSpeed: 4.2, twPhase: 1.1, letter: 'з' }, // 1
-        { x: 340, y: 150, speed1: 0.15, speed2: 0.41, phase1: 2.1, phase2: 0.8, twSpeed: 3.8, twPhase: 2.3, letter: 'в' }, // 2
-        { x: 450, y: 350, speed1: 0.09, speed2: 0.28, phase1: 4.2, phase2: 3.1, twSpeed: 5.1, twPhase: 0.4, letter: 'ѣ' }, // 3
-        { x: 620, y: 520, speed1: 0.14, speed2: 0.33, phase1: 1.1, phase2: 2.7, twSpeed: 4.5, twPhase: 3.8, letter: 'з' }, // 4
-        { x: 670, y: 750, speed1: 0.18, speed2: 0.45, phase1: 3.5, phase2: 0.2, twSpeed: 3.2, twPhase: 1.7, letter: 'д' }, // 5
-        { x: 950, y: 820, speed1: 0.11, speed2: 0.31, phase1: 5.1, phase2: 1.9, twSpeed: 4.9, twPhase: 2.9, letter: 'ы' }, // 6
-        { x: 1005, y: 580, speed1: 0.16, speed2: 0.38, phase1: 0.4, phase2: 4.4, twSpeed: 3.5, twPhase: 0.8, letter: 'з' }  // 7
+        { x: 100, y: 100, speed1: 0.12, speed2: 0.35, phase1: 0.0, phase2: 1.5, twSpeed: 4.2, twPhase: 1.1, letter: 'з' },
+        { x: 340, y: 150, speed1: 0.15, speed2: 0.41, phase1: 2.1, phase2: 0.8, twSpeed: 3.8, twPhase: 2.3, letter: 'в' },
+        { x: 450, y: 350, speed1: 0.09, speed2: 0.28, phase1: 4.2, phase2: 3.1, twSpeed: 5.1, twPhase: 0.4, letter: 'ѣ' },
+        { x: 620, y: 520, speed1: 0.14, speed2: 0.33, phase1: 1.1, phase2: 2.7, twSpeed: 4.5, twPhase: 3.8, letter: 'з' },
+        { x: 670, y: 750, speed1: 0.18, speed2: 0.45, phase1: 3.5, phase2: 0.2, twSpeed: 3.2, twPhase: 1.7, letter: 'д' },
+        { x: 950, y: 820, speed1: 0.11, speed2: 0.31, phase1: 5.1, phase2: 1.9, twSpeed: 4.9, twPhase: 2.9, letter: 'ы' },
+        { x: 1005, y: 580, speed1: 0.16, speed2: 0.38, phase1: 0.4, phase2: 4.4, twSpeed: 3.5, twPhase: 0.8, letter: 'з' }
     ];
 
     let scale = 1;
@@ -10434,6 +10438,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     let dpr = 1;
     let starSprites = {};
     let starGlows = {};
+    let lastWidth = window.innerWidth; // Для отслеживания реального изменения размера
 
     function makeStarLetterSprite(ch, size, dprScale) {
         var pad = Math.ceil(size * 0.7), d = size + pad * 2;
@@ -10479,7 +10484,11 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         });
     }
 
-    function resize() {
+    function resize(force) {
+        // Если ширина не изменилась, а только высота (прокрутка на телефоне) — игнорируем
+        if (!force && window.innerWidth === lastWidth) return;
+        lastWidth = window.innerWidth;
+
         dpr = window.devicePixelRatio || 1;
         canvas.width = window.innerWidth * dpr;
         canvas.height = window.innerHeight * dpr;
@@ -10512,16 +10521,13 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         offsetX = targetCenterX - (550 * scale); 
         offsetY = targetCenterY - (460 * scale); 
     }
-    window.addEventListener('resize', resize);
-    resize();
+    window.addEventListener('resize', function() { resize(false); });
+    resize(true);
 
-    // Проверка: ночь ли сейчас?
     function isNightNow() {
-        // Если основной скрипт погоды уже загружен, берем данные оттуда
         if (window.__precipStatus && typeof window.__precipStatus === 'function') {
             return window.__precipStatus().isNight;
         }
-        // Резервный расчет (если погода еще не прогрузилась)
         var date = new Date();
         var lat = 53.35, lon = 83.78;
         var start = new Date(Date.UTC(date.getUTCFullYear(), 0, 0));
@@ -10537,7 +10543,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         var cosZen = Math.sin(latRad) * Math.sin(decl) + Math.cos(latRad) * Math.cos(decl) * Math.cos(ha);
         var zen = Math.acos(Math.max(-1, Math.min(1, cosZen)));
         var alt = 90 - zen * 180 / Math.PI;
-        return alt < -6; // Ночь, если солнце ниже -6 градусов
+        return alt < -6;
     }
 
     function draw() {
@@ -10547,7 +10553,6 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Если сейчас день, просто очищаем экран и ждем следующего кадра
         if (!isNightNow()) {
             animationId = requestAnimationFrame(draw);
             return;
@@ -10596,7 +10601,7 @@ body.zen-active #precip-canvas { z-index: 99999 !important; }
     function start() {
         if (!animationId) {
             isZen = true;
-            resize();
+            resize(true); // Принудительный пересчет при входе
             canvas.style.opacity = '1';
             draw();
         }

@@ -7507,13 +7507,19 @@ body.glow-baked .card-frame.flick-run .fr-line::after {
   }
 }
 </style>
-<style id="glow-test-off">
+<style id="glow-bake-400">
+/* ===== №400 — Тачъ: убираемъ мерцаніе =====
+   На тач-устройствахъ анимація flicker (5 скачковъ opacity за 2.6s)
+   читается какъ мерцаніе, а не «дрожь пламени». На ПК остаётся —
+   тамъ она мягкая, потому что кегль больше и GPU иначе округляетъ
+   субпиксели. На тачѣ глушимъ её насовсѣмъ: свѣтъ разгорается
+   гладкимъ transition, безъ скачковъ. */
 @media (hover: none) {
-  body.glow-baked .fr-corner::before,
-  body.glow-baked .fr-corner::after,
-  body.glow-baked .fr-line::before,
-  body.glow-baked .fr-line::after {
-    display: none !important;
+  body.glow-baked .card-frame.flick-run .fr-corner::after,
+  body.glow-baked .card-frame.flick-run .fr-line::after,
+  body.glow-baked .card-frame.flick-run .fr-corner::before,
+  body.glow-baked .card-frame.flick-run .fr-line::before {
+    animation: none !important;
   }
 }
 </style>

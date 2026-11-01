@@ -7524,6 +7524,55 @@ body.glow-baked .card-frame:hover .fr-line::after {
   }
 }
 </style>
+<style id="glow-bake-402">
+/* ===== №402 — Тач: уголки — composite, линіи — repaint =====
+   Причина мерцанія и дёрганья буквъ:
+   - .fr-corner имѣетъ фиксированный размѣръ — composite-слой стабиленъ, ок;
+   - .fr-line растягивается при ростѣ карточки (top: 760u, bottom: 760u) —
+     composite-слой пересоздаётся каждый кадръ анимаціи height → мерцаніе,
+     а composite на псевдоэлементѣ заставляетъ браузеръ перерастеризовать
+     сосѣдній текстъ → дёрганье буквъ.
+   Лѣкъ: у линій composite снимается (will-change: auto !important) —
+   repaint дёшевъ для сплошной полосы, мерцанія нѣтъ; transition на линіяхъ
+   короткій (0.15s), чтобы не плодить кадры repaint’а. Уголки сохраняютъ
+   composite — они не растягиваются, плавность безопасна. */
+@media (hover: none) {
+
+  /* Уголки — composite, плавно */
+  body.glow-baked .card-frame.card-lit .fr-corner::before,
+  body.glow-baked .card-frame.card-lit .fr-corner::after {
+    opacity: 1;
+    will-change: opacity !important;
+  }
+  body.glow-baked .card-frame.card-lit .fr-corner::before {
+    transition: opacity 1.5s ease;
+  }
+  body.glow-baked .card-frame.card-lit .fr-corner::after {
+    transition: opacity 1s ease;
+  }
+
+  /* Линіи — без composite (repaint), transition очень короткій */
+  body.glow-baked .card-frame.card-lit .fr-line::before,
+  body.glow-baked .card-frame.card-lit .fr-line::after {
+    opacity: 1;
+    will-change: auto !important;
+    transition: opacity 0.15s ease !important;
+  }
+
+  /* Изоляція слота: ростъ height не выходитъ за предѣлы .online-results */
+  .online-results {
+    contain: layout style paint;
+  }
+
+  /* Burst — подмѣна спрайта (одна растеризація на тап, не критично) */
+  body.glow-baked .card-frame.card-lit.fr-burst .fr-corner::before {
+    background: var(--glow-gold-burst) center / 100% 100% no-repeat;
+  }
+  body.glow-baked .card-frame.card-lit.fr-burst .fr-corner::after {
+    background: var(--glow-flame-burst) center / 100% 100% no-repeat;
+  }
+}
+</style>
 <!-- №154: перо возврата къ клавиатурѣ (введено въ №141) — всплываетъ при прокруткѣ снизу вверхъ,
      таетъ скольженіемъ вверхъ; въ №144 исправлено направленіе, въ №145 устранено морганье,
      въ №146 порогъ и инерція, въ №147 сглаженная инерція, въ №148 ходъ на композиторѣ,
@@ -10943,17 +10992,7 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
     if (card) card.classList.add('card-lit');
   }
 
-  document.addEventListener('touchstart', function (e) {
-    var f = cardOf(e.target);
-    if (f) { lit(f); console.log('[№401] touchstart на карточке → card-lit поставлен'); }
-  }, { passive: true, capture: true });
-
-  /* Дубль на click — для десктопа и как страховка */
   document.addEventListener('click', function (e) {
-    if (e.target && e.target.closest && e.target.closest('.wiktionary-btn')) {
-      if (current) { current.classList.remove('card-lit'); current = null; }
-      return;
-    }
     var f = cardOf(e.target);
     if (f) lit(f);
   }, true);

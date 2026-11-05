@@ -507,6 +507,13 @@ body.telegraph-on #s-tape { display: none; }
   animation: flicker 2.6s ease-in-out forwards;
 }
 
+/* Сшивъ №349: пауза анимаціи мерцанія безъ снятія класса —
+   will-change линій остаётся, box-shadow не перерастеризуется при измѣненіи высоты. */
+.card-frame.flick-hold .fr-corner::after,
+.card-frame.flick-hold .fr-line::after {
+  animation-play-state: paused !important;
+}
+
 /* ===== №329 — мѣрцаніе рамки на сенсорѣ: лѣчимъ причину, а не слой =====
    №327 откачена насовсѣмъ: will-change на линіяхъ, растущихъ съ высотой
    карточки, заставлялъ слой композитора пересобираться каждый кадръ —
@@ -4920,7 +4927,20 @@ function bindButtons(out, list) {
     const wm = toModern(w);
     /* Сшивъ №98: кнопка не отнимаетъ фокусъ у строки — отложенное стираніе не сжигаетъ списокъ */
     b.addEventListener('mousedown', function (ev) { ev.preventDefault(); });
-    b.addEventListener('click', async () => {
+            b.addEventListener('click', async () => {
+      /* Сшивъ №349: не снимаемъ flick-run (онъ держитъ will-change линій и не даётъ
+         box-shadow перерастеризовываться каждый кадръ при измѣненіи высоты карточки).
+         Вмѣсто этого ставимъ анимацію на паузу черезъ flick-hold — мерцаніе молчитъ,
+         а композитные слои линій живы, пока идётъ transition высоты. */
+      const card = b.closest('.card-frame');
+      if (card) {
+        card.classList.add('flick-hold');
+        if (card._flickHoldTimer) clearTimeout(card._flickHoldTimer);
+        card._flickHoldTimer = setTimeout(function () {
+          card.classList.remove('flick-hold');
+          card._flickHoldTimer = null;
+        }, 700);
+      }
       const slot = b.closest('.entry').querySelector('.online-results');
       if (!slot) return;
       if (slot._closing) cancelSlotClose(slot);   /* повторный кликъ по закрывающемуся — отмена закрытія */

@@ -8264,11 +8264,26 @@ function updateMoonPos() {
         if (typeof v.precipitation === 'number' && v.precipitation > precipMax) precipMax = v.precipitation;
       }
 
-      wCode = finalCode;
+            wCode = finalCode;
       wFall = (fallMax > 0) ? fallMax : base.fall;
       wRain = (rainMax > 0) ? rainMax : base.rain;
       wPrecip = (precipMax > 0) ? precipMax : (base.precipitation || null);
-      wWind = base.wind; wWDir = base.wdir; wVis = base.vis; wCloud = base.cloud;
+      /* Вѣтеръ: первое непустое значеніе среди всѣхъ отвѣтовъ зеркалъ.
+         Первый отвѣтъ можетъ не нести вѣтра (null), а другой несётъ —
+         ранѣше въ такомъ раскладѣ вѣтеръ терялся, и костёръ въ дзенѣ
+         стоялъ безъ вѣтра. */
+      var _wv = null, _wd = null, _wvis = null, _wcl = null;
+      for (var _wi = 0; _wi < responses.length; _wi++) {
+        var _rv = responses[_wi].val;
+        if (_wv === null && typeof _rv.wind === 'number') _wv = _rv.wind;
+        if (_wd === null && typeof _rv.wdir === 'number') _wd = _rv.wdir;
+        if (_wvis === null && typeof _rv.vis === 'number') _wvis = _rv.vis;
+        if (_wcl === null && typeof _rv.cloud === 'number') _wcl = _rv.cloud;
+      }
+      wWind  = (_wv   !== null) ? _wv   : base.wind;
+      wWDir  = (_wd   !== null) ? _wd   : base.wdir;
+      wVis   = (_wvis !== null) ? _wvis : base.vis;
+      wCloud = (_wcl  !== null) ? _wcl  : base.cloud;
       if (forceCloud === null && wCloud !== null) cloudCover = wCloud;
       saveCache();
       applyWeather(decideWeather());
@@ -9514,11 +9529,12 @@ window.addEventListener('resize', function () {
   };
 /* Экспортъ погодныхъ данныхъ для другихъ скриптовъ (ZEN-режимъ, костёръ) */
 window.__weather = {
-    get windSpeed() { return wWind; },
-    get windDir()   { return wWDir; },
+    get windSpeed() { return (debugOverrides.windSpeed !== null) ? debugOverrides.windSpeed : wWind; },
+    get windDir()   { return (debugOverrides.windDir   !== null) ? debugOverrides.windDir   : wWDir; },
     get mode()      { return mode; },
     get level()     { return level; }
 };
+window.__precipRefresh = fetchWeather;                       // ← ВОТЪ ЭТА СТРОКА
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
@@ -9895,7 +9911,11 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
     const WORD_SPARKS = ['и', 'с', 'к', 'р', 'ы'];
     const WORD_GROUND = ['т', 'в', 'е', 'р', 'д', 'ь'];
 
-    let weatherLastFetch = 0, windXWorld = 0, isRainOrSnow = false;
+        let weatherLastFetch = 0, windXWorld = 0, isRainOrSnow = false;
+    let windStrength = 0;   /* 0..1 — нормированная сила вѣтра: 15 м/с = буря */
+    let windGustPhase = Math.random() * Math.PI * 2;
+    let windRetryTimer = null;
+    let windRetryCount = 0;
     let flameTipX = 0, flameTipY = 0, flameTipInit = false;
 
     function refreshWeather() {
@@ -9903,15 +9923,37 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
         if (now - weatherLastFetch < 500) return;
         weatherLastFetch = now;
         const w = window.__weather || {};
-        const sp = w.windSpeed || 0;
+        const sp = Math.max(0, Math.min(50, w.windSpeed || 0));
         const dir = w.windDir;
         let sign = 1;
         if (dir !== null && dir !== undefined) {
             sign = -Math.sin(dir * Math.PI / 180);
             if (Math.abs(sign) < 0.1) sign = 1;
         }
-        windXWorld = sign * sp * 8.5;
+        /* Сшивъ: 14 px/с на 1 м/с вѣтра (было 8.5) — на 10 м/с пламя
+           ложится отчётливо. Ширина костра ~50 px, время жизни искры
+           ~0.9 с, потому при 10 м/с частица сносится на 120–150 px. */
+        windXWorld = sign * sp * 14;
+        windStrength = Math.min(1, sp / 15);
         isRainOrSnow = w.mode === 'rain' || w.mode === 'snow';
+        if (w.windSpeed != null) {
+            windRetryCount = 0;
+        } else if (!windRetryTimer && window.__precipRefresh && windRetryCount < 5) {
+            /* Вѣтеръ ещё не извѣстенъ — просимъ погоду дотянуть (до 5 разъ) */
+            windRetryCount++;
+            windRetryTimer = setTimeout(function () {
+                windRetryTimer = null;
+                try { window.__precipRefresh(); } catch (e) {}
+            }, 4000);
+        }
+    }
+
+    /* Порывистость: медленная шумовая волна — размахъ растётъ съ силой вѣтра.
+       На штилѣ ±6 px/с (лёгкое колыханіе), на бурѣ ±52 px/с (сильные порывы). */
+    function windGust(time) {
+        const amp = 6 + windStrength * 46;
+        return Math.sin(time * 0.0011 + windGustPhase) * amp
+             + Math.sin(time * 0.0037 + windGustPhase * 0.7) * (amp * 0.4);
     }
 
     function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -10303,12 +10345,12 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
             }
             smokeCount -= 1;
         }
-        if (Math.random() < dt * (8 + lvl * 5)) {
+                if (Math.random() < dt * (8 + lvl * 5) * (1 + windStrength * 1.2)) {
             const vyB = vertSparkVyBase(lvl), sz = randSize(6, 12);
             addParticle({
                 type: 'spark', x: CX + (Math.random() - 0.5) * 40,
                 y: CY - 20 - Math.random() * 30,
-                vx: (Math.random() - 0.5) * 20, vy: (vyB + (Math.random() - 0.5) * 40) * heightMul,
+                vx: (Math.random() - 0.5) * 20 + windXWorld * 0.35, vy: (vyB + (Math.random() - 0.5) * 40) * heightMul,
                 gravity: 30, life: 1, maxLife: 1.5 + Math.random() * 1.0,
                 text: pick(WORD_SPARKS),
                 color: Math.random() > 0.5 ? '#ffdd44' : '#ff6600',
@@ -10385,8 +10427,7 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
         fCtx.clearRect(0, 0, W, H);
         drawCoals(time);
         spawnParticles(dt, time);
-        const windNoise = Math.sin(time * 0.001) * 15 + Math.sin(time * 0.003) * 5;
-        const windTotal = windNoise + windXWorld;
+                const windTotal = windGust(time) + windXWorld;
         for (let i = particleCount - 1; i >= 0; i--) {
             const p = particlePool[i];
             if (p.type === 'coal-pop') {
@@ -10419,7 +10460,7 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
             if (p.type === 'fire-core') {
                 p.age = 1 - p.life;
                 const sway = Math.sin(time * 0.01 + p.swaySeed) * (2 + p.age * 12) * p.age;
-                p.x += (p.vx + sway + windTotal * 0.55) * dt; p.y += p.vy * dt;
+                p.x += (p.vx + sway + windTotal * (0.55 + windStrength * 0.55)) * dt; p.y += p.vy * dt;
                 if (p.life > 0.8) p.color = '#ffffff';
                 else if (p.life > 0.5) p.color = '#fff0c2';
                 else if (p.life > 0.2) p.color = '#ff9d00';
@@ -10436,7 +10477,7 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
                 p.age = 1 - p.life;
                 // Изменено: уменьшено качание, чтобы не выпирали наружу
                 const sway = Math.sin(time * 0.02 + p.swaySeed) * 10 * p.age; 
-                p.x += (p.vx + sway + windTotal * 0.55) * dt; p.y += p.vy * dt;
+                p.x += (p.vx + sway + windTotal * (0.55 + windStrength * 0.55)) * dt; p.y += p.vy * dt;
                 if (p.life > 0.85) p.color = '#fff0c2';
                 else if (p.life > 0.5) p.color = '#ff9d00';
                 else p.color = '#d83b00';
@@ -10445,7 +10486,7 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
                 p.age = 1 - p.life;
                 const factor = 1 + 0.8 * Math.sin(p.age * Math.PI) - p.age * 0.8;
                 const desiredX = CX + p.initDX * factor;
-                p.x += ((desiredX - p.x) * 3 + windTotal * 0.55) * dt; p.y += p.vy * dt;
+                p.x += ((desiredX - p.x) * 3 + windTotal * (0.55 + windStrength * 0.55)) * dt; p.y += p.vy * dt;
                 if (p.life > 0.85) p.color = '#fff0c2';
                 else if (p.life > 0.6) p.color = '#ff9d00';
                 else if (p.life > 0.25) p.color = '#d83b00';
@@ -10455,7 +10496,7 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
                 p.age = 1 - p.life;
                 p.vy *= (1 - dt * 0.08); p.y += p.vy * dt;
                 const curl = Math.sin(time * 0.002 + p.seed) * (6 + p.age * 8);
-                p.vx += (windTotal * 1.4 + curl - p.vx) * dt * 0.55;
+                p.vx += (windTotal * (1.4 + windStrength * 1.0) + curl - p.vx) * dt * 0.55;
                 const midBulge = Math.sin(Math.PI * p.age);
                 const spreadBulge = 1 + midBulge * 1.0;
                 p.x += (p.x - CX) * 0.25 * spreadBulge * p.age * dt + p.vx * dt;
@@ -10467,7 +10508,7 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
                 else baseA = 0.35;
                 p.alpha = baseA * (p.dim !== undefined ? p.dim : 1);
             } else if (p.type === 'spark') {
-                p.vx += windTotal * 1.2 * dt; p.y += p.vy * dt; p.x += p.vx * dt;
+                p.vx += windTotal * (1.2 + windStrength * 0.8) * dt; p.y += p.vy * dt; p.x += p.vx * dt;
                 p.vy += (p.gravity || 15) * dt; p.vx *= (1 - dt * 0.2);
                 p.alpha = p.life;
             } else if (p.type === 'coal-pop') {
@@ -10616,9 +10657,10 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
             document.body.classList.remove('zen-returning');
             document.body.classList.add('zen-active');
             requestWakeLock();
-            fireLevel = 1; fireTargetVisual = 1; fireVisual = 1;
+                        fireLevel = 1; fireTargetVisual = 1; fireVisual = 1;
             heatVisual = 1; coolT = 0; smokeFadeT = 0;
 fireTouched = false;   /* при входѣ дежурный снова вѣченъ */
+            windRetryCount = 0;   /* вѣтеръ: свѣжій бюджетъ попытокъ на новую сессію */
             zeroEnteredAt = 0; coalsPopped = 0; particleCount = 0;
             flameTipInit = false; flameTipX = CX; flameTipY = CY - 80;
             lastDecreaseAt = Date.now(); lastDrawTime = 0;

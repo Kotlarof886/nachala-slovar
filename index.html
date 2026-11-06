@@ -698,7 +698,18 @@ html.tg-sliding { overflow: hidden !important; }   /* на время сколь
     inset 0 0 0 1px rgba(0,0,0,.6);
 }
 .wiktionary-btn:hover { filter: brightness(1.1); }
-.src-block { margin-top: 0.6rem; padding: 0.7rem 0.9rem; background: rgba(12, 10, 30, 0.7); border-left: 3px solid var(--gold); border-radius: 0.25rem; }
+
+/* ── Сшивъ № …: на телефонахъ кнопка «Уточнить у адъютантовъ» — во всю ширину
+      карточки разысканій; высота и текстъ прежніе. ─────────────────────────── */
+@media (max-width: 560px) {
+  .wiktionary-btn {
+    display: block;
+    width: 100%;
+    text-align: center;
+  }
+}
+
+.src-block { margin-top: 0.6rem; padding: 0.7rem 0.9rem; background: rgba(12, 10, 30, 0.7); border: 2px solid var(--gold-bright); border-radius: 0.25rem; }
 .src-block h4 { margin: 0 0 0.3rem; font-size: 0.9rem; color: #d4b06a; }
 .src-block p, .src-block li { font-size: 0.92rem; line-height: 1.5; margin: 0.2rem 0; }
 .src-block a { color: var(--gold-bright); }

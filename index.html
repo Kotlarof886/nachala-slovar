@@ -545,12 +545,14 @@ body.telegraph-on #s-tape { display: none; }
    Максимумъ 32 дополнительныхъ слоя одновременно (одна карточка),
    не 32 × N, какъ было бы при поголовномъ промоутѣ (тотъ путь
    отброшенъ въ №292). */
-.card-frame:hover .fr-line::before,
-.card-frame:hover .fr-line::after,
-.card-frame.flick-run .fr-line::before,
-.card-frame.flick-run .fr-line::after {
+.card-frame.flick-hold .fr-line::before,
+.card-frame.flick-hold .fr-line::after {
   will-change: opacity;
   transform: translateZ(0);
+  animation-play-state: paused !important;
+}
+.card-frame.flick-hold .fr-corner::after {
+  animation-play-state: paused !important;
 }
 
 /* базовые переходы для тушенія: работаютъ въ обѣ стороны */

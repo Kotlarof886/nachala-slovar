@@ -7665,11 +7665,13 @@ window.addEventListener('error', function (e) {
    N карточекъ падаетъ въ N разъ. */
 (function () {
   var last = null;
+  var isCoarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
   function flash(f) {
     if (!f) return;
+    if (isCoarse) return;            /* ← на телефонѣ пульсацію не запускаемъ */
     if (last && last !== f) last.classList.remove('flick-run');
-    f.classList.remove('flick-run');
-    void f.offsetWidth;
+    if (f.classList.contains('flick-run')) return;  /* ← и на десктопѣ не перезапускаемъ */
     f.classList.add('flick-run');
     last = f;
   }

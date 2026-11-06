@@ -370,13 +370,14 @@ body.telegraph-on #s-tape { display: none; }
 
 /* ---------- Декоративная рамка статьи ---------- */
 .card-frame {
+  /* №321: живой масштабъ рамки — на узкихъ экранахъ сжимается пропорционально,
+     потолокъ 0.055 держитъ десктопъ прежнимъ (перьевой скриптъ читаетъ --u какъ прежде) */
   --u: var(--frame-u, 0.055);
   position: relative;
   background: var(--card, #1a1520);
   width: 100%;
   margin: 0 0 1.2rem;
   margin: 0 auto 1.2rem;
-  contain: layout style paint;
 }
 /* узорная подложка карточки с затуханием к рамке */
 .card-frame::before {
@@ -488,20 +489,16 @@ body.telegraph-on #s-tape { display: none; }
   --c-flick: 1;
 }
 
-/* Правка C: свѣченіе по :hover — только на десктопѣ. На сенсорѣ
-   :hover ставится липко при каждомъ тапѣ и запускаетъ 40 переходовъ
-   @property-перемѣнныхъ — на мобильномъ GPU это и есть морганіе. */
-@media (hover: hover) and (pointer: fine) {
-  .card-frame:hover .fr-corner::before,
-  .card-frame:hover .fr-line::before {
-    --c-glow: 1;
-    transition: --c-glow 2.7s ease, filter 1.1s ease, box-shadow 1.1s ease;
-  }
-  .card-frame:hover .fr-corner::after,
-  .card-frame:hover .fr-line::after {
-    --c-flame: 1;
-    transition: --c-flame 2.7s cubic-bezier(0.75, 0, 0.25, 1), filter 1.1s ease, box-shadow 1.1s ease;
-  }
+.card-frame:hover .fr-corner::before,
+.card-frame:hover .fr-line::before {
+  --c-glow: 1;
+  transition: --c-glow 2.7s ease, filter 1.1s ease, box-shadow 1.1s ease;
+}
+
+.card-frame:hover .fr-corner::after,
+.card-frame:hover .fr-line::after {
+  --c-flame: 1;
+  transition: --c-flame 2.7s cubic-bezier(0.75, 0, 0.25, 1), filter 1.1s ease, box-shadow 1.1s ease;
 }
 
 /* ===== №330 — вспышка при активности: один цикл пульса и замираніе ===== */
@@ -535,10 +532,8 @@ body.telegraph-on #s-tape { display: none; }
   filter: none;
   box-shadow: 0 0 10px rgba(240, 150, 60, 0.55);
 }
-@media (hover: hover) and (pointer: fine) {
-  .fr-corner::before,
-  .fr-corner::after { transform: translateZ(0); }
-}
+.fr-corner::before,
+.fr-corner::after { transform: translateZ(0); }
 /* ===== №347: промоутъ линій на время свѣченія =====
    32 псевдослоя линій (16 элементовъ × ::before/::after) анимируютъ
    opacity черезъ --c-glow и --c-flame. Безъ промоута браузеръ можетъ
@@ -550,14 +545,12 @@ body.telegraph-on #s-tape { display: none; }
    Максимумъ 32 дополнительныхъ слоя одновременно (одна карточка),
    не 32 × N, какъ было бы при поголовномъ промоутѣ (тотъ путь
    отброшенъ въ №292). */
-.card-frame.flick-hold .fr-line::before,
-.card-frame.flick-hold .fr-line::after {
+.card-frame:hover .fr-line::before,
+.card-frame:hover .fr-line::after,
+.card-frame.flick-run .fr-line::before,
+.card-frame.flick-run .fr-line::after {
   will-change: opacity;
   transform: translateZ(0);
-  animation-play-state: paused !important;
-}
-.card-frame.flick-hold .fr-corner::after {
-  animation-play-state: paused !important;
 }
 
 /* базовые переходы для тушенія: работаютъ въ обѣ стороны */
@@ -4674,68 +4667,22 @@ var ENV_BG_FALLBACK = ['images/bg-01.png','images/bg-02.png','images/bg-03.png',
              'images/bg-05.png','images/bg-06.png','images/bg-07.png','images/bg-08.png',
              'images/bg-09.png','images/bg-10.png','images/bg-11.png','images/bg-12.png'];
 var ENV_BG_LIST = ENV_BG_FALLBACK.slice();
-/* Ленивое прогревание конвертовъ:
-   стартъ — первое дѣйствіе пользователя (скроллъ/тапъ/клавиша/колесо/наведеніе
-   на результаты) либо 2.5 с послѣ window.load, если дѣйствій не было.
-   Пробы идутъ батчами черезъ requestIdleCallback. Save-Data и 2G — пропускъ. */
 (function () {
   var found = [], pending = 40;
   function bgName(n) { return 'images/bg-' + (n < 10 ? '0' + n : n) + '.png'; }
   function check() {
     if (--pending) return;
     found.sort(function (a, b) { return a - b; });
-    if (found.length) ENV_BG_LIST = found.map(bgName);
+    if (found.length) ENV_BG_LIST = found.map(bgName);   /* найденные карточки — по порядку */
   }
-
-  try {
-    if (navigator.connection) {
-      if (navigator.connection.saveData) return;
-      var et = navigator.connection.effectiveType;
-      if (et === 'slow-2g' || et === '2g') return;
-    }
-  } catch (e) {}
-
-  var started = false, idx = 0, nums = [];
-  for (var i = 1; i <= 40; i++) nums.push(i);
-
-  var schedule = ('requestIdleCallback' in window)
-    ? function (cb) { requestIdleCallback(cb, { timeout: 2000 }); }
-    : function (cb) { setTimeout(function () { cb({ timeRemaining: function () { return 8; } }); }, 200); };
-
-  function step(deadline) {
-    while (idx < nums.length && (!deadline || deadline.timeRemaining() > 4)) {
-      (function (n) {
-        var im = new Image();
-        im.decoding = 'async';
-        im.onload = function () { found.push(n); check(); };
-        im.onerror = check;
-        im.src = bgName(n);
-      })(nums[idx++]);
-    }
-    if (idx < nums.length) schedule(step);
+  for (var i = 1; i <= 40; i++) {
+    (function (n) {
+      var im = new Image();
+      im.onload = function () { found.push(n); check(); };
+      im.onerror = check;
+      im.src = bgName(n);
+    })(i);
   }
-
-  var triggers = ['scroll', 'pointerdown', 'touchstart', 'keydown', 'wheel'];
-  function start() {
-    if (started) return;
-    started = true;
-    triggers.forEach(function (ev) {
-      window.removeEventListener(ev, start, { passive: true });
-      window.removeEventListener(ev, start, true);
-    });
-    schedule(step);
-  }
-  triggers.forEach(function (ev) {
-    window.addEventListener(ev, start, { once: true, passive: true, capture: true });
-  });
-  /* наведеніе на списокъ результатовъ — фора до клика (~300–500 мс) */
-  var res = document.getElementById('results');
-  if (res) res.addEventListener('mouseenter', start, { once: true, passive: true });
-  document.addEventListener('mouseover', function (e) {
-    if (e.target && e.target.closest && e.target.closest('.wiktionary-btn')) start();
-  }, { once: true, passive: true });
-  /* если пользователь вообще ничѣмъ не занялся — послѣ полной загрузки */
-  window.addEventListener('load', function () { setTimeout(start, 2500); }, { once: true });
 })();
 function cornetEnvelopesHtml(wm, w) {
   var bgs = ENV_BG_LIST.slice();
@@ -4847,7 +4794,36 @@ function envHandwritingHtml(s) {
    высота таетъ, а прокрутка кадръ въ кадръ компенсируется — нижніе карточки стоятъ на мѣстѣ,
    ничто не тянется вверхъ. Прокрутка снизу вверхъ — прежнее сворачиваніе. */
 var _openSlotKey = null;
-function closeSlotSmooth(slot, down) {
+/* Сшивъ №350: плавный ростъ карточки при приходѣ справки.
+   Обёртка вокругъ любой замѣны внутри слота разысканій: мѣряетъ высоту
+   слота до и послѣ, тянетъ height 0.28s ease-out — тѣмъ же тѣмпомъ, что и
+   открытіе. Если слотъ уже ушёлъ за верхъ экрана, анимаціи не видно —
+   компенсируемъ прокрутку однимъ шагомъ по окончаніи. */
+function slotSwapSmooth(slot, doSwap, aboveFlag) {
+  if (!slot) { doSwap(); return; }
+  var h0 = slot.getBoundingClientRect().height;
+  var y0 = window.pageYOffset || 0;
+  doSwap();
+  var h1 = slot.scrollHeight;
+  var d = h1 - h0;
+  if (Math.abs(d) < 2) return;
+  if (aboveFlag) {
+    setTimeout(function () {
+      if (y0 > 0 && d !== 0) window.scrollTo(0, Math.max(0, y0 + d));
+    }, 300);
+    return;
+  }
+  slot.style.overflow = 'hidden';
+  slot.style.height = h0 + 'px';
+  void slot.offsetHeight;
+  slot.style.transition = 'height 0.28s ease-out';
+  slot.style.height = h1 + 'px';
+  setTimeout(function () {
+    slot.style.height = '';
+    slot.style.overflow = '';
+    slot.style.transition = '';
+  }, 300);
+}function closeSlotSmooth(slot, down) {
   if (!slot || slot._closing || !slot.innerHTML.trim()) return;
   /* Сшивъ №341: клавиша отжимается при любомъ закрытіи окна */
   var _e = slot.closest ? slot.closest('.entry') : null;
@@ -5029,24 +5005,26 @@ function bindButtons(out, list) {
       /* №323: открытіе большѣ не трогаетъ margin-top — мгновенное обнуленіе верхняго
          отступа стягивало 10px надъ окномъ въ первый кадръ, и содержимое дёргалось вверхъ.
          Окно растётъ только высотой: всѣ карточки выше и ниже стоятъ на своихъ мѣстахъ. */
-            (function (sl) {
-  var isCoarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-  var full = sl.scrollHeight;
-  if (isCoarse) {
-    /* на телефонѣ — мгновенно: одна перестройка вмѣсто 280 мс покадровыхъ */
-    sl.style.height = ''; sl.style.overflow = ''; sl.style.transition = '';
-  } else {
-    sl.style.height = '0px';
-    sl.style.overflow = 'hidden';
-    void sl.offsetHeight;
-    sl.style.transition = 'height 0.28s ease-out';
-    sl.style.height = full + 'px';
-  }
-  if (sl._openTimer) clearTimeout(sl._openTimer);
-  sl._openTimer = setTimeout(function () {
-    sl._openTimer = null;
-    if (!sl._closing) { sl.style.height = ''; sl.style.overflow = ''; sl.style.transition = ''; }
-  }, 330);
+      (function (sl) {
+        var full = sl.scrollHeight;
+        sl.style.height = '0px';
+        sl.style.overflow = 'hidden';
+        void sl.offsetHeight;
+        sl.style.transition = 'height 0.28s ease-out';
+        sl.style.height = full + 'px';
+        var inn = sl.firstElementChild;
+        if (inn) {
+          inn.style.transform = 'translateY(-12px)';
+          inn.style.opacity = '0';
+          void inn.offsetHeight;
+          inn.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
+          inn.style.transform = '';
+          inn.style.opacity = '';
+        }
+        sl._openTimer = setTimeout(function () {
+          sl._openTimer = null;
+          if (!sl._closing) { sl.style.height = ''; sl.style.overflow = ''; sl.style.transition = ''; }
+        }, 330);
       })(slot);
       const cache = window._wikiCache || (window._wikiCache = new Map());
       try {
@@ -5067,30 +5045,20 @@ function bindButtons(out, list) {
         const entry = _slotCache.get(w);
         if (!entry) return;   /* слотъ закрыли, пока шла справка — не воскресаемъ */
         entry.wiki = rec; entry.busy = false;
-        const live = liveSlotByWord(w);
+                const live = liveSlotByWord(w);
         if (live) {
           const blk = live.querySelector('.wiki-block');
           if (blk) {
-            /* №324: справка встаётъ точечно, но если окно уже ушло за верхъ экрана,
-               мѣна «Ищу…» на готовый текст мѣняетъ высоту и сдвигаетъ страницу.
-               Мѣряемъ блокъ до и послѣ, разницу тутъ же докручиваемъ — рывка нѣтъ. */
-            var _wr0 = blk.getBoundingClientRect();
-            var _wy0 = window.pageYOffset || 0;
-            var _wAbove = _wr0.bottom <= 0;
-            blk.outerHTML = wikiBlockHtml(entry.wiki);
-            if (_wAbove) {
-              var _nb = live.querySelector('.wiki-block');
-              if (_nb) {
-                var _dd = _nb.getBoundingClientRect().height - _wr0.height;
-                if (_dd) window.scrollTo(0, Math.max(0, _wy0 + _dd));
-              }
-            }
+            var _wAbove = blk.getBoundingClientRect().bottom <= 0;
+            slotSwapSmooth(live, function () {
+              blk.outerHTML = wikiBlockHtml(entry.wiki);
+            }, _wAbove);
           } else {
             /* №324: пересборка цѣликомъ — если слотъ ушёл за верхъ экрана, докручиваемъ на разницу высоты */
             var _fr0 = live.getBoundingClientRect();
             var _fy0 = window.pageYOffset || 0;
             var _fAbove = _fr0.bottom <= 0;
-            live.innerHTML = slotInner(w);   /* запасная ветка — слотъ пересобрали, покуда шла справка */
+            live.innerHTML = slotInner(w);
             if (_fAbove) {
               var _fd = live.getBoundingClientRect().height - _fr0.height;
               if (_fd) window.scrollTo(0, Math.max(0, _fy0 + _fd));
@@ -5105,28 +5073,16 @@ function bindButtons(out, list) {
         if (live) {
           const blk = live.querySelector('.wiki-block');
           if (blk) {
-            /* №324: та же компенсація въ ошибочнѣ веткѣ — блокъ за верхомъ экрана не дёргаетъ страницу */
-            var _er0 = blk.getBoundingClientRect();
-            var _ey0 = window.pageYOffset || 0;
-            var _eAbove = _er0.bottom <= 0;
-            blk.outerHTML = wikiBlockHtml(entry.wiki);
-            if (_eAbove) {
-              var _enb = live.querySelector('.wiki-block');
-              if (_enb) {
-                var _edd = _enb.getBoundingClientRect().height - _er0.height;
-                if (_edd) window.scrollTo(0, Math.max(0, _ey0 + _edd));
-              }
-            }
-          } else {
-            var _gr0 = live.getBoundingClientRect();
-            var _gy0 = window.pageYOffset || 0;
-            var _gAbove = _gr0.bottom <= 0;
-            live.innerHTML = slotInner(w);
-            if (_gAbove) {
-              var _gd = live.getBoundingClientRect().height - _gr0.height;
-              if (_gd) window.scrollTo(0, Math.max(0, _gy0 + _gd));
-            }
-          }
+  var _eAbove = blk.getBoundingClientRect().bottom <= 0;
+  slotSwapSmooth(live, function () {
+    blk.outerHTML = wikiBlockHtml(entry.wiki);
+  }, _eAbove);
+} else {
+  var _gAbove = live.getBoundingClientRect().bottom <= 0;
+  slotSwapSmooth(live, function () {
+    live.innerHTML = slotInner(w);
+  }, _gAbove);
+}
         }
       }
     });
@@ -7654,51 +7610,39 @@ window.addEventListener('error', function (e) {
   }
   frameU();
   window.addEventListener('resize', frameU, { passive: true });
-  window.addEventListener('orientationchange', function () { setTimeout(frameU, 120); }, { passive: true });
+   window.addEventListener('orientationchange', function () { setTimeout(frameU, 120); }, { passive: true });
 })();
+</script>
 
-/* №334 — двѣ вспышки: скромная по наведенію, яркая по целенаправленному тапу;
-   разгорається и таетъ плавно, по окончаніи цикла — покой */
-/* Сшивъ №347 — свѣтъ карточекъ: одна активная, безъ клика.
-   Кликъ (fr-burst) снятъ: онъ анимировалъ параметръ фильтра (drop-shadow
-   на 8 уголкахъ, ~2.2 сек. перерастеризаціи) — самый дорогой источникъ
-   нагрузки. Свѣтъ теперь зажигается только наведеніемъ/касаніемъ.
-   Когда мышь переходитъ на другую карточку, прежняя теряетъ flick-run:
-   анимація мерцанія останавливается (40 псевдослоёвъ не крутятъ opacity
-   каждый кадръ), а свѣченіе гаснетъ черезъ --c-flame (1.5 сек.) плавно.
-   Одновременно мерцаетъ только одна карточка — нагрузка при переборѣ
-   N карточекъ падаетъ въ N разъ. */
+<script>
+/* №334/№347/№350 — свѣтъ карточекъ:
+   на сенсорѣ молчимъ; на десктопѣ — одна активная карточка;
+   mouseover зажигаетъ flick-run, animationend снимаетъ, уходъ мыши тушитъ. */
 (function () {
+  var _touch = false;
+  try { _touch = window.matchMedia('(hover: none)').matches; } catch (e) {}
+  if (_touch) return;
+
   var last = null;
-  var isCoarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
 
   function flash(f) {
-    if (!f) return;
-    if (isCoarse) return;            /* ← на телефонѣ пульсацію не запускаемъ */
-    if (last && last !== f) last.classList.remove('flick-run');
-    if (f.classList.contains('flick-run')) return;  /* ← и на десктопѣ не перезапускаемъ */
-    f.classList.add('flick-run');
+    if (last) last.classList.remove('flick-run');
     last = f;
+    if (f) f.classList.add('flick-run');
   }
+
   document.addEventListener('mouseover', function (e) {
     var t = e.target;
     var f = t && t.closest ? t.closest('.card-frame') : null;
     if (!f) {
-      /* Мышь ушла съ карточекъ (въ пустоту, на шапку, на рамку):
-         отпускаемъ послѣднюю — при возвратѣ flash снова зажжётъ мерцаніе.
-         Классъ flick-run снимается — анимація flicker останавливается,
-         40 псевдослоёвъ больше не переписываютъ --c-flick каждый кадръ.
-         Свѣченіе при этомъ НЕ рвётся: уходъ :hover самъ запускаетъ
-         переходъ --c-flame 1→0 за 1.5 с. и --c-glow 1→0 за 3 с. —
-         плавное угасаніе идётъ своимъ ходомъ, безъ класса. */
+      /* Мышь ушла съ карточекъ — тушимъ послѣднюю. Классъ снимается,
+         а плавное угасаніе --c-flame 1→0 за 1.5 с. идётъ своимъ ходомъ. */
       if (last) { last.classList.remove('flick-run'); last = null; }
       return;
     }
     if (f !== last) flash(f);
   }, true);
-  /* Страховка: если flick-run остался висѣть (быстрый переборъ карточекъ,
-     browser-кэшъ глюкнулъ) — снимаемъ его по окончаніи анимаціи мерцанія
-     (она длится 2.6 с., см. @keyframes flicker). */
+
   document.addEventListener('animationend', function (e) {
     if (e.animationName !== 'flicker') return;
     var card = e.target && e.target.closest ? e.target.closest('.card-frame') : null;
@@ -10590,14 +10534,11 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
                 }
                 sprite = c._spr;
             }
-                        /* Оптимизация: setTransform вместо save/translate/rotate/restore.
-               Математически абсолютно то же самое, но не грузит GPU состояниями. */
-            const cos = Math.cos(c.rot), sin = Math.sin(c.rot);
-            fCtx.setTransform(DPR * cos, DPR * sin, -DPR * sin, DPR * cos, (CX + c.x) * DPR, (CY + c.y) * DPR);
+            fCtx.save(); fCtx.translate(c.x, c.y); fCtx.rotate(c.rot);
             fCtx.drawImage(sprite.img, -sprite.w / 2, -sprite.h / 2, sprite.w, sprite.h);
+            fCtx.restore();
         }
-        fCtx.setTransform(DPR, 0, 0, DPR, 0, 0); /* сброс матрицы */
-        fCtx.globalAlpha = 1;
+        fCtx.restore(); fCtx.globalAlpha = 1;
     }
 
     function fireLoop(time) {
@@ -10736,8 +10677,7 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
                 p.color = p.life > 0.4 ? '#ff9933' : '#cc3300';
             }
             if (p.x < -80 || p.x > W + 80 || p.y < -60 || p.y > H + 60) continue;
-                        var _a = (p.alpha !== undefined) ? p.alpha : Math.max(0, Math.min(1, p.life));
-            fCtx.globalAlpha = Math.round(_a * 20) / 20; /* округляем до шага 0.05 */
+            fCtx.globalAlpha = (p.alpha !== undefined) ? p.alpha : Math.max(0, Math.min(1, p.life));
             
                         if (p.type === 'smoke') {
                 if (!smokeSpritesReady) initSmokeSprites();
@@ -10762,14 +10702,11 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
                     p._s = p.size;
                 }
                 const sprite = p._spr;
-                                if (p.type === 'coal-pop') {
-                    const cosA = Math.cos(p.angle), sinA = Math.sin(p.angle);
-                    fCtx.setTransform(DPR * cosA, DPR * sinA, -DPR * sinA, DPR * cosA, p.x * DPR, p.y * DPR);
+                if (p.type === 'coal-pop') {
+                    fCtx.save(); fCtx.translate(p.x, p.y); fCtx.rotate(p.angle);
                     fCtx.drawImage(sprite.img, -sprite.w / 2, -sprite.h / 2, sprite.w, sprite.h);
-                    fCtx.setTransform(DPR, 0, 0, DPR, 0, 0); /* сброс для следующих частиц */
-                } else {
-                    fCtx.drawImage(sprite.img, p.x - sprite.w / 2, p.y - sprite.h / 2, sprite.w, sprite.h);
-                }
+                    fCtx.restore();
+                } else fCtx.drawImage(sprite.img, p.x - sprite.w / 2, p.y - sprite.h / 2, sprite.w, sprite.h);
             }
         }
         fCtx.globalAlpha = 1;
@@ -11192,7 +11129,7 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
         }
     }
 
-    function stop() {
+        function stop() {
         isZen = false;
         canvas.style.opacity = '0';
         if (animationId) {
@@ -11223,6 +11160,7 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
 </script>
 <!-- ===== ОТЛАДОЧНАЯ ПАНЕЛЬ (по коду «886» + ϕ) ===== -->
 <style>
+
 #zen-debug-gear {
     position: fixed;
     bottom: 24px;
@@ -11625,27 +11563,33 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
     }
 })();
 </script>
-<style id="touch-light-compromise">
-@media (pointer: coarse) {
-  .fr-corner::before,
-  .fr-corner::after,
-  .fr-line::before,
-  .fr-line::after {
-    transition: none !important;
+
+<style>
+/* ===== Сшивъ №350 — свѣченіе словарныхъ карточекъ: только на десктопѣ =====
+   На тачъ-устройствахъ :hover «залипаетъ», и золото съ пламенемъ горятъ
+   впустую — плюсъ это десятки псевдослоёвъ съ drop-shadow на каждой карточкѣ,
+   изъ-за чего падаетъ плавность прокрутки на телефонѣ. Гасимъ цѣликомъ:
+   золотой слой (::before), пламенный слой (::after), анимацію flicker —
+   ничего не рисуется, ничего не анимируется. Десктопъ (hover: hover)
+   этимъ запросомъ не задѣтъ. */
+@media (hover: none), (pointer: coarse) {
+  .card-frame:hover .fr-corner::before,
+  .card-frame:hover .fr-corner::after,
+  .card-frame:hover .fr-line::before,
+  .card-frame:hover .fr-line::after,
+  .card-frame.flick-run .fr-corner::after,
+  .card-frame.flick-run .fr-line::after,
+  .card-frame.flick-hold .fr-corner::after,
+  .card-frame.flick-hold .fr-line::after {
     animation: none !important;
+    transition: none !important;
+    opacity: 0 !important;
+    --c-glow:  0 !important;
+    --c-flame: 0 !important;
     filter: none !important;
-    --c-flick: 1;
+    box-shadow: none !important;
+    will-change: auto !important;
   }
-  .fr-line::before {
-    box-shadow: 0 0 4px rgba(212, 176, 106, 0.8), 0 0 14px rgba(212, 176, 106, 0.35);
-  }
-  .fr-line::after {
-    box-shadow: 0 0 10px rgba(240, 150, 60, 0.55);
-  }
-  .card-frame:active .fr-corner::before,
-  .card-frame:active .fr-line::before { --c-glow: 0.85; }
-  .card-frame:active .fr-corner::after,
-  .card-frame:active .fr-line::after  { --c-flame: 1; }
 }
 </style>
 </body>

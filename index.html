@@ -7690,7 +7690,7 @@ window.addEventListener('error', function (e) {
   var MODE_NONE = 'none', MODE_SNOW = 'snow', MODE_RAIN = 'rain', MODE_FOG = 'fog';
    var mode = MODE_NONE, level = 0;
   /* ===== ОТЛАДКА: переопределения из панели (адъюнкт-режим по коду «886») ===== */
-  var debugOverrides = {
+      var debugOverrides = {
     precipType: null,        // null = авто (из API), иначе: 'none'|'snow'|'rain'|'fog'
     precipIntensity: null,   // 1..3, null = авто
     thunder: null,           // true/false/null = авто
@@ -7699,13 +7699,15 @@ window.addEventListener('error', function (e) {
     moonVisible: null,       // null = авто, true = показать всегда, false = скрыть
     moonPhase: null,         // 0..12, null = авто по дате
     starTiers: null,         // null = все видны; иначе {1:true,2:true,3:true,4:true}
-    meteorMode: null         // null = авто; 'none'|'rare'|'normal'|'frequent'|'storm'
+    meteorMode: null,        // null = авто; 'none'|'rare'|'normal'|'frequent'|'storm'
+    cloudCover: null         // null = авто (из API); 0..100 = вручную
   };
   /* ===== Конец блока отладки ===== */
 
    var W = 0, H = 0, dpr = 1, layoutH = 0;
   var particles = [], stars = [], guards = [];
-  var sprites = {}, glows = {}, starSprites = {}, starGlows = {};
+      var sprites = {}, glows = {}, starSprites = {}, starGlows = {}, starSpritesB1 = {}, starSpritesB2 = {};
+  var cloudPatches = [], cloudVisual = 0;
 
   var lastTime = 0, animId = null, lastDraw = 0;
 
@@ -8447,7 +8449,7 @@ var FOG_CODES = [45,48];
     } else { windRatio = 0; windMul = 1; windX = 0; }
   }
 
-         function resize() {
+           function resize() {
         dpr = Math.min(window.devicePixelRatio || 1, 2);
         const newW = window.innerWidth;
         const newH = window.innerHeight;
@@ -8463,6 +8465,7 @@ var FOG_CODES = [45,48];
         canvas.height = Math.floor(H * dpr);
         canvas.style.width = W + 'px';
         canvas.style.height = H + 'px';
+        generateCloudPatches();
     }
 
   function makeSnowSprite(ch, size, dprScale) {
@@ -8536,6 +8539,85 @@ var FOG_CODES = [45,48];
     g.fillStyle = grd; g.beginPath(); g.arc(d/2, d/2, d/2, 0, Math.PI*2); g.fill();
     return c;
   }
+  /* ============ СИСТЕМА ОБЛАЧНОСТИ ============ */
+  function smoothstep01(a, b, x) {
+    var t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+    return t * t * (3 - 2 * t);
+  }
+
+  function makeStarLetterSpriteBlur(ch, size, dprScale, blurPx) {
+    var pad = Math.ceil(size * 0.7 + blurPx * 2);
+    var d = size + pad * 2;
+    var c = document.createElement('canvas');
+    c.width = Math.ceil(d * dprScale); c.height = Math.ceil(d * dprScale);
+    var g = c.getContext('2d');
+    g.scale(dprScale, dprScale);
+    g.font = 'normal ' + size + 'px "Gardenia Decor", "Yeseva One", Georgia, serif';
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    g.translate(d / 2, d / 2); g.rotate(-Math.PI / 4); g.translate(-d / 2, -d / 2);
+    g.filter = 'blur(' + blurPx + 'px)';
+    g.shadowColor = 'rgba(160, 195, 255, 0.9)'; g.shadowBlur = size * 0.7;
+    g.fillStyle = 'rgba(190, 215, 255, 0.55)'; g.fillText(ch, d/2, d/2); g.fillText(ch, d/2, d/2);
+    g.shadowBlur = size * 0.35; g.fillStyle = 'rgba(215, 230, 255, 0.85)'; g.fillText(ch, d/2, d/2);
+    g.shadowBlur = size * 0.15; g.fillStyle = '#f0f6ff'; g.fillText(ch, d/2, d/2);
+    g.filter = 'none';
+    return c;
+  }
+
+  function generateCloudPatches() {
+    cloudPatches = [];
+    var b = starFieldBounds();
+    var fw = b.xMax - b.xMin, fh = b.yMax - b.yMin;
+    if (fw < 60 || fh < 30) return;
+    var count = (W < 600) ? 2 : 3;
+    for (var i = 0; i < count; i++) {
+      cloudPatches.push({
+        cx: b.xMin + fw * (0.15 + 0.70 * Math.random()),
+        cy: b.yMin + fh * (0.15 + 0.70 * Math.random()),
+        rx: fw * (0.24 + Math.random() * 0.08),
+        ry: fh * (0.30 + Math.random() * 0.12)
+      });
+    }
+  }
+
+  function patchFactorAt(x, y) {
+    if (!cloudPatches.length) return 0;
+    var maxF = 0;
+    for (var i = 0; i < cloudPatches.length; i++) {
+      var p = cloudPatches[i];
+      var dx = (x - p.cx) / p.rx, dy = (y - p.cy) / p.ry;
+      var d = Math.sqrt(dx * dx + dy * dy);
+      if (d < 1) {
+        var f = 1 - smoothstep01(0, 1, d);
+        if (f > maxF) maxF = f;
+      }
+    }
+    return maxF;
+  }
+
+  function cloudEffect(x, y) {
+    var t = cloudVisual;
+    if (t < 0.05) return { dim: 0, blur: 0 };
+    var pf = patchFactorAt(x, y);
+    var p2 = smoothstep01(0.3, 0.7, t);
+    var p3 = smoothstep01(0.7, 1.0, t);
+    return {
+      dim:  Math.min(0.95, Math.max(p2 * 0.3 * pf, p3 * 0.9)),
+      blur: Math.min(2.0,  Math.max(p2 * 1.0 * pf, p3 * 2.0))
+    };
+  }
+  window.__cloudEffect = cloudEffect;
+
+  function updateCloudVisual(dt) {
+    var src = (debugOverrides.cloudCover !== null)
+        ? debugOverrides.cloudCover : cloudCover;
+    var target = Math.max(0, Math.min(100, src || 0)) / 100;
+    cloudVisual += (target - cloudVisual) * Math.min(1, dt * 1.2);
+    if (Math.abs(target - cloudVisual) < 0.001) cloudVisual = target;
+  }
+  /* ============ КОНЕЦЪ СИСТЕМЫ ОБЛАЧНОСТИ ============ */
+
+  var SNOW_SIZE_POOL = [12, 14, 15, 16, 20, 26];
 
   var SNOW_SIZE_POOL = [12, 14, 15, 16, 20, 26];
   var RAIN_SIZE_POOL = [11, 14, 15, 16, 19];
@@ -8566,11 +8648,16 @@ var FOG_CODES = [45,48];
     }
   }
 
-  function prepareStarSprites() {
-    starSprites = {}; starGlows = {};
+    function prepareStarSprites() {
+    starSprites = {}; starGlows = {}; starSpritesB1 = {}; starSpritesB2 = {};
     for (var s = 0; s < STAR_SPRITE_SIZES.length; s++) {
       var sz = STAR_SPRITE_SIZES[s];
-      for (var l = 0; l < STAR_LETTERS.length; l++) starSprites[sz+':'+STAR_LETTERS[l]] = makeStarLetterSprite(STAR_LETTERS[l], sz, dpr);
+      for (var l = 0; l < STAR_LETTERS.length; l++) {
+        var L = STAR_LETTERS[l];
+        starSprites[sz+':'+L]   = makeStarLetterSprite(L, sz, dpr);
+        starSpritesB1[sz+':'+L] = makeStarLetterSpriteBlur(L, sz, dpr, 1.5);
+        starSpritesB2[sz+':'+L] = makeStarLetterSpriteBlur(L, sz, dpr, 3.5);
+      }
       starGlows[sz] = makeGlowSprite(sz, dpr);
     }
   }
@@ -8645,7 +8732,7 @@ var FOG_CODES = [45,48];
         attempts++;
       } while (!ok && attempts < 50);
 
-      var dur = 6000 + Math.random() * 6000;
+            var dur = 6000 + Math.random() * 6000;
       guards.push({
         x: gx, y: gy,
         size: isMobile ? STAR_SIZES_MOBILE[0] : STAR_SIZES_DESKTOP[0],
@@ -8660,6 +8747,7 @@ var FOG_CODES = [45,48];
         _nextBlockCheck: 0
       });
     }
+    generateCloudPatches();
   }
 
     function startStarAppearance(s, now) {
@@ -8713,22 +8801,22 @@ var FOG_CODES = [45,48];
   }
 
     function starIntensity() {
-    if (debugOverrides.starTiers) {
-      /* если ни один слой не включён — звёзд нет вообще */
-      var _anyOn = debugOverrides.starTiers[1] || debugOverrides.starTiers[2] ||
-                   debugOverrides.starTiers[3] || debugOverrides.starTiers[4];
-      if (!_anyOn) return 0;
-    }
-    return (isNight || forceStars) ? 1 : 0;
+  if (debugOverrides.starTiers) {
+    var _anyOn = debugOverrides.starTiers[1] || debugOverrides.starTiers[2] ||
+                 debugOverrides.starTiers[3] || debugOverrides.starTiers[4];
+    if (!_anyOn) return 0;
+    return 1;                        // ← принудительно: хоть одинъ ярусъ включёнъ — звёзды видны
   }
+  return (isNight || forceStars) ? 1 : 0;
+}
 
-  function starDimFactor(s) {
+    function starDimFactor(s) {
     if (!s || s.peakAlpha < BRIGHT_PEAK) return 1;
     if (!isNight && !forceStars) return 1;
     if (isThunder) return 1;
     if (mode === MODE_FOG) return 1;
     var hasPrecip = (mode === MODE_SNOW || mode === MODE_RAIN) && level > 0;
-    if ((cloudCover || 0) > 30 || hasPrecip) return 0.5;
+    if (hasPrecip) return 0.5;
     return 1;
   }
 
@@ -8906,40 +8994,55 @@ var FOG_CODES = [45,48];
     }
   }
 
-    function drawStars(now) {
+      function drawStars(now) {
     if (!stars.length || starIntensity() <= 0) return;
     for (var i = 0; i < stars.length; i++) {
       var s = stars[i];
       if (!s.visible || s.alpha <= 0.01 || s.meteor) continue;
-      var sprite = starSprites[s.sizeKey + ':' + s.letter]; if (!sprite) continue;
+
+      var ce = cloudEffect(s.x, s.y);
+      var alphaMult = 1 - ce.dim;
+      var key = s.sizeKey + ':' + s.letter;
+      var sprite = (ce.blur < 0.5) ? starSprites[key]
+                 : (ce.blur < 1.5) ? starSpritesB1[key]
+                 :                   starSpritesB2[key];
+      if (!sprite) continue;
+
       var scale = 1, glowAlpha = 0, gb = s.glowBoost || 1;
       if (s.tier === 1) { scale = 1 + 0.25 * s.env; glowAlpha = 0.85 * s.env * gb; }
       else if (s.tier === 2) { scale = 1 + 0.12 * s.env; glowAlpha = 0.40 * s.env * gb; }
       else if (s.tier === 3) { scale = 1 + 0.04 * s.env; }
       if (s.peakAlpha >= BRIGHT_PEAK) { var gDim = starDimFactor(s); if (gDim < 1) glowAlpha *= gDim; }
       if (s._preset && s.dimMul !== undefined && s.dimMul < 1) glowAlpha *= s.dimMul;
+
+      var glowSpread = (ce.blur < 0.5) ? 1 : (ce.blur < 1.5) ? 1.5 : 2.5;
+      glowAlpha *= (1 - ce.dim * 0.5);
+
       if (glowAlpha > 0.02) {
         var glow = starGlows[s.sizeKey];
         if (glow) {
-          var gScale = (1 + 0.6 * glowAlpha) * (0.7 + 0.3 * gb);
+          var gScale = (1 + 0.6 * glowAlpha) * (0.7 + 0.3 * gb) * glowSpread;
           ctx.setTransform(gScale, 0, 0, gScale, s.x * dpr, s.y * dpr);
           ctx.globalAlpha = glowAlpha; ctx.drawImage(glow, -glow.width / 2, -glow.height / 2);
         }
       }
       ctx.setTransform(scale, 0, 0, scale, s.x * dpr, s.y * dpr);
-      ctx.globalAlpha = s.alpha; ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
+      ctx.globalAlpha = s.alpha * alphaMult; ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
     }
-    
-    // === ОТРИСОВКА СТРАЖЕЙ ===
+
     if (starIntensity() > 0) {
-      for (var i = 0; i < guards.length; i++) {
-        var g = guards[i];
+      for (var gi = 0; gi < guards.length; gi++) {
+        var g = guards[gi];
         if (g.alpha <= 0.01) continue;
-        var sprite = starSprites[g.size + ':' + g.letter]; 
-        if (!sprite) continue;
+        var ceG = cloudEffect(g.x, g.y);
+        var keyG = g.size + ':' + g.letter;
+        var spriteG = (ceG.blur < 0.5) ? starSprites[keyG]
+                    : (ceG.blur < 1.5) ? starSpritesB1[keyG]
+                    :                    starSpritesB2[keyG];
+        if (!spriteG) continue;
         ctx.setTransform(1, 0, 0, 1, g.x * dpr, g.y * dpr);
-        ctx.globalAlpha = g.alpha;
-        ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
+        ctx.globalAlpha = g.alpha * (1 - ceG.dim);
+        ctx.drawImage(spriteG, -spriteG.width / 2, -spriteG.height / 2);
       }
     }
 
@@ -8964,9 +9067,11 @@ var FOG_CODES = [45,48];
     ctx.translate(moonScreenX * dpr, moonScreenY * dpr);
     ctx.scale(dpr, dpr);
 
-    var tiltRatio = (W/2 - moonScreenX) / (W/2);
+        var tiltRatio = (W/2 - moonScreenX) / (W/2);
     var tilt = -tiltRatio * (Math.PI / 6);
     ctx.rotate(tilt);
+
+    var ceMoon = cloudEffect(moonScreenX, moonScreenY);
 
     var charW = D / 18;
     var lineH = D / 7.5;
@@ -9039,26 +9144,27 @@ var FOG_CODES = [45,48];
       ctx.strokeText(visible[pi].ch, visible[pi].x, visible[pi].y);
     }
 
-    /* ПРОХОДЪ 1 — сверхширокій внѣшній ореолъ (только бѣлыя) */
-    ctx.shadowBlur = 25;
+        /* ПРОХОДЪ 1 — сверхширокій внѣшній ореолъ (только бѣлыя) */
+    ctx.shadowBlur = 25 * (1 + ceMoon.blur * 0.5);
     ctx.shadowColor = 'rgba(120, 180, 255, 0.95)';
-    ctx.fillStyle = 'rgba(140, 185, 255, 0.55)';
+    ctx.fillStyle = 'rgba(140, 185, 255, ' + (0.55 * (1 - ceMoon.dim * 0.5)) + ')';
     for (var i = 0; i < visible.length; i++) {
       var v = visible[i];
       if (v.isShadow) continue;
       ctx.fillText(v.ch, v.x, v.y);
     }
 
-    /* ПРОХОДЪ 2 — средній яркій вѣнецъ (только бѣлыя) */
-    ctx.shadowBlur = 30;
+        /* ПРОХОДЪ 2 — средній яркій вѣнецъ (только бѣлыя) */
+    ctx.shadowBlur = 30 * (1 + ceMoon.blur * 0.5);
     ctx.shadowColor = 'rgba(200, 225, 255, 0.95)';
-    ctx.fillStyle = 'rgba(220, 235, 255, 0.85)';
+    ctx.fillStyle = 'rgba(220, 235, 255, ' + (0.85 * (1 - ceMoon.dim * 0.5)) + ')';
     for (var i = 0; i < visible.length; i++) {
       var v = visible[i];
       if (v.isShadow) continue;
       ctx.fillText(v.ch, v.x, v.y);
     }
 
+if (ceMoon.blur >= 1.5) ctx.filter = 'blur(' + ((ceMoon.blur - 1) * 2) + 'px)';
     /* ===== ПРОХОДЪ 3 — плотное ядро: у КАЖДОЙ буквы свой цвѣтъ и своё мерцаніе =====
        Никакой рядности: у каждой буквы своё состояніе — свой цвѣтъ, свой ритмъ
        перехода (1,1–2,2 с), свой ритмъ мерцанія (по случайному зерну).
@@ -9129,7 +9235,7 @@ var FOG_CODES = [45,48];
       var finalPulse = Math.min(1.0, pulse * boost); 
       var finalBlur = blurNow * boost;               
 
-      ctx.globalAlpha = finalPulse;
+            ctx.globalAlpha = finalPulse * (1 - ceMoon.dim * 0.6);
       ctx.shadowBlur = finalBlur;
       ctx.shadowColor = 'rgba(' + gr + ',' + gg + ',' + gbl + ',1)';
       
@@ -9139,6 +9245,8 @@ var FOG_CODES = [45,48];
       ctx.fillText(v.ch, v.x, v.y);
     }
     ctx.globalAlpha = 1;
+    if (ceMoon.blur >= 1.5) ctx.filter = 'blur(' + ((ceMoon.blur - 1) * 2) + 'px)';
+
 
         /* ПРОХОДЪ 4 — сѣрыя буквы (фазовыя «0»): безъ свѣченія, поверхъ ореоловъ. */
     ctx.shadowBlur = 0;
@@ -9176,21 +9284,25 @@ var FOG_CODES = [45,48];
       var g = Math.round((darkCenter.g + (darkEdge.g - darkCenter.g) * t) * lightFactor);
       var b = Math.round((darkCenter.b + (darkEdge.b - darkCenter.b) * t) * lightFactor);
       
-      ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',0.94)';
+            var _a4 = 0.94 * (1 - ceMoon.dim * 0.6);
+      ctx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ',' + _a4 + ')';
       ctx.fillText(v.ch, v.x, v.y);
     }
 
+        ctx.filter = 'none';
     ctx.restore();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.globalAlpha = 1;
   }
 
-  function drawMeteors(now) {
+    function drawMeteors(now) {
     for (var i = 0; i < stars.length; i++) {
       var s = stars[i];
       if (!s.meteor || s.alpha <= 0.01) continue;
+      var ce = cloudEffect(s.meteor.x, s.meteor.y);
+      var aMult = (1 - ce.dim) * (ce.blur >= 1.5 ? 0.3 : 1);
       var sprite = starSprites[s.sizeKey + ':' + s.letter]; if (!sprite) continue;
-      var scale = 1.2, glowAlpha = 0.8 * (s.glowBoost || 1);
+      var scale = 1.2, glowAlpha = 0.8 * (s.glowBoost || 1) * (1 - ce.dim * 0.5);
       if (glowAlpha > 0.02) {
         var glow = starGlows[s.sizeKey];
         if (glow) {
@@ -9200,7 +9312,7 @@ var FOG_CODES = [45,48];
         }
       }
       ctx.setTransform(scale, 0, 0, scale, s.meteor.x * dpr, s.meteor.y * dpr);
-      ctx.globalAlpha = s.alpha; ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
+      ctx.globalAlpha = s.alpha * aMult; ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
   }
@@ -9255,8 +9367,9 @@ var FOG_CODES = [45,48];
     if (p.type === MODE_SNOW || p.type === MODE_RAIN) return 0.5; return 1;
   }
 
-  function update(dt, now) {
+    function update(dt, now) {
     var tSec = now / 1000;
+    updateCloudVisual(dt);
     for (var i = 0; i < particles.length; i++) {
       var p = particles[i];
       if (p.type === MODE_SNOW) {
@@ -9543,8 +9656,11 @@ window.__precipRefresh = fetchWeather;                       // ← ВОТЪ Э�
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-  /* ===== ОТЛАДКА: публичное API для отладочной панели ===== */
+    /* ===== ОТЛАДКА: публичное API для отладочной панели ===== */
   window.__zenDebugWeather = {
+        setCloudCover: function (pct) {
+      debugOverrides.cloudCover = (pct === null) ? null : Math.max(0, Math.min(100, Number(pct)));
+    },
     setPrecip: function (type, intensity, thunder) {
       debugOverrides.precipType = type;         // 'auto' | 'none' | 'snow' | 'rain' | 'fog'
       if (type === 'auto') debugOverrides.precipType = null;
@@ -9585,7 +9701,7 @@ window.__precipRefresh = fetchWeather;                       // ← ВОТЪ Э�
       if (m === 'auto') debugOverrides.meteorMode = null;
       if (m !== 'none') nextMeteorAt = performance.now() + 1000;
     },
-    reset: function () {
+        reset: function () {
       debugOverrides.precipType = null;
       debugOverrides.precipIntensity = null;
       debugOverrides.thunder = null;
@@ -9595,6 +9711,7 @@ window.__precipRefresh = fetchWeather;                       // ← ВОТЪ Э�
       debugOverrides.moonPhase = null;
       debugOverrides.starTiers = null;
       debugOverrides.meteorMode = null;
+      debugOverrides.cloudCover = null;
       /* Восстанавливаем погоду из API и пружины приборов */
       try { applyWeather(decideWeather()); } catch (e) {}
       try { computeWind(mode); } catch (e) {}
@@ -10803,9 +10920,10 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
         g.shadowBlur = size * 0.15; g.fillStyle = '#f0f6ff'; g.fillText(ch, d/2, d/2);
         return c;
     }
+     
 
-    function makeGlowSprite(size, dprScale) {
-        var d = size * 1.6;
+      function makeGlowSprite(size, dprScale) {
+    var d = size * 1.6;
         var c = document.createElement('canvas');
         c.width = Math.ceil(d * dprScale); c.height = Math.ceil(d * dprScale);
         var g = c.getContext('2d');
@@ -10910,16 +11028,18 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        if (!isNightNow()) {
+                if (!isNightNow() && !window._zenDebugMode) {
             animationId = requestAnimationFrame(draw);
             return;
         }
 
         ctx.scale(dpr, dpr);
 
-        starsData.forEach(star => {
+                starsData.forEach(star => {
             const x = offsetX + star.x * scale;
             const y = offsetY + star.y * scale;
+            
+            const ce = window.__cloudEffect ? window.__cloudEffect(x, y) : { dim: 0, blur: 0 };
             
             const wave1 = Math.sin(t * star.speed1 + star.phase1);
             const wave2 = Math.sin(t * star.speed2 + star.phase2);
@@ -10932,21 +11052,26 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
             
             const sizeFactor = 0.7 + (breath * 0.3);
 
+                        alpha *= (1 - ce.dim);
+
             if (alpha > 0.02) {
                 const glowSprite = starGlows[star.letter];
                 const gScale = (1 + 0.6 * alpha) * (0.7 + 0.3 * breath) * sizeFactor;
                 
                 ctx.setTransform(gScale, 0, 0, gScale, x * dpr, y * dpr);
-                ctx.globalAlpha = alpha * 0.85;
+                ctx.globalAlpha = alpha * 0.85 * (1 - ce.dim * 0.5);
                 ctx.drawImage(glowSprite, -glowSprite.width / 2, -glowSprite.height / 2);
             }
 
-            const sprite = starSprites[star.letter];
+                        const sprite = starSprites[star.letter];
             const sScale = sizeFactor;
             
+            ctx.save();
+            if (ce.blur >= 0.5) ctx.filter = 'blur(' + (ce.blur * 1.5) + 'px)';
             ctx.setTransform(sScale, 0, 0, sScale, x * dpr, y * dpr);
             ctx.globalAlpha = alpha;
             ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
+            ctx.restore();
         });
 
         ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -11185,13 +11310,27 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
         +   '</div>'
         + '</div>'
 
-        /* Звёзды — 4 слоя */
+                /* Звёзды — 4 слоя */
         + '<div class="dp-grp">'
         +   '<div class="dp-lbl">Звёзды — слои</div>'
         +   '<label class="dp-chk"><input type="checkbox" data-tier="1" checked> Слой 1 (яркие)</label>'
         +   '<label class="dp-chk"><input type="checkbox" data-tier="2" checked> Слой 2</label>'
         +   '<label class="dp-chk"><input type="checkbox" data-tier="3" checked> Слой 3</label>'
         +   '<label class="dp-chk"><input type="checkbox" data-tier="4" checked> Слой 4 (тусклые)</label>'
+        + '</div>'
+
+        /* Облачность */
+        + '<div class="dp-grp">'
+        +   '<div class="dp-lbl">Облачность</div>'
+        +   '<div class="dp-btns" data-k="cloudMode">'
+        +     '<button data-v="auto" class="active">Авто</button>'
+        +     '<button data-v="manual">Ручной</button>'
+        +   '</div>'
+        +   '<div class="dp-row">'
+        +     '<span>0–100%</span>'
+        +     '<input type="range" min="0" max="100" step="1" data-k="cloudCover" value="50">'
+        +     '<span data-out="cloudCover">50</span>'
+        +   '</div>'
         + '</div>'
 
         /* Метеоры */
@@ -11273,7 +11412,7 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
         });
     });
 
-    /* ---- Диспетчер изменений ---- */
+        /* ---- Диспетчер изменений ---- */
     var _precipType = 'auto';
     var _precipIntensity = 2;
     var _thunder = false;
@@ -11281,6 +11420,8 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
     var _windSpeed = 0;
     var _windDir = 0;
     var _moonVisible = 'auto';
+    var _cloudMode = 'auto';
+    var _cloudCover = 50;
 
     function onPanelChange(k, v) {
         var W = window.__zenDebugWeather;
@@ -11321,10 +11462,22 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
             if (W && _moonVisible !== 'hide') {
                 W.setMoon(_moonVisible === 'auto' ? null : true, v);
             }
-        } else if (k === 'meteorMode') {
+                } else if (k === 'meteorMode') {
             if (W) W.setMeteorMode(v);
         } else if (k === 'fireLevel') {
             if (F) F.setLevel(parseFloat(v));
+        } else if (k === 'cloudMode') {
+            _cloudMode = v;
+            if (W) {
+                if (_cloudMode === 'auto') {
+                    W.setCloudCover(null);
+                } else {
+                    W.setCloudCover(_cloudCover);
+                }
+            }
+        } else if (k === 'cloudCover') {
+            _cloudCover = v;
+            if (W && _cloudMode === 'manual') W.setCloudCover(_cloudCover);
         }
     }
 
@@ -11348,12 +11501,14 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
                 if (ws) { ws.value = 0; var o2 = panel.querySelector('[data-out="windSpeed"]'); if (o2) o2.textContent = '0'; }
                 var wd = panel.querySelector('input[data-k="windDir"]');
                 if (wd) { wd.value = 0; var o3 = panel.querySelector('[data-out="windDir"]'); if (o3) o3.textContent = '0'; }
-                var mp = panel.querySelector('input[data-k="moonPhase"]');
+                                var mp = panel.querySelector('input[data-k="moonPhase"]');
                 if (mp) { mp.value = 6; var o4 = panel.querySelector('[data-out="moonPhase"]'); if (o4) o4.textContent = '6'; }
+                var cc = panel.querySelector('input[data-k="cloudCover"]');
+                if (cc) { cc.value = 50; var o5 = panel.querySelector('[data-out="cloudCover"]'); if (o5) o5.textContent = '50'; }
                 var thr = panel.querySelector('input[data-k="thunder"]');
                 if (thr) thr.checked = false;
                 panel.querySelectorAll('input[data-tier]').forEach(function (cb) { cb.checked = true; });
-                /* сброс внутренних значений диспетчера */
+                                /* сброс внутренних значений диспетчера */
                 _precipType = 'auto';
                 _precipIntensity = 2;
                 _thunder = false;
@@ -11361,6 +11516,8 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
                 _windSpeed = 0;
                 _windDir = 0;
                 _moonVisible = 'auto';
+                _cloudMode = 'auto';
+                _cloudCover = 50;
             }
         }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
     }

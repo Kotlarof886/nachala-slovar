@@ -545,14 +545,12 @@ body.telegraph-on #s-tape { display: none; }
    Максимумъ 32 дополнительныхъ слоя одновременно (одна карточка),
    не 32 × N, какъ было бы при поголовномъ промоутѣ (тотъ путь
    отброшенъ въ №292). */
-.card-frame.flick-hold .fr-line::before,
-.card-frame.flick-hold .fr-line::after {
+.card-frame:hover .fr-line::before,
+.card-frame:hover .fr-line::after,
+.card-frame.flick-run .fr-line::before,
+.card-frame.flick-run .fr-line::after {
   will-change: opacity;
   transform: translateZ(0);
-  animation-play-state: paused !important;
-}
-.card-frame.flick-hold .fr-corner::after {
-  animation-play-state: paused !important;
 }
 
 /* базовые переходы для тушенія: работаютъ въ обѣ стороны */
@@ -4669,68 +4667,22 @@ var ENV_BG_FALLBACK = ['images/bg-01.png','images/bg-02.png','images/bg-03.png',
              'images/bg-05.png','images/bg-06.png','images/bg-07.png','images/bg-08.png',
              'images/bg-09.png','images/bg-10.png','images/bg-11.png','images/bg-12.png'];
 var ENV_BG_LIST = ENV_BG_FALLBACK.slice();
-/* Ленивое прогревание конвертовъ:
-   стартъ — первое дѣйствіе пользователя (скроллъ/тапъ/клавиша/колесо/наведеніе
-   на результаты) либо 2.5 с послѣ window.load, если дѣйствій не было.
-   Пробы идутъ батчами черезъ requestIdleCallback. Save-Data и 2G — пропускъ. */
 (function () {
   var found = [], pending = 40;
   function bgName(n) { return 'images/bg-' + (n < 10 ? '0' + n : n) + '.png'; }
   function check() {
     if (--pending) return;
     found.sort(function (a, b) { return a - b; });
-    if (found.length) ENV_BG_LIST = found.map(bgName);
+    if (found.length) ENV_BG_LIST = found.map(bgName);   /* найденные карточки — по порядку */
   }
-
-  try {
-    if (navigator.connection) {
-      if (navigator.connection.saveData) return;
-      var et = navigator.connection.effectiveType;
-      if (et === 'slow-2g' || et === '2g') return;
-    }
-  } catch (e) {}
-
-  var started = false, idx = 0, nums = [];
-  for (var i = 1; i <= 40; i++) nums.push(i);
-
-  var schedule = ('requestIdleCallback' in window)
-    ? function (cb) { requestIdleCallback(cb, { timeout: 2000 }); }
-    : function (cb) { setTimeout(function () { cb({ timeRemaining: function () { return 8; } }); }, 200); };
-
-  function step(deadline) {
-    while (idx < nums.length && (!deadline || deadline.timeRemaining() > 4)) {
-      (function (n) {
-        var im = new Image();
-        im.decoding = 'async';
-        im.onload = function () { found.push(n); check(); };
-        im.onerror = check;
-        im.src = bgName(n);
-      })(nums[idx++]);
-    }
-    if (idx < nums.length) schedule(step);
+  for (var i = 1; i <= 40; i++) {
+    (function (n) {
+      var im = new Image();
+      im.onload = function () { found.push(n); check(); };
+      im.onerror = check;
+      im.src = bgName(n);
+    })(i);
   }
-
-  var triggers = ['scroll', 'pointerdown', 'touchstart', 'keydown', 'wheel'];
-  function start() {
-    if (started) return;
-    started = true;
-    triggers.forEach(function (ev) {
-      window.removeEventListener(ev, start, { passive: true });
-      window.removeEventListener(ev, start, true);
-    });
-    schedule(step);
-  }
-  triggers.forEach(function (ev) {
-    window.addEventListener(ev, start, { once: true, passive: true, capture: true });
-  });
-  /* наведеніе на списокъ результатовъ — фора до клика (~300–500 мс) */
-  var res = document.getElementById('results');
-  if (res) res.addEventListener('mouseenter', start, { once: true, passive: true });
-  document.addEventListener('mouseover', function (e) {
-    if (e.target && e.target.closest && e.target.closest('.wiktionary-btn')) start();
-  }, { once: true, passive: true });
-  /* если пользователь вообще ничѣмъ не занялся — послѣ полной загрузки */
-  window.addEventListener('load', function () { setTimeout(start, 2500); }, { once: true });
 })();
 function cornetEnvelopesHtml(wm, w) {
   var bgs = ENV_BG_LIST.slice();
@@ -7667,13 +7619,11 @@ window.addEventListener('error', function (e) {
    N карточекъ падаетъ въ N разъ. */
 (function () {
   var last = null;
-  var isCoarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
-
   function flash(f) {
     if (!f) return;
-    if (isCoarse) return;            /* ← на телефонѣ пульсацію не запускаемъ */
     if (last && last !== f) last.classList.remove('flick-run');
-    if (f.classList.contains('flick-run')) return;  /* ← и на десктопѣ не перезапускаемъ */
+    f.classList.remove('flick-run');
+    void f.offsetWidth;
     f.classList.add('flick-run');
     last = f;
   }
@@ -10587,14 +10537,11 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
                 }
                 sprite = c._spr;
             }
-                        /* Оптимизация: setTransform вместо save/translate/rotate/restore.
-               Математически абсолютно то же самое, но не грузит GPU состояниями. */
-            const cos = Math.cos(c.rot), sin = Math.sin(c.rot);
-            fCtx.setTransform(DPR * cos, DPR * sin, -DPR * sin, DPR * cos, (CX + c.x) * DPR, (CY + c.y) * DPR);
+            fCtx.save(); fCtx.translate(c.x, c.y); fCtx.rotate(c.rot);
             fCtx.drawImage(sprite.img, -sprite.w / 2, -sprite.h / 2, sprite.w, sprite.h);
+            fCtx.restore();
         }
-        fCtx.setTransform(DPR, 0, 0, DPR, 0, 0); /* сброс матрицы */
-        fCtx.globalAlpha = 1;
+        fCtx.restore(); fCtx.globalAlpha = 1;
     }
 
     function fireLoop(time) {
@@ -10733,8 +10680,7 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
                 p.color = p.life > 0.4 ? '#ff9933' : '#cc3300';
             }
             if (p.x < -80 || p.x > W + 80 || p.y < -60 || p.y > H + 60) continue;
-                        var _a = (p.alpha !== undefined) ? p.alpha : Math.max(0, Math.min(1, p.life));
-            fCtx.globalAlpha = Math.round(_a * 20) / 20; /* округляем до шага 0.05 */
+            fCtx.globalAlpha = (p.alpha !== undefined) ? p.alpha : Math.max(0, Math.min(1, p.life));
             
                         if (p.type === 'smoke') {
                 if (!smokeSpritesReady) initSmokeSprites();
@@ -10759,14 +10705,11 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
                     p._s = p.size;
                 }
                 const sprite = p._spr;
-                                if (p.type === 'coal-pop') {
-                    const cosA = Math.cos(p.angle), sinA = Math.sin(p.angle);
-                    fCtx.setTransform(DPR * cosA, DPR * sinA, -DPR * sinA, DPR * cosA, p.x * DPR, p.y * DPR);
+                if (p.type === 'coal-pop') {
+                    fCtx.save(); fCtx.translate(p.x, p.y); fCtx.rotate(p.angle);
                     fCtx.drawImage(sprite.img, -sprite.w / 2, -sprite.h / 2, sprite.w, sprite.h);
-                    fCtx.setTransform(DPR, 0, 0, DPR, 0, 0); /* сброс для следующих частиц */
-                } else {
-                    fCtx.drawImage(sprite.img, p.x - sprite.w / 2, p.y - sprite.h / 2, sprite.w, sprite.h);
-                }
+                    fCtx.restore();
+                } else fCtx.drawImage(sprite.img, p.x - sprite.w / 2, p.y - sprite.h / 2, sprite.w, sprite.h);
             }
         }
         fCtx.globalAlpha = 1;

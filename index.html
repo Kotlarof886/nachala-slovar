@@ -10507,22 +10507,35 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
         if (lvl > 0.5 && Math.random() < dt * sparkRate) spawnSidewaysSparks(1, lvl);
     }
 
-    function drawCoals(time) {
+        function drawCoals(time) {
         const heatLevel = heatVisual;
         fCtx.save(); fCtx.translate(CX, CY);
         for (let i = 0; i < baseChars.length; i++) {
             const c = baseChars[i]; if (c.type !== 'coal') continue;
             let sprite;
-            if (heatLevel < 0.05) sprite = getCoalSprite(c.letter, c.size, false, 0, 0);
-            else if (c.dist < 0.6) {
+            if (heatLevel < 0.05) {
+                if (!c._spr || c._h !== -1) { c._spr = getCoalSprite(c.letter, c.size, false, 0, 0); c._h = -1; }
+                sprite = c._spr;
+            } else if (c.dist < 0.6) {
                 const shift = Math.sin(time * 0.004 + c.phase);
-                sprite = getCoalSprite(c.letter, c.size, true, heatLevel, shift);
+                /* Кэшируем спрайт угля, если тепло и сдвиг изменились незначительно */
+                if (!c._spr || Math.abs(c._h - heatLevel) > 0.02 || Math.abs((c._shift||0) - shift) > 0.1) {
+                    c._spr = getCoalSprite(c.letter, c.size, true, heatLevel, shift);
+                    c._h = heatLevel;
+                    c._shift = shift;
+                }
+                sprite = c._spr;
             } else {
                 const dim = Math.max(0.1, heatLevel);
-                const color = 'rgb(' + Math.round(18 * dim) + ',' + Math.round(5 * dim) + ',0)';
-                const key = c.letter + '|' + Math.round(c.size) + '|dark|' + color;
-                sprite = coalSpriteCache.get(key);
-                if (!sprite) { sprite = makeSprite(c.letter, c.size, color, null, 0); coalSpriteCache.set(key, sprite); }
+                const bucket = Math.round(dim * 20) / 20;
+                if (!c._spr || c._h !== bucket) {
+                    const color = 'rgb(' + Math.round(18 * dim) + ',' + Math.round(5 * dim) + ',0)';
+                    const key = c.letter + '|' + Math.round(c.size) + '|dark|' + color;
+                    c._spr = coalSpriteCache.get(key);
+                    if (!c._spr) { c._spr = makeSprite(c.letter, c.size, color, null, 0); coalSpriteCache.set(key, c._spr); }
+                    c._h = bucket;
+                }
+                sprite = c._spr;
             }
             fCtx.save(); fCtx.translate(c.x, c.y); fCtx.rotate(c.rot);
             fCtx.drawImage(sprite.img, -sprite.w / 2, -sprite.h / 2, sprite.w, sprite.h);
@@ -10669,7 +10682,7 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
             if (p.x < -80 || p.x > W + 80 || p.y < -60 || p.y > H + 60) continue;
             fCtx.globalAlpha = (p.alpha !== undefined) ? p.alpha : Math.max(0, Math.min(1, p.life));
             
-            if (p.type === 'smoke') {
+                        if (p.type === 'smoke') {
                 if (!smokeSpritesReady) initSmokeSprites();
                 const bIdx = pickSmokeBaseIdx(p.size), sIdx = pickSmokeShadeIdx(p.age);
                 const letterCache = smokeSpriteCache[p.text] || smokeSpriteCache['M'];
@@ -10678,15 +10691,20 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
                 const drawH = p.size * (sprite.h / SMOKE_BASE_SIZES[bIdx]);
                 fCtx.drawImage(sprite.img, p.x - drawW / 2, p.y - drawH / 2, drawW, drawH);
             } else {
-                let glowColor = null, glowBlur = 0;
-                if (p.type === 'spark' || p.type === 'coal-pop') { glowColor = p.color; glowBlur = 8; }
-                else if (p.type === 'smolder') { glowColor = p.color; glowBlur = 6; }
-                
-                if (p.type === 'fire-core' || p.type === 'fire-sub' || p.type === 'fire-outer') {
-                    glowColor = p.color; glowBlur = 4;
+                /* Оптимизація: печёмъ спрайтъ одинъ разъ и хранимъ на частицѣ,
+                   чтобы не искать его въ кэшѣ каждый кадръ (спасаетъ отъ GC-фризовъ) */
+                if (!p._spr || p._c !== p.color || p._s !== p.size) {
+                    let glowColor = null, glowBlur = 0;
+                    if (p.type === 'spark' || p.type === 'coal-pop') { glowColor = p.color; glowBlur = 8; }
+                    else if (p.type === 'smolder') { glowColor = p.color; glowBlur = 6; }
+                    else if (p.type === 'fire-core' || p.type === 'fire-sub' || p.type === 'fire-outer') {
+                        glowColor = p.color; glowBlur = 4;
+                    }
+                    p._spr = getSprite(p.text, p.size, p.color || '#fff', glowColor, glowBlur);
+                    p._c = p.color;
+                    p._s = p.size;
                 }
-                
-                const sprite = getSprite(p.text, p.size, p.color || '#fff', glowColor, glowBlur);
+                const sprite = p._spr;
                 if (p.type === 'coal-pop') {
                     fCtx.save(); fCtx.translate(p.x, p.y); fCtx.rotate(p.angle);
                     fCtx.drawImage(sprite.img, -sprite.w / 2, -sprite.h / 2, sprite.w, sprite.h);

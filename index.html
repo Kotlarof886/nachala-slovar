@@ -370,14 +370,13 @@ body.telegraph-on #s-tape { display: none; }
 
 /* ---------- Декоративная рамка статьи ---------- */
 .card-frame {
-  /* №321: живой масштабъ рамки — на узкихъ экранахъ сжимается пропорционально,
-     потолокъ 0.055 держитъ десктопъ прежнимъ (перьевой скриптъ читаетъ --u какъ прежде) */
   --u: var(--frame-u, 0.055);
   position: relative;
   background: var(--card, #1a1520);
   width: 100%;
   margin: 0 0 1.2rem;
   margin: 0 auto 1.2rem;
+  contain: layout style paint;
 }
 /* узорная подложка карточки с затуханием к рамке */
 .card-frame::before {
@@ -498,7 +497,6 @@ body.telegraph-on #s-tape { display: none; }
     --c-glow: 1;
     transition: --c-glow 2.7s ease, filter 1.1s ease, box-shadow 1.1s ease;
   }
-
   .card-frame:hover .fr-corner::after,
   .card-frame:hover .fr-line::after {
     --c-flame: 1;
@@ -537,8 +535,10 @@ body.telegraph-on #s-tape { display: none; }
   filter: none;
   box-shadow: 0 0 10px rgba(240, 150, 60, 0.55);
 }
-.fr-corner::before,
-.fr-corner::after { transform: translateZ(0); }
+@media (hover: hover) and (pointer: fine) {
+  .fr-corner::before,
+  .fr-corner::after { transform: translateZ(0); }
+}
 /* ===== №347: промоутъ линій на время свѣченія =====
    32 псевдослоя линій (16 элементовъ × ::before/::after) анимируютъ
    opacity черезъ --c-glow и --c-flame. Безъ промоута браузеръ можетъ
@@ -5029,26 +5029,24 @@ function bindButtons(out, list) {
       /* №323: открытіе большѣ не трогаетъ margin-top — мгновенное обнуленіе верхняго
          отступа стягивало 10px надъ окномъ въ первый кадръ, и содержимое дёргалось вверхъ.
          Окно растётъ только высотой: всѣ карточки выше и ниже стоятъ на своихъ мѣстахъ. */
-      (function (sl) {
-        var full = sl.scrollHeight;
-        sl.style.height = '0px';
-        sl.style.overflow = 'hidden';
-        void sl.offsetHeight;
-        sl.style.transition = 'height 0.28s ease-out';
-        sl.style.height = full + 'px';
-        var inn = sl.firstElementChild;
-        if (inn) {
-          inn.style.transform = 'translateY(-12px)';
-          inn.style.opacity = '0';
-          void inn.offsetHeight;
-          inn.style.transition = 'transform 0.3s ease-out, opacity 0.3s ease-out';
-          inn.style.transform = '';
-          inn.style.opacity = '';
-        }
-        sl._openTimer = setTimeout(function () {
-          sl._openTimer = null;
-          if (!sl._closing) { sl.style.height = ''; sl.style.overflow = ''; sl.style.transition = ''; }
-        }, 330);
+            (function (sl) {
+  var isCoarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  var full = sl.scrollHeight;
+  if (isCoarse) {
+    /* на телефонѣ — мгновенно: одна перестройка вмѣсто 280 мс покадровыхъ */
+    sl.style.height = ''; sl.style.overflow = ''; sl.style.transition = '';
+  } else {
+    sl.style.height = '0px';
+    sl.style.overflow = 'hidden';
+    void sl.offsetHeight;
+    sl.style.transition = 'height 0.28s ease-out';
+    sl.style.height = full + 'px';
+  }
+  if (sl._openTimer) clearTimeout(sl._openTimer);
+  sl._openTimer = setTimeout(function () {
+    sl._openTimer = null;
+    if (!sl._closing) { sl.style.height = ''; sl.style.overflow = ''; sl.style.transition = ''; }
+  }, 330);
       })(slot);
       const cache = window._wikiCache || (window._wikiCache = new Map());
       try {
@@ -11627,3 +11625,28 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
     }
 })();
 </script>
+<style id="touch-light-compromise">
+@media (pointer: coarse) {
+  .fr-corner::before,
+  .fr-corner::after,
+  .fr-line::before,
+  .fr-line::after {
+    transition: none !important;
+    animation: none !important;
+    filter: none !important;
+    --c-flick: 1;
+  }
+  .fr-line::before {
+    box-shadow: 0 0 4px rgba(212, 176, 106, 0.8), 0 0 14px rgba(212, 176, 106, 0.35);
+  }
+  .fr-line::after {
+    box-shadow: 0 0 10px rgba(240, 150, 60, 0.55);
+  }
+  .card-frame:active .fr-corner::before,
+  .card-frame:active .fr-line::before { --c-glow: 0.85; }
+  .card-frame:active .fr-corner::after,
+  .card-frame:active .fr-line::after  { --c-flame: 1; }
+}
+</style>
+</body>
+</html>

@@ -11775,10 +11775,6 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
   }
 }
 </style>
-
-
-
-
 <script>
 /* НАЧАЛА · надзиратель набивки №366: одна мѣрка — та же, что и у набивки.
    Прежняя канвасная панель и внешний патчъ удаляются; проба — на живых буквахъ. */
@@ -11927,7 +11923,8 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
     document.body.appendChild(out);
   }
 
-  function boot() { runAll(); buildPanel(); }
+  
+function boot() { runAll(); /* buildPanel(); */ }
   if (document.readyState === 'loading')
     document.addEventListener('DOMContentLoaded', function () { setTimeout(boot, 150); });
   else setTimeout(boot, 150);
@@ -12004,5 +12001,46 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
   }
 })();
 </script>
+<script>
+/* НАЧАЛА · №371 «рамки ужаты» */
+(function () {
+  if (window.__nachalaFrame371) return;
+  window.__nachalaFrame371 = true;
+  var css = document.createElement('style');
+  css.textContent =
+    '.brief-block{padding:0.4rem 0.4rem!important}' +
+    '.brief-strip{padding:3px 5px 4px!important}' +
+    '.brief-line{letter-spacing:0.02em!important}' +
+    '.brief-tape .tpc{letter-spacing:0.02em!important}';
+  document.head.appendChild(css);
+  function norm(s){ return (s||'').replace(/\s+/g,' ').trim(); }
+  function refit() {
+    if (typeof window.bakeTapeText !== 'function' ||
+        typeof window.paintTapeStrips !== 'function') return;
+    document.querySelectorAll('[data-brief-tape]').forEach(function (tape) {
+      try {
+        var t = norm(tape._briefText || tape.textContent);
+        if (!t) return;
+        tape._briefText = t;
+        var W = tape.clientWidth;
+        if (!W) return;
+        var track = document.getElementById('tape-track');
+        var bg = track ? getComputedStyle(track).backgroundImage : '';
+        tape._baked = true; tape._f366 = 0; tape._t366 = 0;
+        tape.innerHTML = '';
+        bakeTapeText(tape, t, W);
+        paintTapeStrips(tape, bg, W);
+      } catch (e) {}
+    });
+  }
+  setTimeout(refit, 350);
+  setTimeout(refit, 1500);
+  if (document.fonts && document.fonts.ready)
+    document.fonts.ready.then(function () { setTimeout(refit, 150); });
+  var rT;
+  window.addEventListener('resize', function () { clearTimeout(rT); rT = setTimeout(refit, 300); });
+})();
+</script>
+
 </body>
 </html>

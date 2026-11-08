@@ -11945,7 +11945,7 @@ function boot() { runAll(); /* buildPanel(); */ }
       clearTimeout(mT); mT = setTimeout(runAll, 250);
     }).observe(document.documentElement, { childList: true, subtree: true });
   }
-  setInterval(function () { if (!document.hidden) runAll(); }, 5000);
+
 })();
 </script>
 <script>

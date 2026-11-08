@@ -4481,47 +4481,54 @@ function bakeBriefTapes(scope) {
     var txt = el.textContent.trim();
     var words = txt.split(/\s+/).filter(function (x) { return x; });
     el.innerHTML = '';
-    /* мѣрка: скрытый мѣритель съ тем же шрифтомъ */
-    var meas = document.createElement('div');
-    meas.style.cssText = 'position:absolute;left:-99999px;top:0;visibility:hidden;white-space:nowrap;';
-    var msp = document.createElement('span');
-    msp.className = 'tpc'; msp.style.display = 'inline-block'; msp.style.whiteSpace = 'pre';
-    meas.appendChild(msp);
-    el.appendChild(meas);
-    var spaceW = msp.offsetWidth + 4 || 9;
-    var maxW = W - 16;                       /* поля полосы и запасъ подъ рваный срѣзъ */
-    var lines = [], cur = [], curW = 0;
+    /* №357: живая набивка — слово приставляется къ настоящей полосѣ,
+       и полоса мѣрится тѣмъ же браузеромъ, тѣмъ же шрифтомъ и CSS,
+       какимъ будетъ напечатана. Никакихъ мѣрокъ «на расстояніи»:
+       разойтись съ фактическимъ рендеромъ физически невозможно. */
+    var _newStrip = function () {
+      var st = document.createElement('div');
+      st.className = 'brief-strip';
+      var inr = document.createElement('span');
+      inr.className = 'brief-line';
+      st.appendChild(inr);
+      el.appendChild(st);
+      return inr;
+    };
+    var _mkChar = function (ch) {
+      var c = document.createElement('span');
+      c.className = 'tpc';
+      c.textContent = ch;
+      /* пляска буквъ: лёгкій сдвигъ, поворотъ и разбросъ тона — приёмъ телеграфа */
+      var dy = (Math.random() * 1.4 - 0.7).toFixed(2);
+      var dr = (Math.random() * 1.0 - 0.5).toFixed(2);
+      var br = (0.92 + Math.random() * 0.16).toFixed(2);
+      c.style.transform = 'translateY(' + dy + 'px) rotate(' + dr + 'deg)';
+      c.style.filter = 'brightness(' + br + ')';
+      return c;
+    };
+    var curInner = null;
     words.forEach(function (wd) {
-      msp.textContent = wd;
-      var w = msp.offsetWidth;
-      if (cur.length && curW + spaceW + w > maxW) { lines.push(cur); cur = []; curW = 0; }
-      cur.push(wd); curW += (cur.length > 1 ? spaceW : 0) + w;
-    });
-    if (cur.length) lines.push(cur);
-    meas.parentNode.removeChild(meas);
-
-    lines.forEach(function (line) {
-      var strip = document.createElement('div');
-      strip.className = 'brief-strip';
-      var inner = document.createElement('span');
-      inner.className = 'brief-line';
-      line.forEach(function (wd, wi) {
-        if (wi) inner.appendChild(document.createTextNode(' '));
-        for (var k = 0; k < wd.length; k++) {
-          var s = document.createElement('span');
-          s.className = 'tpc';
-          s.textContent = wd.charAt(k);
-          /* пляска буквъ: лёгкій сдвигъ, поворотъ и разбросъ тона — приёмъ телеграфа */
-          var dy = (Math.random() * 1.4 - 0.7).toFixed(2);
-          var dr = (Math.random() * 1.0 - 0.5).toFixed(2);
-          var br = (0.92 + Math.random() * 0.16).toFixed(2);
-          s.style.transform = 'translateY(' + dy + 'px) rotate(' + dr + 'deg)';
-          s.style.filter = 'brightness(' + br + ')';
-          inner.appendChild(s);
-        }
-      });
-      strip.appendChild(inner);
-      el.appendChild(strip);
+      var chs = [];
+      for (var k = 0; k < wd.length; k++) chs.push(_mkChar(wd.charAt(k)));
+      if (!curInner) {
+        curInner = _newStrip();
+        for (var k2 = 0; k2 < chs.length; k2++) curInner.appendChild(chs[k2]);
+        return;
+      }
+      curInner.appendChild(document.createTextNode(' '));
+      var b0 = curInner.childNodes.length;      /* сколько уже есть до слова */
+      for (var k3 = 0; k3 < chs.length; k3++) curInner.appendChild(chs[k3]);
+      /* №358: правило «максимумъ словъ въ строкѣ при минимумѣ строкъ» —
+         рвёмъ только когда слово дѣйствительно не влѣзаетъ: мѣряется
+         настоящий переливъ строки (scrollWidth) противъ настоящей
+         доступной ширины (лента минусъ поля полосы 14px, съ граціей 1px
+         подъ концевую разрядку буквы), а не запасной расчётный лимитъ */
+      if (curInner.scrollWidth > W - 13 && b0 > 0) {
+        for (var k4 = 0; k4 < chs.length; k4++) curInner.removeChild(curInner.lastChild);
+        curInner.removeChild(curInner.lastChild);   /* пробѣлъ передъ словомъ */
+        curInner = _newStrip();
+        for (var k5 = 0; k5 < chs.length; k5++) curInner.appendChild(chs[k5]);
+      }
     });
 
     /* фонъ, наклонъ и рваный срѣзъ — по каждой полосѣ, послѣ укладки */
@@ -4547,6 +4554,25 @@ function bakeBriefTapes(scope) {
 
 
 
+
+/* №358: страховка шрифта — ежели телеграфный шрифтъ дозагрузился послѣ
+   запеканія, полосы мѣрялись запаснымъ начертаніемъ и рвались не туда.
+   Одинъ разъ перезапекаемъ всѣ ленты на страницѣ и чистимъ кэшъ разысканій,
+   чтобы будущіе запекались уже съ настоящимъ шрифтомъ. */
+(function () {
+  if (!(document.fonts && document.fonts.ready)) return;
+  document.fonts.ready.then(function () {
+    try { _slotCache.clear(); } catch (e) {}
+    var tapes = document.querySelectorAll('[data-brief-tape]');
+    if (!tapes.length) return;
+    tapes.forEach(function (el) {
+      if (!el.textContent.trim()) return;
+      el._baked = false;
+      el.innerHTML = '';
+    });
+    bakeBriefTapes(document.body);
+  });
+})();
 
 /* Сшивъ №261: отложенная пересборка списка (debounce набора) */
 var _renderTimer = null;

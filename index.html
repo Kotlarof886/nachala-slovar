@@ -11922,7 +11922,6 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
     document.body.appendChild(btn);
     document.body.appendChild(out);
   }
-
   
 function boot() { runAll(); /* buildPanel(); */ }
   if (document.readyState === 'loading')
@@ -12041,6 +12040,10 @@ function boot() { runAll(); /* buildPanel(); */ }
   window.addEventListener('resize', function () { clearTimeout(rT); rT = setTimeout(refit, 300); });
 })();
 </script>
-
+<style>
+/* №373: бокс как былъ (№371), двигается ТОЛЬКО заголовокъ «Казенная справка» */
+.brief-block { padding: 0.4rem 0.4rem !important; }
+.brief-block > h4 { margin: 0.3rem 0.5rem !important; }
+</style>
 </body>
 </html>

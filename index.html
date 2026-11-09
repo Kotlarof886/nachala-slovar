@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №343: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №396: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -6442,7 +6442,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 343</div>
+<div class="build-info">Сшивъ № 396</div>
 <style id="tg-strips">
 /* Казенная справка: полосы ленты, какъ у телеграфныхъ карточекъ.
    Рамку и заголовокъ блокъ наследуетъ у .src-block. */
@@ -7875,6 +7875,16 @@ window.addEventListener('error', function (e) {
   var SKY_PARALLAX = 0.2, SKY_EASE = 0.08, SKY_TOP = 80; /* небо едет въ 0.2 прокрутки — дали; догоняніе плавное */
   /* высота неба заморожена на загрузку: шапка Хрома и клавиатура её не двигаютъ */
   var SKY_BASE_H = window.innerHeight || 600, SKY_LAST_W = window.innerWidth || 600;
+  var pinPrecip = { base: null }, pinUrsa = { base: null };
+  function pinCanvas(cv, entry) {
+    if (!cv) return;
+    var r = cv.getBoundingClientRect();
+    if (r.height < 2) return; /* канвасъ ещё не показанъ — пинъ отложимъ */
+    if (entry.base === null) entry.base = window.innerHeight - r.bottom;
+    var dy = (window.innerHeight - r.bottom) - entry.base;
+    if (dy > 0.5) cv.style.transform = 'translateY(' + dy.toFixed(1) + 'px) translateZ(0)';
+    else if (cv.style.transform !== 'translateZ(0)') cv.style.transform = 'translateZ(0)';
+  }
   if (SKY_LAST_W < 600) {
     (function () {
       var bg = new Image();
@@ -9668,21 +9678,24 @@ var FOG_CODES = [45,48];
       if (Math.abs(skyGoal - skyScrollOff) < 0.5) skyScrollOff = skyGoal;
       /* компенсация шапки Хрома: ростъ окна гасится поправкой — шапка лишь открываетъ верхнюю полосу неба,
          фонъ и звёзды стоятъ на мѣстѣ (канвасъ приклеенъ къ кромкѣ окна, замеръ его положенія всегда ноль) */
-      skyComp = Math.max(0, window.innerHeight - SKY_BASE_H);
+      skyComp = 0; /* геометрію держитъ пинъ канваса */
     }
     if (!skyHidden) {
-      var kbOn = false;
+      var kbOn = false, kbEdge = -1;
       if (window.innerWidth < 600 && window.visualViewport) {
-        var kbEdge = window.visualViewport.height + (window.visualViewport.offsetTop || 0);
-        if (kbEdge < H - 2) { /* клавіатура въшла въ экранъ — всё небо ниже ея кромки не рисуется */
-          ctx.save(); ctx.beginPath();
-          ctx.rect(0, 0, canvas.width, Math.max(0, kbEdge * dpr)); ctx.clip(); kbOn = true;
-        }
+        kbEdge = window.visualViewport.height - canvas.getBoundingClientRect().top;
       }
-      drawStars(now);
-      drawMoon(now);
-      drawMeteors(now);
-      if (kbOn) ctx.restore();
+      if (kbEdge > 0 && kbEdge < H - 2) { /* срѣзъ мѣряется отъ самого канваса — точно по кромкѣ клавіатуры */
+        ctx.save(); ctx.beginPath();
+        ctx.rect(0, 0, canvas.width, Math.max(0, kbEdge * dpr)); ctx.clip(); kbOn = true;
+        drawStars(now); drawMoon(now); drawMeteors(now);
+        ctx.restore();
+      } else if (kbEdge === 0) {
+        /* мобайлъ: небо цѣликомъ за клавиатуройъ — не рисуемъ вовсе: экономія ресурса */
+      } else {
+        /* десктопъ (kbEdge === -1, замеръ не вѣдется) и открытый кліпъ — рисуемъ всё */
+        drawStars(now); drawMoon(now); drawMeteors(now);
+      }
     }
     for (var i = 0; i < particles.length; i++) {
       var p = particles[i];
@@ -9742,7 +9755,9 @@ var FOG_CODES = [45,48];
     if (dt > 0.1) dt = 0.1;
     lastTime = now;
     update(dt, now);
-    updateStars(now, dt);
+    if (!skyHidden) updateStars(now, dt); /* небо скрылось — звёзды не тратятъ ресурсъ */
+    pinCanvas(canvas, pinPrecip);
+    pinCanvas(document.getElementById('ursa-major-canvas'), pinUrsa);
     if (now - lastDraw >= FRAME_MS) { draw(now); lastDraw = now; }
     animId = requestAnimationFrame(loop);
   }
@@ -11350,7 +11365,7 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
         var ursaGoal = ursaTarget;
         ursaScrollOff += (ursaGoal - ursaScrollOff) * URSA_EASE;
         if (Math.abs(ursaGoal - ursaScrollOff) < 0.5) ursaScrollOff = ursaGoal;
-        if (window.innerWidth < 600) ursaComp = Math.max(0, window.innerHeight - URSA_BASE_H);
+        if (window.innerWidth < 600) ursaComp = 0; /* геометрію держитъ пинъ канваса */
         time = time || performance.now();
         if (time - lastDrawTime < FRAME_MS) {
             animationId = requestAnimationFrame(draw);
@@ -11373,7 +11388,7 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
             const x = offsetX + star.x * scale;
             const y = offsetY + star.y * scale - ursaScrollOff + ursaComp;
             if (window.innerWidth < 600 && window.visualViewport) {
-              const kbU = window.visualViewport.height + (window.visualViewport.offsetTop || 0);
+              const kbU = window.visualViewport.height - canvas.getBoundingClientRect().top; /* замеръ отъ самого канваса */
               if (y > kbU) return;
             }
             
@@ -12160,35 +12175,7 @@ function boot() { runAll(); /* buildPanel(); */ }
 /* №373: бокс как былъ (№371), двигается ТОЛЬКО заголовокъ «Казенная справка» */
 .brief-block { padding: 0.4rem 0.4rem !important; }
 .brief-block > h4 { margin: 0.3rem 0.5rem !important; }
-</style><script>
-(function () {
-  if (window.innerWidth >= 600) return;
-  var vv = window.visualViewport;
-
-  function patch(canvas) {
-    if (!canvas) return;
-    var baseTop = null;
-    function sync() {
-      var r = canvas.getBoundingClientRect();
-      if (baseTop === null) baseTop = r.top;
-      var dy = r.top - baseTop;
-      if (Math.abs(dy) > 0.5) canvas.style.transform = 'translateY(' + (-dy) + 'px)';
-      else canvas.style.transform = '';
-      var cut = r.height - (vv ? (vv.height + vv.offsetTop) : r.height);
-      if (cut > 2) canvas.style.clipPath = 'inset(0px 0px ' + cut.toFixed(1) + 'px 0px)';
-      else canvas.style.clipPath = '';
-    }
-    if (vv) { vv.addEventListener('resize', sync); vv.addEventListener('scroll', sync); }
-    window.addEventListener('scroll', sync, { passive: true });
-    window.addEventListener('resize', sync);
-    window.addEventListener('orientationchange', function () { baseTop = null; sync(); });
-    sync();
-  }
-
-  patch(document.getElementById('precip-canvas'));
-  patch(document.getElementById('ursa-major-canvas'));
-})();
-</script>
+</style>
 
 </body>
 </html>

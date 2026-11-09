@@ -126,9 +126,9 @@ body::before {
   position: fixed;
   inset: 0;
   background-image: url('images/fon.jpg');
-  background-size: cover; /* №257: растяжение пропорцiонально на весьъ экранъ, безъ швовъ */
+  background-size: var(--sky-bg-size, cover); /* мобайл: размѣръ замороженъ — шапка не зумитъ фонъ */
   background-repeat: no-repeat;
-  background-position: center;
+  background-position: var(--sky-bg-pos, center); /* мобайл: якорь къ низу — фонъ стоитъ на мѣстѣ */
   z-index: -2;
 }
 body::after {
@@ -7871,10 +7871,22 @@ window.addEventListener('error', function (e) {
      сдвигаются вверхъ на 0.35 прокрутки (параллаксъ дали) и плавно догоняютъ цѣль;
      когда небо скрылось цѣликомъ, отрисовка его прекращается вовсе (экономія кадра).
      На широкомъ экранѣ сдвигъ всегда нулевой — поведеніе не меняется. */
-    var skyScrollOff = 0, skyTarget = 0, skyHidden = false, skyLastY = 0, skyComp = 0;
+    var skyScrollOff = 0, skyTarget = 0, skyHidden = false, skyLastY = 0, skyComp = 0, skyKbWas = false;
   var SKY_PARALLAX = 0.2, SKY_EASE = 0.08, SKY_TOP = 80; /* небо едет въ 0.2 прокрутки — дали; догоняніе плавное */
   /* высота неба заморожена на загрузку: шапка Хрома и клавиатура её не двигаютъ */
   var SKY_BASE_H = window.innerHeight || 600, SKY_LAST_W = window.innerWidth || 600;
+  if (SKY_LAST_W < 600) {
+    (function () {
+      var bg = new Image();
+      bg.onload = function () {
+        var sc = Math.max(SKY_LAST_W / bg.width, (SKY_BASE_H + 160) / bg.height);
+        var st = document.documentElement.style;
+        st.setProperty('--sky-bg-size', Math.ceil(bg.width * sc) + 'px ' + Math.ceil(bg.height * sc) + 'px');
+        st.setProperty('--sky-bg-pos', 'center bottom'); /* якорь къ низу: низъ окна неподвиженъ */
+      };
+      bg.src = 'images/fon.jpg';
+    })();
+  }
   window.addEventListener('resize', function () {
     var w = window.innerWidth || 600;
     if (Math.abs(w - SKY_LAST_W) > 1) { SKY_LAST_W = w; SKY_BASE_H = window.innerHeight || 600; }
@@ -7886,12 +7898,19 @@ window.addEventListener('error', function (e) {
         var H = SKY_BASE_H;
         var up = y < skyLastY - 1; /* движеніе вверхъ — защёлка */
         skyLastY = y;
-        skyTarget = Math.max(0, y) * SKY_PARALLAX;
-        if (!skyHidden) { if (skyTarget >= H + 40) skyHidden = true; }
-        else if (skyTarget < H - 40) skyHidden = false; /* гистерезисъ 40px — не дрожитъ на границѣ */
-        if (up || y < SKY_TOP) { /* возвратъ наверхъ — мгновенный, звёзды уже на мѣстѣ */
-          if (y < SKY_TOP) skyTarget = 0;
-          skyScrollOff = skyTarget;
+        var vSky = (window.innerWidth < 600 && window.visualViewport) ? window.visualViewport : null;
+        var kbOpen = !!(vSky && (vSky.height + (vSky.offsetTop || 0)) < SKY_BASE_H - 60);
+        if (kbOpen) {
+          skyKbWas = true; /* клавіатура открыта — цѣль параллакса заморожена, звёзды не толкаются */
+        } else {
+          skyTarget = Math.max(0, y) * SKY_PARALLAX;
+          if (!skyHidden) { if (skyTarget >= H + 40) skyHidden = true; }
+          else if (skyTarget < H - 40) skyHidden = false; /* гистерезисъ 40px — не дрожитъ на границѣ */
+          if (up || y < SKY_TOP) { /* возвратъ наверхъ — мгновенный, звёзды уже на мѣстѣ */
+            if (y < SKY_TOP) skyTarget = 0;
+            skyScrollOff = skyTarget;
+          }
+          if (skyKbWas) { skyKbWas = false; skyScrollOff = skyTarget; } /* закрылась — мгновенный возвратъ на мѣсто */
         }
       };
       window.addEventListener('scroll', onSkyScroll, { passive: true });
@@ -9649,7 +9668,7 @@ var FOG_CODES = [45,48];
       if (Math.abs(skyGoal - skyScrollOff) < 0.5) skyScrollOff = skyGoal;
       /* компенсация шапки Хрома: меряем фактическое положеніе канваса и гасим сдвигъ въ отрисовкѣ —
          шапка лишь открываетъ верхнюю полосу неба, фонъ стоитъ на мѣстѣ */
-      skyComp = -canvas.getBoundingClientRect().top;
+      skyComp = Math.max(0, window.innerHeight - SKY_BASE_H); /* шапка уехала — окно выросло: разницу гасимъ, звёзды стоятъ */
     }
     if (!skyHidden) {
       var kbOn = false;
@@ -11151,7 +11170,7 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
 <!-- ===== КОНЕЦ БЛОКА ZEN MODE ===== -->
 
 <!-- ===== Созвездие Большая Медведица (Защита от дерганья при прокрутке) ===== -->
-<canvas id="ursa-major-canvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:99990;opacity:0;transition:opacity 0.8s ease-in-out;will-change:transform;transform:translateZ(0);backface-visibility:hidden;contain:strict;"></canvas>
+<canvas id="ursa-major-canvas" style="position:fixed;top:0;left:0;pointer-events:none;z-index:99990;opacity:0;transition:opacity 0.8s ease-in-out;will-change:transform;transform:translateZ(0);backface-visibility:hidden;contain:strict;"></canvas>
 <script>
 (function() {
     const canvas = document.getElementById('ursa-major-canvas');
@@ -11162,7 +11181,7 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
     let lastDrawTime = 0;
 
     /* №X: мобильный уходъ созвездія за верхній край при прокруткѣ (только телефонъ) */
-        let ursaScrollOff = 0, ursaTarget = 0, ursaHidden = false, ursaLastY = 0, ursaComp = 0;
+        let ursaScrollOff = 0, ursaTarget = 0, ursaHidden = false, ursaLastY = 0, ursaComp = 0, ursaKbWas = false;
     const URSA_PARALLAX = 0.2, URSA_EASE = 0.08, URSA_TOP = 80;
     /* высота заморожена: шапка и клавиатура созвездіе не двигаютъ */
     let URSA_BASE_H = window.innerHeight || 600, URSA_LAST_W = window.innerWidth || 600;
@@ -11176,12 +11195,19 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
         const H = URSA_BASE_H;
         const up = y < ursaLastY - 1;
         ursaLastY = y;
-        ursaTarget = Math.max(0, y) * URSA_PARALLAX;
-        if (!ursaHidden) { if (ursaTarget >= H + 40) ursaHidden = true; }
-        else if (ursaTarget < H - 40) ursaHidden = false;
-        if (up || y < URSA_TOP) {
-          if (y < URSA_TOP) ursaTarget = 0;
-          ursaScrollOff = ursaTarget;
+        var vUrsa = (window.innerWidth < 600 && window.visualViewport) ? window.visualViewport : null;
+        var kbOpenU = !!(vUrsa && (vUrsa.height + (vUrsa.offsetTop || 0)) < URSA_BASE_H - 60);
+        if (kbOpenU) {
+          ursaKbWas = true; /* клавіатура открыта — цѣль заморожена */
+        } else {
+          ursaTarget = Math.max(0, y) * URSA_PARALLAX;
+          if (!ursaHidden) { if (ursaTarget >= H + 40) ursaHidden = true; }
+          else if (ursaTarget < H - 40) ursaHidden = false;
+          if (up || y < URSA_TOP) {
+            if (y < URSA_TOP) ursaTarget = 0;
+            ursaScrollOff = ursaTarget;
+          }
+          if (ursaKbWas) { ursaKbWas = false; ursaScrollOff = ursaTarget; } /* закрылась — мгновенный возвратъ */
         }
       };
       window.addEventListener('scroll', onUrsaScroll, { passive: true });
@@ -11253,13 +11279,15 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
 
         function resize(force) {
         const currentW = window.innerWidth;
-        const currentH = window.innerHeight;
+        const currentH = URSA_BASE_H; /* высота заморожена — шапка и клавиатура буферъ не двигаютъ */
         
         dpr = window.devicePixelRatio || 1;
-        canvas.width = currentW * dpr;
-        canvas.height = currentH * dpr;
-        canvas.style.width = currentW + 'px';
-        canvas.style.height = currentH + 'px';
+        if (force || currentW !== lastWidth || Math.floor(currentW * dpr) !== canvas.width) {
+          canvas.width = Math.floor(currentW * dpr);
+          canvas.height = Math.floor(currentH * dpr);
+          canvas.style.width = currentW + 'px';
+          canvas.style.height = currentH + 'px';
+        }
         
         // Если ширина не изменилась, выходим (предотвращает дергание при скролле)
         if (!force && currentW === lastWidth) return;
@@ -11322,7 +11350,7 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
         var ursaGoal = ursaTarget;
         ursaScrollOff += (ursaGoal - ursaScrollOff) * URSA_EASE;
         if (Math.abs(ursaGoal - ursaScrollOff) < 0.5) ursaScrollOff = ursaGoal;
-        if (window.innerWidth < 600) ursaComp = -canvas.getBoundingClientRect().top;
+        if (window.innerWidth < 600) ursaComp = Math.max(0, window.innerHeight - URSA_BASE_H);
         time = time || performance.now();
         if (time - lastDrawTime < FRAME_MS) {
             animationId = requestAnimationFrame(draw);

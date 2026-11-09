@@ -9666,9 +9666,9 @@ var FOG_CODES = [45,48];
       var skyGoal = skyTarget;
       skyScrollOff += (skyGoal - skyScrollOff) * SKY_EASE;
       if (Math.abs(skyGoal - skyScrollOff) < 0.5) skyScrollOff = skyGoal;
-      /* компенсация шапки Хрома: меряем фактическое положеніе канваса и гасим сдвигъ въ отрисовкѣ —
-         шапка лишь открываетъ верхнюю полосу неба, фонъ стоитъ на мѣстѣ */
-      skyComp = Math.max(0, window.innerHeight - SKY_BASE_H); /* шапка уехала — окно выросло: разницу гасимъ, звёзды стоятъ */
+      /* компенсация шапки Хрома: ростъ окна гасится поправкой — шапка лишь открываетъ верхнюю полосу неба,
+         фонъ и звёзды стоятъ на мѣстѣ (канвасъ приклеенъ къ кромкѣ окна, замеръ его положенія всегда ноль) */
+      skyComp = Math.max(0, window.innerHeight - SKY_BASE_H);
     }
     if (!skyHidden) {
       var kbOn = false;
@@ -11195,8 +11195,8 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
         const H = URSA_BASE_H;
         const up = y < ursaLastY - 1;
         ursaLastY = y;
-        var vUrsa = (window.innerWidth < 600 && window.visualViewport) ? window.visualViewport : null;
-        var kbOpenU = !!(vUrsa && (vUrsa.height + (vUrsa.offsetTop || 0)) < URSA_BASE_H - 60);
+        const vUrsa = (window.innerWidth < 600 && window.visualViewport) ? window.visualViewport : null;
+        const kbOpenU = !!(vUrsa && (vUrsa.height + (vUrsa.offsetTop || 0)) < URSA_BASE_H - 60);
         if (kbOpenU) {
           ursaKbWas = true; /* клавіатура открыта — цѣль заморожена */
         } else {
@@ -12160,6 +12160,35 @@ function boot() { runAll(); /* buildPanel(); */ }
 /* №373: бокс как былъ (№371), двигается ТОЛЬКО заголовокъ «Казенная справка» */
 .brief-block { padding: 0.4rem 0.4rem !important; }
 .brief-block > h4 { margin: 0.3rem 0.5rem !important; }
-</style>
+</style><script>
+(function () {
+  if (window.innerWidth >= 600) return;
+  var vv = window.visualViewport;
+
+  function patch(canvas) {
+    if (!canvas) return;
+    var baseTop = null;
+    function sync() {
+      var r = canvas.getBoundingClientRect();
+      if (baseTop === null) baseTop = r.top;
+      var dy = r.top - baseTop;
+      if (Math.abs(dy) > 0.5) canvas.style.transform = 'translateY(' + (-dy) + 'px)';
+      else canvas.style.transform = '';
+      var cut = r.height - (vv ? (vv.height + vv.offsetTop) : r.height);
+      if (cut > 2) canvas.style.clipPath = 'inset(0px 0px ' + cut.toFixed(1) + 'px 0px)';
+      else canvas.style.clipPath = '';
+    }
+    if (vv) { vv.addEventListener('resize', sync); vv.addEventListener('scroll', sync); }
+    window.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', sync);
+    window.addEventListener('orientationchange', function () { baseTop = null; sync(); });
+    sync();
+  }
+
+  patch(document.getElementById('precip-canvas'));
+  patch(document.getElementById('ursa-major-canvas'));
+})();
+</script>
+
 </body>
 </html>

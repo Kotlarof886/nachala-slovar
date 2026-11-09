@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №397: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №398: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -6442,7 +6442,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 397</div>
+<div class="build-info">Сшивъ № 398</div>
 <style id="tg-strips">
 /* Казенная справка: полосы ленты, какъ у телеграфныхъ карточекъ.
    Рамку и заголовокъ блокъ наследуетъ у .src-block. */
@@ -7904,8 +7904,7 @@ window.addEventListener('error', function (e) {
           skyKbWas = true; /* клавіатура открыта — цѣль параллакса заморожена, звёзды не толкаются */
         } else {
           skyTarget = Math.max(0, y) * SKY_PARALLAX;
-          if (!skyHidden) { if (skyTarget >= H + 40) skyHidden = true; }
-          else if (skyTarget < H - 40) skyHidden = false; /* гистерезисъ 40px — не дрожитъ на границѣ */
+          skyHidden = false; /* №398: звёзды приклеены къ экрану — за верхомъ не скрываются */
           if (up || y < SKY_TOP) { /* возвратъ наверхъ — мгновенный, звёзды уже на мѣстѣ */
             if (y < SKY_TOP) skyTarget = 0;
             skyScrollOff = skyTarget;
@@ -9267,11 +9266,11 @@ var FOG_CODES = [45,48];
         var glow = starGlows[s.sizeKey];
         if (glow) {
           var gScale = (1 + 0.6 * glowAlpha) * (0.7 + 0.3 * gb) * glowSpread;
-          ctx.setTransform(gScale, 0, 0, gScale, s.x * dpr, (s.y - skyScrollOff + skyComp) * dpr);
+          ctx.setTransform(gScale, 0, 0, gScale, s.x * dpr, (s.y) * dpr);
           ctx.globalAlpha = glowAlpha; ctx.drawImage(glow, -glow.width / 2, -glow.height / 2);
         }
       }
-      ctx.setTransform(scale, 0, 0, scale, s.x * dpr, (s.y - skyScrollOff + skyComp) * dpr);
+      ctx.setTransform(scale, 0, 0, scale, s.x * dpr, (s.y) * dpr);
       ctx.globalAlpha = s.alpha * alphaMult; ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
     }
 
@@ -9286,7 +9285,7 @@ var FOG_CODES = [45,48];
                     : (ceG.blur < 1.5) ? starSpritesB1[keyG]
                     :                    starSpritesB2[keyG];
         if (!spriteG) continue;
-        ctx.setTransform(1, 0, 0, 1, g.x * dpr, (g.y - skyScrollOff + skyComp) * dpr);
+        ctx.setTransform(1, 0, 0, 1, g.x * dpr, (g.y) * dpr);
         ctx.globalAlpha = g.alpha * (1 - ceG.dim);
         ctx.drawImage(spriteG, -spriteG.width / 2, -spriteG.height / 2);
       }
@@ -9310,7 +9309,7 @@ var FOG_CODES = [45,48];
     if (targetAppearance < 0) targetAppearance = 0;
 
     ctx.save();
-    ctx.translate(moonScreenX * dpr, (moonScreenY - skyScrollOff + skyComp) * dpr);
+    ctx.translate(moonScreenX * dpr, (moonScreenY) * dpr);
     ctx.scale(dpr, dpr);
 
         var tiltRatio = (W/2 - moonScreenX) / (W/2);
@@ -9562,11 +9561,11 @@ var FOG_CODES = [45,48];
         var glow = starGlows[s.sizeKey];
         if (glow) {
           var gScale = (1 + 0.6 * glowAlpha) * (0.7 + 0.3 * (s.glowBoost || 1));
-          ctx.setTransform(gScale, 0, 0, gScale, s.meteor.x * dpr, (s.meteor.y - skyScrollOff + skyComp) * dpr);
+          ctx.setTransform(gScale, 0, 0, gScale, s.meteor.x * dpr, (s.meteor.y) * dpr);
           ctx.globalAlpha = glowAlpha; ctx.drawImage(glow, -glow.width / 2, -glow.height / 2);
         }
       }
-      ctx.setTransform(scale, 0, 0, scale, s.meteor.x * dpr, (s.meteor.y - skyScrollOff + skyComp) * dpr);
+      ctx.setTransform(scale, 0, 0, scale, s.meteor.x * dpr, (s.meteor.y) * dpr);
       ctx.globalAlpha = s.alpha * aMult; ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
@@ -9661,7 +9660,7 @@ var FOG_CODES = [45,48];
     ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.globalCompositeOperation = 'source-over';
-    /* №Y: плавное догоняніе цѣли — звёзды не дёргаются ни за прокруткой, ни за прыжками шапки Хрома */
+    /* №398: параллаксъ снятъ изъ отрисовки — звёзды и луна приклеены къ канвасу, шапка ихъ не двигаетъ */
     if (window.innerWidth < 600) {
       var skyGoal = skyTarget;
       skyScrollOff += (skyGoal - skyScrollOff) * SKY_EASE;
@@ -9675,15 +9674,16 @@ var FOG_CODES = [45,48];
       if (window.innerWidth < 600 && window.visualViewport) {
         kbEdge = window.visualViewport.offsetTop + window.visualViewport.height;
       }
-      if (kbEdge > 0 && kbEdge < H - 2) { /* срѣзъ по аріфметикѣ вьюпорта — точно по кромкѣ клавіатуры */
-        ctx.save(); ctx.beginPath();
-        ctx.rect(0, 0, canvas.width, Math.max(0, kbEdge * dpr)); ctx.clip(); kbOn = true;
-        drawStars(now); drawMoon(now); drawMeteors(now);
-        ctx.restore();
-      } else if (kbEdge === 0) {
-        /* мобайлъ: небо цѣликомъ за клавиатуройъ — не рисуемъ вовсе: экономія ресурса */
+      if (kbEdge >= 0) { /* №398: барьеръ всегда — на мобайлѣ ниже кромки звёздъ и луны не существуетъ */
+        if (kbEdge > 0) {
+          ctx.save(); ctx.beginPath();
+          ctx.rect(0, 0, canvas.width, Math.max(0, Math.min(kbEdge, H) * dpr)); ctx.clip(); kbOn = true;
+          drawStars(now); drawMoon(now); drawMeteors(now);
+          ctx.restore();
+        }
+        /* kbEdge === 0 — небо цѣликомъ за клавиатуройъ: не рисуемъ вовсе */
       } else {
-        /* десктопъ (kbEdge === -1, замеръ не вѣдется) и открытый кліпъ — рисуемъ всё */
+        /* десктопъ (kbEdge === -1, замеръ не вѣдется) — рисуемъ всё */
         drawStars(now); drawMoon(now); drawMeteors(now);
       }
     }
@@ -11376,7 +11376,7 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
             const x = offsetX + star.x * scale;
             const y = offsetY + star.y * scale - ursaScrollOff + ursaComp;
             if (window.innerWidth < 600 && window.visualViewport) {
-              const kbU = window.visualViewport.offsetTop + window.visualViewport.height; /* мера отъ вьюпорта */
+              const kbU = Math.min(window.visualViewport.offsetTop + window.visualViewport.height, URSA_BASE_H); /* №398: барьеръ всегда */
               if (y > kbU) return;
             }
             

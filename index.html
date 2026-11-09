@@ -7867,26 +7867,6 @@ window.addEventListener('error', function (e) {
   var ctx = canvas.getContext('2d', { alpha: true });
   if (!ctx) return;
 
-  /* №X: мобильный уходъ неба за верхній край — звёзды, стражи, луна и метеоры
-     сдвигаются вверхъ на 0.35 прокрутки (параллаксъ дали) и плавно догоняютъ цѣль;
-     когда небо скрылось цѣликомъ, отрисовка его прекращается вовсе (экономія кадра).
-     На широкомъ экранѣ сдвигъ всегда нулевой — поведеніе не меняется. */
-  var skyScrollOff = 0, skyTarget = 0, skyHidden = false;
-  var SKY_PARALLAX = 0.35, SKY_EASE = 0.15; /* сдвигъ въ 0.35 прокрутки — небо далеко; догоняніе — плавность */
-  if (window.innerWidth < 600) {
-    (function () {
-      var onSkyScroll = function () {
-        var y = window.scrollY || window.pageYOffset || 0;
-        var H = window.innerHeight || 600;
-        if (!skyHidden) { if (y >= H + 40) skyHidden = true; }
-        else if (y < H) skyHidden = false; /* гистерезисъ 40px — небо не дрожитъ на границѣ */
-        skyTarget = Math.max(0, Math.min(y, H + 40));
-      };
-      window.addEventListener('scroll', onSkyScroll, { passive: true });
-      onSkyScroll();
-    })();
-  }
-
   var MODE_NONE = 'none', MODE_SNOW = 'snow', MODE_RAIN = 'rain', MODE_FOG = 'fog';
    var mode = MODE_NONE, level = 0;
   /* ===== ОТЛАДКА: переопределения из панели (адъюнкт-режим по коду «886») ===== */
@@ -9236,11 +9216,11 @@ var FOG_CODES = [45,48];
         var glow = starGlows[s.sizeKey];
         if (glow) {
           var gScale = (1 + 0.6 * glowAlpha) * (0.7 + 0.3 * gb) * glowSpread;
-          ctx.setTransform(gScale, 0, 0, gScale, s.x * dpr, (s.y - skyScrollOff) * dpr);
+          ctx.setTransform(gScale, 0, 0, gScale, s.x * dpr, (s.y - skyOff) * dpr);
           ctx.globalAlpha = glowAlpha; ctx.drawImage(glow, -glow.width / 2, -glow.height / 2);
         }
       }
-      ctx.setTransform(scale, 0, 0, scale, s.x * dpr, (s.y - skyScrollOff) * dpr);
+      ctx.setTransform(scale, 0, 0, scale, s.x * dpr, (s.y - skyOff) * dpr);
       ctx.globalAlpha = s.alpha * alphaMult; ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
     }
 
@@ -9255,7 +9235,7 @@ var FOG_CODES = [45,48];
                     : (ceG.blur < 1.5) ? starSpritesB1[keyG]
                     :                    starSpritesB2[keyG];
         if (!spriteG) continue;
-        ctx.setTransform(1, 0, 0, 1, g.x * dpr, (g.y - skyScrollOff) * dpr);
+        ctx.setTransform(1, 0, 0, 1, g.x * dpr, (g.y - skyOff) * dpr);
         ctx.globalAlpha = g.alpha * (1 - ceG.dim);
         ctx.drawImage(spriteG, -spriteG.width / 2, -spriteG.height / 2);
       }
@@ -9279,7 +9259,7 @@ var FOG_CODES = [45,48];
     if (targetAppearance < 0) targetAppearance = 0;
 
     ctx.save();
-    ctx.translate(moonScreenX * dpr, (moonScreenY - skyScrollOff) * dpr);
+    ctx.translate(moonScreenX * dpr, (moonScreenY - skyOff) * dpr);
     ctx.scale(dpr, dpr);
 
         var tiltRatio = (W/2 - moonScreenX) / (W/2);
@@ -9531,11 +9511,11 @@ var FOG_CODES = [45,48];
         var glow = starGlows[s.sizeKey];
         if (glow) {
           var gScale = (1 + 0.6 * glowAlpha) * (0.7 + 0.3 * (s.glowBoost || 1));
-          ctx.setTransform(gScale, 0, 0, gScale, s.meteor.x * dpr, (s.meteor.y - skyScrollOff) * dpr);
+          ctx.setTransform(gScale, 0, 0, gScale, s.meteor.x * dpr, (s.meteor.y - skyOff) * dpr);
           ctx.globalAlpha = glowAlpha; ctx.drawImage(glow, -glow.width / 2, -glow.height / 2);
         }
       }
-      ctx.setTransform(scale, 0, 0, scale, s.meteor.x * dpr, (s.meteor.y - skyScrollOff) * dpr);
+      ctx.setTransform(scale, 0, 0, scale, s.meteor.x * dpr, (s.meteor.y - skyOff) * dpr);
       ctx.globalAlpha = s.alpha * aMult; ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2);
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1;
@@ -9626,21 +9606,44 @@ var FOG_CODES = [45,48];
     return 0.5 - 0.5*Math.cos(2*Math.PI*e/SPARKLE_DUR);
   }
 
+  /* ===== Небесный параллаксъ (мобильный словарь): звёзды, стражи, луна
+     и метеоры уходятъ за верхъ впятеро медленнѣе контента — сдвигъ =
+     прокрутка × 0.25, эффектъ дали. Цѣль сдвига догоняется плавно (лерпъ),
+     при подъѣмѣ наверхъ и у самой вершины — мгновенно. Высота неба заморожена
+     при загрузкѣ (обновляется лишь при сменѣ ширинъ экрана), потому шапка
+     браузера и клавиатура не дёргаютъ небо и не гасятъ его: шапка лишь
+     открываетъ верхъ неба, клавиатура накрываетъ низъ. Когда небо цѣликомъ
+     скрылось — отрисовка прекращается вовсе (ноль вычисленій на кадръ).
+     Гистерезисъ: скрытіе на vh+60, возвратъ на vh-40 — на границѣ небо
+     не дрожитъ. На широкихъ экранахъ сдвигъ всегда нулевой. */
+  var skyOff = 0, skyTarget = 0, skyHidden = false, skyLastY = 0;
+  var skyVH = window.innerHeight || 1, skyLastW = window.innerWidth || 0;
+  function skyUpdate() {
+    if (window.innerWidth >= 600) { skyOff = 0; skyTarget = 0; skyHidden = false; return; }
+    var y = window.scrollY || window.pageYOffset || 0;
+    var up = y < skyLastY; skyLastY = y;
+    skyTarget = y * 0.25;
+    if (y < 80 || up) skyOff = skyTarget;
+    if (skyHidden) { if (skyTarget < skyVH - 40) skyHidden = false; }
+    else if (skyTarget > skyVH + 60) skyHidden = true;
+  }
+  function skyResize() {
+    var w = window.innerWidth || 0;
+    if (w !== skyLastW) { skyLastW = w; skyVH = window.innerHeight || 1; skyUpdate(); }
+  }
+  window.addEventListener('scroll', skyUpdate, { passive: true });
+  window.addEventListener('resize', skyResize);
+  skyUpdate();
+
   function draw(now) {
+    if (window.innerWidth < 600 && skyOff !== skyTarget) {
+      skyOff += (skyTarget - skyOff) * 0.09;
+      if (Math.abs(skyTarget - skyOff) < 0.5) skyOff = skyTarget;
+    }
     ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0,0,canvas.width,canvas.height);
     ctx.globalCompositeOperation = 'source-over';
-    /* №Y: плавное догоняніе цѣли — звёзды не дёргаются ни за прокруткой, ни за прыжками шапки Хрома */
-    if (window.innerWidth < 600) {
-      var skyGoal = skyTarget * SKY_PARALLAX;
-      skyScrollOff += (skyGoal - skyScrollOff) * SKY_EASE;
-      if (Math.abs(skyGoal - skyScrollOff) < 0.5) skyScrollOff = skyGoal;
-    }
-    if (!skyHidden) {
-      drawStars(now);
-      drawMoon(now);
-      drawMeteors(now);
-    }
+    if (!skyHidden) { drawStars(now); drawMoon(now); drawMeteors(now); }
     for (var i = 0; i < particles.length; i++) {
       var p = particles[i];
       if (p.x < -80 || p.x > W+80 || p.y < -60 || p.y > H+60) continue;
@@ -11137,20 +11140,30 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
     const FRAME_MS = 1000 / ((window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ? 30 : 60);
     let lastDrawTime = 0;
 
-    /* №X: мобильный уходъ созвездія за верхній край при прокруткѣ (только телефонъ) */
-    let ursaScrollOff = 0, ursaTarget = 0, ursaHidden = false;
-    const URSA_PARALLAX = 0.35, URSA_EASE = 0.15;
-    if (window.innerWidth < 600) {
-      const onUrsaScroll = function () {
+    /* Параллаксъ Медведицы: на узкихъ экранахъ созвездіе уходитъ за верхъ
+       вдвое медленнѣе контента (сдвигъ = прокрутка × 0.5); когда скрылось —
+       не рисуется вовсе. На широкихъ экранахъ сдвигъ нулевой. */
+    /* Параллаксъ Медведицы: сдвигъ = прокрутка × 0.25, догоняется плавно;
+       при подъѣмѣ наверхъ — мгновенно. Высота заморожена: шапка и клавиатура
+       не дёргаютъ и не гасятъ созвездіе. Когда скрылось — не рисуется вовсе. */
+    let ursaOff = 0, ursaTarget = 0, ursaHidden = false, ursaLastY = 0;
+    const ursaVH = window.innerHeight || 1, ursaLastW = window.innerWidth || 0;
+    function ursaUpdate() {
+        if (window.innerWidth >= 600) { ursaOff = 0; ursaTarget = 0; ursaHidden = false; return; }
         const y = window.scrollY || window.pageYOffset || 0;
-        const H = window.innerHeight || 600;
-        if (!ursaHidden) { if (y >= H + 40) ursaHidden = true; }
-        else if (y < H) ursaHidden = false;
-        ursaTarget = Math.max(0, Math.min(y, H + 40));
-      };
-      window.addEventListener('scroll', onUrsaScroll, { passive: true });
-      onUrsaScroll();
+        const up = y < ursaLastY; ursaLastY = y;
+        ursaTarget = y * 0.25;
+        if (y < 80 || up) ursaOff = ursaTarget;
+        if (ursaHidden) { if (ursaTarget < ursaVH - 40) ursaHidden = false; }
+        else if (ursaTarget > ursaVH + 60) ursaHidden = true;
     }
+    function ursaResize() {
+        const w = window.innerWidth || 0;
+        if (w !== ursaLastW) { ursaLastW = w; ursaUpdate(); }
+    }
+    window.addEventListener('scroll', ursaUpdate, { passive: true });
+    window.addEventListener('resize', ursaResize);
+    ursaUpdate();
 
     const starsData = [
         { x: 100, y: 100, speed1: 0.12, speed2: 0.35, phase1: 0.0, phase2: 1.5, twSpeed: 4.2, twPhase: 1.1, letter: 'з' },
@@ -11281,11 +11294,17 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
     }
 
         function draw(time) {
-        if (!isZen || ursaHidden) return;
-        /* №Y: плавное догоняніе — какъ въ общемъ циклѣ */
-        var ursaGoal = ursaTarget * URSA_PARALLAX;
-        ursaScrollOff += (ursaGoal - ursaScrollOff) * URSA_EASE;
-        if (Math.abs(ursaGoal - ursaScrollOff) < 0.5) ursaScrollOff = ursaGoal;
+        if (!isZen) return;
+        if (window.innerWidth < 600 && ursaOff !== ursaTarget) {
+            ursaOff += (ursaTarget - ursaOff) * 0.09;
+            if (Math.abs(ursaTarget - ursaOff) < 0.5) ursaOff = ursaTarget;
+        }
+        if (ursaHidden) {
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            animationId = requestAnimationFrame(draw);
+            return;
+        }
         time = time || performance.now();
         if (time - lastDrawTime < FRAME_MS) {
             animationId = requestAnimationFrame(draw);
@@ -11306,7 +11325,7 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
 
                 starsData.forEach(star => {
             const x = offsetX + star.x * scale;
-            const y = offsetY + star.y * scale - ursaScrollOff;
+            const y = offsetY + star.y * scale - ursaOff;
             
             const ce = window.__cloudEffect ? window.__cloudEffect(x, y) : { dim: 0, blur: 0 };
             

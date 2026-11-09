@@ -21,7 +21,7 @@
     <link rel="icon" type="image/png" sizes="16x16" href="images/favicon.png">
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>НАЧАЛА – Сшивъ №398: Сводный алфавитный лексиконъ</title>
+    <title>НАЧАЛА – Сшивъ №399: Сводный алфавитный лексиконъ</title>
 <style>
 /* №153: синяя подсвѣтка тапа снята со всѣхъ кнопокъ (было только на клавиатурѣ, №139) */
 html *,
@@ -6442,7 +6442,7 @@ function tgCloseCard(w) {
 Код 
 Морзе ВНИМАНИЕ, СЕНСАЦІЯ -.- --- - .-.. .- .-. --- ..-. ---.. ---.. -.... .-.-.- --. .. - .... ..- -... .-.-.- .. --- -..-. -. .- -.-. .... .- .-.. .- -....- ... .-.. --- ...- .- .-. означает адрес сайта: kotlarof886.github.io/nachala-slovar/
 </p>
-<div class="build-info">Сшивъ № 398</div>
+<div class="build-info">Сшивъ № 399</div>
 <style id="tg-strips">
 /* Казенная справка: полосы ленты, какъ у телеграфныхъ карточекъ.
    Рамку и заголовокъ блокъ наследуетъ у .src-block. */
@@ -7859,7 +7859,7 @@ window.addEventListener('error', function (e) {
   canvas.id = 'precip-canvas';
   canvas.setAttribute('aria-hidden', 'true');
  canvas.style.cssText =
-  'position:fixed;top:0;left:0;pointer-events:none;z-index:0;' +
+  'position:fixed;bottom:0;left:0;pointer-events:none;z-index:0;' +
   'will-change:transform;transform:translateZ(0);backface-visibility:hidden;' +
   'contain:strict;';
   document.body.appendChild(canvas);
@@ -7934,7 +7934,7 @@ window.addEventListener('error', function (e) {
   };
   /* ===== Конец блока отладки ===== */
 
-   var W = 0, H = 0, dpr = 1, layoutH = 0;
+   var W = 0, H = 0, dpr = 1, layoutH = 0, SKY_PAD = 170; /* №399: запасъ неба сверху — полоса за шапкой */
   var particles = [], stars = [], guards = [];
       var sprites = {}, glows = {}, starSprites = {}, starGlows = {}, starSpritesB1 = {}, starSpritesB2 = {};
   var cloudPatches = [], cloudVisual = 0;
@@ -8146,7 +8146,7 @@ function updateMoonPos() {
             var _baseY, _peakY;
             if (_isM) { _baseY = layoutH * 0.22; _peakY = layoutH * 0.17; }
             else { _baseY = Math.min(layoutH * 0.4, 310); _peakY = Math.min(layoutH * 0.15, 130); }
-            moonScreenY = _peakY + (_baseY - _peakY) * _t * _t;
+            moonScreenY = _peakY + (_baseY - _peakY) * _t * _t + SKY_PAD;
             return;
         }
         if (debugOverrides.moonVisible === true) {
@@ -8161,7 +8161,7 @@ function updateMoonPos() {
             var _baseY2, _peakY2;
             if (_isM2) { _baseY2 = layoutH * 0.22; _peakY2 = layoutH * 0.17; }
             else { _baseY2 = Math.min(layoutH * 0.4, 310); _peakY2 = Math.min(layoutH * 0.15, 130); }
-            moonScreenY = _peakY2 + (_baseY2 - _peakY2) * _t2 * _t2;
+            moonScreenY = _peakY2 + (_baseY2 - _peakY2) * _t2 * _t2 + SKY_PAD;
             return;
         }
         /* ===== Конец блока отладки ===== */
@@ -8183,7 +8183,7 @@ function updateMoonPos() {
                 baselineY = Math.min(layoutH * 0.4, 310); // <--- ИЗМЕНЕНО H на layoutH
                 peakY = Math.min(layoutH * 0.15, 130);    // <--- ИЗМЕНЕНО H на layoutH
             }
-            moonScreenY = peakY + (baselineY - peakY) * t * t;
+            moonScreenY = peakY + (baselineY - peakY) * t * t + SKY_PAD;
         } else {
             moonScreenX = -9999;
             moonScreenY = -9999;
@@ -8248,13 +8248,13 @@ function updateMoonPos() {
     for (var i = 0; i < _glyphRectsCache.length; i++) {
       var r = _glyphRectsCache[i];
       if (x >= r.left - GLYPH_PAD && x <= r.right + GLYPH_PAD &&
-          y >= r.top - GLYPH_PAD && y <= r.bottom + GLYPH_PAD) return true;
+          y >= r.top - GLYPH_PAD + SKY_PAD && y <= r.bottom + GLYPH_PAD + SKY_PAD) return true;
     }
     return false;
   }
 
           function starFieldBounds() {
-        return { xMin: 20, xMax: Math.max(60, W - 40), yMin: 30, yMax: Math.max(80, Math.min(320, layoutH * 0.35)) }; // <--- Должно быть layoutH
+        return { xMin: 20, xMax: Math.max(60, W - 40), yMin: 30 + SKY_PAD, yMax: Math.max(80, Math.min(320, layoutH * 0.35)) + SKY_PAD }; // <--- Должно быть layoutH
     }
 
   function currentMinDist() {
@@ -8689,7 +8689,7 @@ var FOG_CODES = [45,48];
             W = newW;
             layoutH = newH; 
         }
-        H = newH; // H всегда равна реальной высоте для отрисовки холста
+        H = newH + SKY_PAD; /* №399: буферъ выше экрана на запасъ — верхняя полоса неба зашедшая за шапку */
 
         canvas.width = Math.floor(W * dpr);
         canvas.height = Math.floor(H * dpr);
@@ -9671,19 +9671,24 @@ var FOG_CODES = [45,48];
     }
     if (!skyHidden) {
       var kbOn = false, kbEdge = -1;
-      if (window.innerWidth < 600 && window.visualViewport) {
-        kbEdge = window.visualViewport.offsetTop + window.visualViewport.height;
+      if (window.visualViewport && (window.visualViewport.scale || 1) < 1.02) {
+        /* №399: кромка въ координатахъ буфера — чистая ариѳметика вьюпорта, безъ замѣровъ прямоугольника.
+           Буферъ выше экрана на SKY_PAD и привязанъ къ низу: сдвигъ шапки открываетъ верхнюю полосу неба,
+           кромка клавиатуры срѣзаетъ звёздный слойъ на любой прокруткѣ */
+        kbEdge = H - window.innerHeight + window.visualViewport.offsetTop + window.visualViewport.height;
+        if (kbEdge > H) kbEdge = H;
+        if (kbEdge < 0) kbEdge = 0;
       }
-      if (kbEdge >= 0) { /* №398: барьеръ всегда — на мобайлѣ ниже кромки звёздъ и луны не существуетъ */
+      if (kbEdge >= 0) { /* №399: барьеръ всегда — ниже кромки клавиатуры звёздъ и луны не существуетъ */
         if (kbEdge > 0) {
           ctx.save(); ctx.beginPath();
-          ctx.rect(0, 0, canvas.width, Math.max(0, Math.min(kbEdge, H) * dpr)); ctx.clip(); kbOn = true;
+          ctx.rect(0, 0, canvas.width, Math.min(kbEdge, H) * dpr); ctx.clip(); kbOn = true;
           drawStars(now); drawMoon(now); drawMeteors(now);
           ctx.restore();
         }
         /* kbEdge === 0 — небо цѣликомъ за клавиатуройъ: не рисуемъ вовсе */
       } else {
-        /* десктопъ (kbEdge === -1, замеръ не вѣдется) — рисуемъ всё */
+        /* безъ вьюпорта (старые браузеры, зумъ) — рисуемъ всё */
         drawStars(now); drawMoon(now); drawMeteors(now);
       }
     }
@@ -11173,7 +11178,7 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
 <!-- ===== КОНЕЦ БЛОКА ZEN MODE ===== -->
 
 <!-- ===== Созвездие Большая Медведица (Защита от дерганья при прокрутке) ===== -->
-<canvas id="ursa-major-canvas" style="position:fixed;top:0;left:0;pointer-events:none;z-index:99990;opacity:0;transition:opacity 0.8s ease-in-out;will-change:transform;transform:translateZ(0);backface-visibility:hidden;contain:strict;"></canvas>
+<canvas id="ursa-major-canvas" style="position:fixed;bottom:0;left:0;pointer-events:none;z-index:99990;opacity:0;transition:opacity 0.8s ease-in-out;will-change:transform;transform:translateZ(0);backface-visibility:hidden;contain:strict;"></canvas>
 <script>
 (function() {
     const canvas = document.getElementById('ursa-major-canvas');
@@ -11188,6 +11193,7 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
     const URSA_PARALLAX = 0.2, URSA_EASE = 0.08, URSA_TOP = 80;
     /* высота заморожена: шапка и клавиатура созвездіе не двигаютъ */
     let URSA_BASE_H = window.innerHeight || 600, URSA_LAST_W = window.innerWidth || 600;
+    const URSA_PAD = 170; /* №399: запасъ неба сверху — полоса за шапкой */
     window.addEventListener('resize', function () {
       const w = window.innerWidth || 600;
       if (Math.abs(w - URSA_LAST_W) > 1) { URSA_LAST_W = w; URSA_BASE_H = window.innerHeight || 600; }
@@ -11282,14 +11288,14 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
 
         function resize(force) {
         const currentW = window.innerWidth;
-        const currentH = URSA_BASE_H; /* высота заморожена — шапка и клавиатура буферъ не двигаютъ */
+        const currentH = URSA_BASE_H; /* высота заморожена — шапка и клавиатура буферъ не двигаютъ; буферъ выше экрана на URSA_PAD */
         
         dpr = window.devicePixelRatio || 1;
         if (force || currentW !== lastWidth || Math.floor(currentW * dpr) !== canvas.width) {
           canvas.width = Math.floor(currentW * dpr);
-          canvas.height = Math.floor(currentH * dpr);
+          canvas.height = Math.floor((currentH + URSA_PAD) * dpr);
           canvas.style.width = currentW + 'px';
-          canvas.style.height = currentH + 'px';
+          canvas.style.height = (currentH + URSA_PAD) + 'px';
         }
         
         // Если ширина не изменилась, выходим (предотвращает дергание при скролле)
@@ -11320,7 +11326,7 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
         const targetCenterY = currentH * (minY_pct + maxY_pct) / 2;
 
         offsetX = targetCenterX - (550 * scale); 
-        offsetY = targetCenterY - (460 * scale); 
+        offsetY = targetCenterY - (460 * scale) + URSA_PAD; /* №399: содержимое сдвинуто на запасъ — на экранѣ созвездіе на прежнемъ мѣстѣ */
     }
     window.addEventListener('resize', function() { resize(false); });
     resize(true);
@@ -11374,11 +11380,12 @@ fireTouched = false;   /* при входѣ дежурный снова вѣче
 
                 starsData.forEach(star => {
             const x = offsetX + star.x * scale;
-            const y = offsetY + star.y * scale - ursaScrollOff + ursaComp;
-            if (window.innerWidth < 600 && window.visualViewport) {
-              const kbU = Math.min(window.visualViewport.offsetTop + window.visualViewport.height, URSA_BASE_H); /* №398: барьеръ всегда */
-              if (y > kbU) return;
+            const y = offsetY + star.y * scale; /* №399: параллаксъ снятъ изъ отрисовки — созвездіе приклеено къ экрану */
+            var kbU = Infinity; /* №399: барьеръ всегда — ниже кромки клавиатуры созвездіе не существуетъ */
+            if (window.visualViewport && (window.visualViewport.scale || 1) < 1.02) {
+              kbU = Math.min(URSA_PAD + window.visualViewport.offsetTop + window.visualViewport.height, URSA_BASE_H + URSA_PAD);
             }
+            if (y > kbU) return;
             
             const ce = window.__cloudEffect ? window.__cloudEffect(x, y) : { dim: 0, blur: 0 };
             

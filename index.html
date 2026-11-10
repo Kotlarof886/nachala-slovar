@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta name="description" content="Сводный алфавитный лексиконъ къ роману «Начала», версія 108. Словарь устарѣвшихъ словъ.">
@@ -1461,6 +1461,27 @@ body.curtain-on .tab .tab-label { visibility: hidden; }
 .tab-curtain-label { font-size: 0.9rem; white-space: nowrap; }
 
 </style>
+<style id="zahar-cards-css">
+/* ===== Захаръ въ эфирѣ: карточки «вопросъ → ответъ» ===== */
+#zahar-cards { display: flex; flex-direction: column; gap: 10px; padding: 8px 12px 2px; }
+body.telegraph-on #zahar-cards { display: none !important; }
+#zahar-cards .zcard-w { overflow: hidden; }
+#zahar-cards .zcard {
+  background: linear-gradient(180deg, #f3e6c8, #e9d7ae);
+  border: 1.5px solid #8a6534;
+  border-radius: 8px;
+  padding: 10px 14px 11px;
+  font-family: Georgia, serif;
+  box-shadow: 0 2px 10px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.4);
+  transform: translateY(calc(-100% - 16px));
+  opacity: 0;
+  transition: transform .55s cubic-bezier(.24,.75,.25,1), opacity .45s ease;
+}
+#zahar-cards .zcard.z-in { transform: none; opacity: 1; }
+#zahar-cards .zq { font-weight: 700; color: #4a3517; font-size: .95rem; line-height: 1.35; word-wrap: break-word; }
+#zahar-cards .zsep { height: 1px; background: #8a6534; opacity: .45; margin: 7px 0; }
+#zahar-cards .za { color: #2e2410; font-size: .92rem; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
+</style>
 </head>
 <body>
 
@@ -1835,6 +1856,11 @@ body.curtain-on .tab .tab-label { visibility: hidden; }
 <!-- Сшивъ №304: изъ выдачи убрана автоподсказка «Изъ словаря устарѣвшихъ словъ» (Азбука). Панель «Изысканіе въ эфирѣ» не тронута. Прежнее: словарь пополненъ книжной карточкой «Выдержанный резервъ» (cover: images/rezerv-cover.jpg, pdf: books/rezerv.pdf) -->
 <script src="words.js?v=343"></script>
 <script src="rugatelstva.js"></script>
+<script src="zahar/zahar_memory.js"></script>
+<script src="zahar/zahar_dict.js"></script>
+<script src="zahar/zahar_phrases.js"></script>
+<script src="zahar/zahar_brain.js"></script>
+<script src="zahar/zahar_ether.js"></script>
 <script>
 // ---------- Данные: подключается words.js ----------
 /* №295: книжная полка — если карточек книг в words.js нет, сайт добавляет их сам, на своё мѣсто по алфавиту */
@@ -2273,6 +2299,7 @@ function closePdf() {
 /* Сшивъ №98: единая клавиатура — экранная буква допечатываетъ запросъ (какъ физическая),
    физическая даётъ оттискъ экранной клавишѣ. Одинъ путь набора — kbType. */
 function kbType(ch, fromScreen) {   /* Сшивъ №99: fromScreen — вызовъ съ экранной клавиатуры (сворачиваетъ нативную) */
+  if (window.__zaharBusy) return;   /* Сшивъ №400: Захаръ печатаетъ — наборъ глухъ */
   var keyEl = (strikeKeyMap && strikeKeyMap[ch]) || document.querySelector('#alphabet-bar .letter[data-letter="' + ch + '"]');
   if (!keyEl && ch === ' ') keyEl = document.querySelector('#alphabet-bar .key-space');
   if (keyEl) telePressKey(keyEl); else sndClick(true);   // клавиш безъ «Ъ/Ы/Ь/Ё/ѣ» — оттиска нѣтъ, звукъ есть
@@ -2309,6 +2336,7 @@ function setLetter(ch) {
   window.kbDismissNative();   /* Сшивъ №99: «Всѣ» сворачиваетъ нативную клавиатуру */
 }/* ---------- Стираніе въ поискѣ: клавиша шифта ---------- */
 function eraseSearchOne() {
+  if (window.__zaharBusy) return;   /* Сшивъ №400: Захаръ печатаетъ — стираніе глухо */
   var v = searchBox.value || '';
   if (v) {
     window._kbSelf = true;
@@ -4674,9 +4702,8 @@ function render() {
   _lastRaw = raw;
   out.innerHTML = '';
   if (currentTab === 'online') {
-    if (!raw) { out.innerHTML = '<p class="empty">Введите слово для поиска в старинных словарях.</p>'; countNote.textContent = ''; return; }
-    out.innerHTML = '<p class="loading">Розыскъ въ словаряхъ эфира…</p>';
-    searchOnline(raw);
+    if (!window.__zaharBusy && !raw) { out.innerHTML = '<p class="empty">Спросите Захара — наберите депешу и отправьте въ эфиръ (ϕ или Enter).</p>'; }
+    countNote.textContent = '';
     return;
   }
   const qt = normKey(raw).split(' ').filter(Boolean);
@@ -5607,7 +5634,7 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
     var dt = last ? Math.min((now - last) / 1000, .05) : .016; last = now;
     if (mode === 'flow') {
       x -= FLOW * dt;
-      if (msg.childNodes.length && xEnd() + x <= W() * .5) {
+            if (msg.childNodes.length && xEnd() + x <= -20) {
         msg.innerHTML = ''; var cb = onDone; onDone = null;
         if (cb) { cb(); } else { mode = 'idle'; setTarget(xIdle()); }
       }
@@ -5712,6 +5739,14 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
     if (msg.childNodes.length) { mode = 'flow'; onDone = function () { mode = 'hidden'; if (cb) cb(); }; start(); }
     else { msg.innerHTML = ''; mode = 'hidden'; if (cb) cb(); }
   };
+  /* Сшивъ №400: пробужденіе ленты изъ скрытаго режима — зовётъ Захаръ по отъездѣ */
+    window.sTapeWake = function () {
+    if (mode !== 'hidden' && mode !== 'flow') return;
+    msg.innerHTML = ''; tape.classList.remove('s-on');
+    mode = 'idle'; tx = xIdle(); x = tx;   /* бумага пуста — прыжокъ невидимъ, дёрганья нетъ */
+    eng.style.transform = 'translateX(' + x.toFixed(2) + 'px)';
+  };
+
   /* ---------- Сброс набранного: текст уходит за свой крайъ, надпись входитъ съ противоположного ---------- */
   function startClear(dir) {
     if (!msg.childNodes.length) { mode = 'idle'; setTarget(xIdle()); return; }
@@ -5842,7 +5877,7 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
   eng.style.transform = 'translateX(' + x.toFixed(2) + 'px)';
 })();
 
-searchBox.addEventListener('input', function () { renderSoon(120); sTapeSync(); if (currentTab !== 'online') { try { azbukaDictPromise().catch(function(){}); } catch (e) {} } });
+searchBox.addEventListener('input', function () { if (window.__zaharBusy) return; renderSoon(120); sTapeSync(); if (currentTab !== 'online') { try { azbukaDictPromise().catch(function(){}); } catch (e) {} } });
 searchBox.addEventListener('focus', sTapeFocus);
 searchBox.addEventListener('blur', sTapeBlur);
 wxStart();
@@ -5902,6 +5937,7 @@ document.addEventListener('keydown', function (e) {
   if (ae && ae !== searchBox && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' || ae.isContentEditable)) return;
   if (e.key === 'Backspace') {
     if (telegraphOn) return;   // въ эфирѣ стираніе идётъ своимъ чередомъ
+    if (window.__zaharBusy) return;   /* Захаръ печатаетъ — стираніе глухо */
     e.preventDefault();
     var bkEl = document.querySelector('#alphabet-bar .key-shift');
     if (bkEl) telePressKey(bkEl, true); else sndClick(true);
@@ -5917,6 +5953,7 @@ document.addEventListener('keydown', function (e) {
     setLetter(null);
     return;
   }
+  if (e.key === 'Enter' && !telegraphOn && currentTab === 'online') { e.preventDefault(); if (window.zaharSend) zaharSend(); return; }
   var ch = null;
   if (e.key === ' ') ch = ' ';
   else if (e.key && e.key.length === 1) {
@@ -11019,6 +11056,8 @@ let fireTouched = false;   /* false — дежурный вѣченъ; true — 
         document.addEventListener('pointerup', function(e) {
             if (pressStart === 0) return;
             const duration = Date.now() - pressStart; pressStart = 0;
+            /* Сшивъ №400: въ эфирѣ фита — отправка Захару (коротко и удержаніемъ) */
+            if (currentTab === 'online' && !telegraphOn) { if (window.zaharSend) zaharSend(); return; }
             if (e.target.closest('.key-spec') && duration < 250 && typeof telegraphOn !== 'undefined' && !telegraphOn) {
                 /* ===== ОТЛАДКА: код «886» открывает дзен с шестерёнкой ===== */
                 var _sb = document.getElementById('search-box');

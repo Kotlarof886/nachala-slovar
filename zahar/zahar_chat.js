@@ -1,5 +1,9 @@
 /* ============================================================
-   zahar_chat.js — слой живой болтовни Захара, правка №18.
+   zahar_chat.js — слой живой болтовни Захара, правка №19.
+   19: имя ловится и в обороте «меня X звать»; справка «что ты знаешь про X»
+   ищет по ОБОИМ словарям с синонимами и стемами раньше счётчиков и нечёткого
+   разбора; подхват слов выводится впереди счётчиков (живое общение прежде всего);
+   узоры справки — под нормализованный текст (мягкий знак отрезается).
    Подключать ПОСЛЕ zahar_brain.js:
      <script src="zahar/zahar_chat.js"></script>
    ИСПРАВЛЕНО: хвост «мы какъ разъ толковали» отцепляется
@@ -25,7 +29,7 @@
 (function () {
   if (window.__zaharChatLoaded) return;
   window.__zaharChatLoaded = true;
-  var VERSION = 'правка №18';
+  var VERSION = 'правка №19';
   if (typeof window.ZAHAR_CHAT_1896 === 'undefined') window.ZAHAR_CHAT_1896 = true;
   if (!window.ZAHAR_USER_NAME) window.ZAHAR_USER_NAME = null;
   if (!window.ZAHAR_USER_GENDER) window.ZAHAR_USER_GENDER = null;
@@ -338,18 +342,33 @@
 
   /* ---------- имя и пол собеседника ---------- */
   var NAME_STOP = {};
-  'не,хочу,живу,работаю,думаю,устал,занят,болен,рад,согласен,против,спросить,люблю,нравится,тут,здесь,сегодня,бот,робот,машина,человек,телеграфист,сударь,сударыня,простой,известно,доволен,готов,молод,стар,должен,свободен,секрет,русский,немец,англичанин,барин,купец,нельма,карась,карп,потом,весело,грустно,плохо,так,знаю,слышал,видел,читал,учусь,один,дома,честный,молчу,год,года,лет,торговле,лавке,конторе,барнаула,городе,барнаул,проездом,проезд,станции'.split(',').forEach(function (w) { if (w) NAME_STOP[norm(w)] = 1; });
+  'не,хочу,живу,работаю,думаю,устал,занят,болен,рад,согласен,против,спросить,люблю,нравится,тут,здесь,сегодня,бот,робот,машина,человек,телеграфист,сударь,сударыня,простой,известно,доволен,готов,молод,стар,должен,свободен,секрет,русский,немец,англичанин,барин,купец,нельма,карась,карп,потом,весело,грустно,плохо,так,знаю,слышал,видел,читал,учусь,один,дома,честный,молчу,год,года,лет,торговле,лавке,конторе,барнаула,городе,барнаул,проездом,проезд,станции,вчера,нынче,теперь,давно,только,утром,вечером,ночью,днем,тебя,тебе,вам,вас,такое,всякое,купно'.split(',').forEach(function (w) { if (w) NAME_STOP[norm(w)] = 1; });
   function tryName(raw) {
-    var m = String(raw || '').match(/^а?\s*(?:меня\s+зовут|мо[еи]\s+имя|моя\s+фамилия|звать\s+меня|я)\s+(.+)$/i);
+    var s = String(raw || '').replace(/[.,!?;:«»"]+$/, '').trim();
+    var m = s.match(/^меня\s+(.+?)\s+(?:звать|зовут)\b/i) ||
+            s.match(/^а?\s*(?:меня\s+зовут|мо[еи]\s+имя|моя\s+фамилия|звать\s+меня|я)\s+(.+)$/i);
     if (!m) return null;
     var words = m[1].replace(/[.,!?;:«»"]+$/g, '').split(/\s+/).filter(Boolean);
     if (!words.length) return null;
+    /* 19: «меня Максимом звать» — творительный падеж сводим к именительному */
+    if (/звать/i.test(s)) {
+      words = words.map(function (w) {
+        var lw = w.toLowerCase();
+        var nw = lw.replace(/(ом|ем|ым|им)$/, '');
+        if (nw !== lw) return nw.length >= 3 ? nw : lw;
+        nw = lw.replace(/(ою|ею|ой|ей)$/, '');
+        if (nw !== lw && nw.length >= 3) {
+          return /[аяоие]$/.test(nw) ? nw + 'я' : nw + 'а';
+        }
+        return lw;
+      });
+    }
     var first = norm(words[0]);
     if (first.length < 3 || NAME_STOP[first]) return null;
     if (/^(как|что|где|когда|почему|зачем|сколько)$/.test(first)) return null;
     var out = [];
     for (var i = 0; i < words.length && i < 2; i++) {
-      var w = words[i].replace(/[.,!?;:«»"]+$/, '');
+      var w = words[i].replace(/[.,!?;:«»"]+$/g, '');
       if (i === 1) {
         var w2 = norm(w);
         if (w2.length < 4 || NAME_STOP[w2] || /^(работаю|учусь|жив|родил|в|из|лет|года|год)$/.test(w2)) break;
@@ -762,8 +781,8 @@
     { keys: ['провода', 'линия'], run: function () { return fill(pick(WIRES)); } }
   ];
 
-  /* ================= связность чата (правка №18) ================= */
-  var MENTION_NOTQ = /(что такое|что за|что значит|означает|что означает|кто такой|кто таков|кто такая|что это|расскажи|поведай|объясни|толкуй|проверка|погода|который час|сколько времени|сколько тебе|как тебя|как вас|меня зовут|зовут меня)/;
+  /* ================= связность чата (правка №19) ================= */
+  var MENTION_NOTQ = /(что такое|что за|что значит|означает|что означает|кто такой|кто таков|кто такая|что это|расскажи|поведай|объясни|толкуй|проверка|погода|который час|сколько времени|сколько тебе|как тебя|как вас|меня зовут|зовут меня|(?:[^а-я]|^)(?:как вам|какой|какая|каким|какую|каких|какова|каково|когда|где|почему|зачем|кому|чему|знаете|скажите|покажите)(?:[^а-я]|$))/;
   var MENTION_SKIP = { аки: 1, аж: 1, ажно: 1, аккурат: 1, тако: 1 };
   var OLD_TOPICS = { nelma: 1, barnaul: 1, kray: 1, tea: 1, job: 1, id: 1, from: 1, where: 1, deed: 1 };
   var THEMED_COUNTERS = {
@@ -930,7 +949,53 @@
   };
   /* ================= конец блока связности ================= */
 
-  function chat(raw) {
+    /* ================= 19: справка по прямым вопросам =================
+     «что ты знаешь про X» мозг не понимает (его регэкспы знают только
+     «что такое X») — потому справку отдает слой, по ОБОИМ словарям:
+     сперва личный, потом словарь сайта. Узоры — под нормализованный
+     текст (norm отрезает мягкий знак: «знаешь» -> «знаеш»). */
+  var REF_RE = /(что\s+(?:ты\s+)?знае|что\s+(?:тебе\s+)?известно|что\s+скаже|знае(?:ш|шь)?\s+ли\s+(?:ты\s+)?(?:о|об|обо|про)|расскажи\s+(?:о|об|обо|про))/;
+  /* синонимы и разговорные имена: падежи, которые стеммер не сводит */
+  var REF_SYN = {
+    лиса: 'лисица', лису: 'лисица', лисе: 'лисица', лисы: 'лисица', лисой: 'лисица', лисою: 'лисица',
+    векша: 'белка', векшу: 'белка', векши: 'белка',
+    чир: 'сырок', чира: 'сырок', чиру: 'сырок', чиром: 'сырок'
+  };
+  function refFind(tok) {
+    if (MENTION_IDX[tok]) return MENTION_IDX[tok];
+    var st = chatStem(tok);
+    if (st && MENTION_IDX[st]) return MENTION_IDX[st];
+    var syn = REF_SYN[tok] || REF_SYN[st];
+    if (syn) return MENTION_IDX[syn] || MENTION_IDX[chatStem(syn)];
+    return null;
+  }
+  function refLookup(q, n) {
+    if (!REF_RE.test(n)) return null;
+    var m = n.match(/(?:\s|\A)(?:про|обо|об)\s+([а-я0-9\-\s]+)\s*$/);
+    if (!m || !m[1]) return null;
+    if (!MENTION_IDX) buildMention();
+    var toks = m[1].split(' ').filter(Boolean)
+      .sort(function (a, b) { return b.length - a.length; });
+    var e = null;
+    var phrase = m[1].replace(/\s+/g, ' ');
+    if (MENTION_PHR[phrase]) e = MENTION_PHR[phrase];
+    if (!e) for (var k = 0; k < toks.length; k++) { e = refFind(toks[k]); if (e) break; }
+    if (!e) return null;
+    try {
+      window.ZAHAR_SESSION = window.ZAHAR_SESSION || { lastWord: null, lastField: null };
+      /* запись справки: главную строку уже показали — «еще» отдает вторую */
+      window.ZAHAR_SESSION.lastWord = e.own ? { w: e.w, b: e.b, d: e.d } : { w: e.w, b: e.d, d: '' };
+      window.ZAHAR_SESSION.lastField = 'b';
+    } catch (err) {}
+    counterTopic = null; awaitingJob = false;
+    var body = e.b || e.d;
+    var out = body;
+    if (out.toLowerCase().indexOf(norm(e.w)) !== 0) out = cap(e.w) + ' — ' + out;
+    if (e.own && e.d && e.b) out += ' (Есть и вторая записка — скажите «еще».)';
+    return out;
+  }
+
+function chat(raw) {
     var q = String(raw || '').trim();
     if (!q) return null;
     var n = norm(q);
@@ -938,8 +1003,16 @@
 
     detectGender(q);
 
+    /* 19: приоритет живого общения — имя, справка и подхват поверх счетчика */
+    var nm0 = tryName(q);
+    if (nm0) return nameReply(nm0);
+    var ref0 = refLookup(q, n);
+    if (ref0) return fill(ref0);
+    var mnt0 = mentionReply(q, n);
+    if (mnt0) { awaitingJob = false; return maybeCounter(mnt0); }
+
     if (counterTopic && n.split(' ').length <= 6 &&
-        !/\?|погод|который час|сколько времени|числ|кто ты|зовут/.test(n)) {
+        !/\?|погод|который час|сколько времени|числ|кто ты|зовут|знае|известн|расскажи/.test(n)) {
       var cr = counterReply(n);
       if (cr) return maybeCounter(cr);
     }
@@ -973,7 +1046,7 @@
       } catch (e) { warn('ошибка в обработчике #' + i + ': ' + e); }
     }
 
-    if (awaitingJob && n.split(' ').length >= 2) {
+    if (awaitingJob && n.split(' ').length >= 2 && !REF_RE.test(n)) {
       awaitingJob = false;
       lastCounter = true;
       if (/железн|билет|поезд|вагон|касс/.test(n)) return fill(pick(JOB_RAIL));

@@ -1,12 +1,12 @@
 /* ============================================================
-   zahar_chat.js — слой живой болтовни Захара, правка №8.
+   zahar_chat.js — слой живой болтовни Захара, правка №9.
    Подключать ПОСЛЕ zahar_brain.js:
      <script src="zahar/zahar_chat.js"></script>
-   Перехватывает прежде мозга: время, число, погоду, имя,
-   биографию, жильё, работу, быт; поддерживает разговор
-   о деле собеседника. Погода: текст страницы -> кэш -> сеть;
-   если всё молчит — честный ответ. Диагностика: «проверка»
-   и «погода проверка». Логи — F12, метка [zahar_chat].
+   Погода — из блока самого сайта: читает wxVal/wxTs,
+   localStorage barnaul-wx2, при нужде просит сайт запустить
+   гонку (wxFetch); запас — своя гонка через те же прокси.
+   Цифры Захара и ленты совпадают всегда.
+   Диагностика: «проверка», «погода проверка». Логи — F12.
    ============================================================ */
 (function () {
   if (window.__zaharChatLoaded) return;
@@ -37,7 +37,7 @@
   function nmOr() { return window.ZAHAR_USER_NAME ? cap(window.ZAHAR_USER_NAME) : 'сударь'; }
   function fill(s) { return String(s || '').replace(/\{N\}/g, nmOr()); }
 
-  /* ---------- ты -> вы ---------- */
+  /* ---------- ты -> вы (границы слов без \b — с кириллицей он не работает) ---------- */
   var YOU_MAP = [['ты','вы'],['тебя','вас'],['тебе','вам'],['тобой','вами'],
     ['твой','ваш'],['твоя','ваша'],['твое','ваше'],['твою','вашу'],['твои','ваши'],
     ['работаешь','работаете'],['делаешь','делаете'],['живешь','живете'],
@@ -99,158 +99,96 @@
     return 'Сегодня ' + wd + ', ' + ORD[d - 1] + ' ' + MON_G[mo] + ' ' + y + ' года, ' + nmOr() + '. ' + tail;
   }
 
-  /* ---------- погода: текст страницы -> кэш -> сеть ---------- */
+  /* ---------- погода: блок сайта (wxVal) -> запрос к сайту -> запасная гонка ---------- */
   var WX_TAIL = ['Мороз не беда — чай горячий спасает.',
     'Такая погода рыбу под лед гонит, приметьте.',
     'На линии то дождь, то снег — провода гудут.',
     'Гулять — да в шубе, сударь.'];
-  var WDESC = [
-    [/снег|снежн|snow/i, 'снегопад'],
-    [/гроз|thunder/i, 'гроза'],
-    [/туман|fog|mist|haze/i, 'туман'],
-    [/ливень|ливни|heavy rain/i, 'ливень'],
-    [/дожд|rain|drizzle|морос/i, 'дождь'],
-    [/перемен|partly|малооблачн/i, 'переменная облачность'],
-    [/пасмурн|overcast/i, 'пасмурно'],
-    [/облачн|cloudy/i, 'облачно'],
-    [/ясно|clear|sunny|солнеч/i, 'ясно']
-  ];
-  function descrFrom(t) {
-    for (var i = 0; i < WDESC.length; i++) if (WDESC[i][0].test(t)) return WDESC[i][1];
-    return 'переменная облачность';
-  }
-  var WINDS = [['северо-западн','северо-западный'],['северо-восточн','северо-восточный'],
-    ['юго-западн','юго-западный'],['юго-восточн','юго-восточный'],
-    ['северн','северный'],['южн','южный'],['западн','западный'],['восточн','восточный']];
-  function windFrom(t) {
-    var l = String(t).toLowerCase();
-    for (var i = 0; i < WINDS.length; i++) if (l.indexOf(WINDS[i][0]) >= 0) return WINDS[i][1];
-    return null;
-  }
-  function wmoDesc(c) {
-    c = Number(c) || 0;
-    if (c === 0) return 'ясно';
-    if (c === 1 || c === 2) return 'малооблачно';
-    if (c === 3) return 'пасмурно';
-    if (c === 45 || c === 48) return 'туман';
-    if (c >= 51 && c <= 57) return 'морось';
-    if (c >= 61 && c <= 67) return 'дождь';
-    if (c >= 71 && c <= 77) return 'снегопад';
-    if (c >= 80 && c <= 82) return 'ливень';
-    if (c >= 85 && c <= 86) return 'снегопад';
-    if (c >= 95) return 'гроза';
-    return 'переменная облачность';
-  }
-  function degToWind(d) {
-    var names = ['северный','северо-восточный','восточный','юго-восточный','южный','юго-западный','западный','северо-западный'];
-    return names[Math.round((d % 360) / 45) % 8];
-  }
-  function wxCacheGet() {
+  function siteTemp() {   /* свежий градус от погодного блока сайта */
     try {
-      var s = JSON.parse(localStorage.getItem('zahar_wx_v1') || 'null');
-      if (s && s.ts && (Date.now() - s.ts) < 600000) return s.data;
+      if (typeof window.wxVal === 'number' && isFinite(window.wxVal) &&
+          typeof window.wxTs === 'number' && Date.now() - window.wxTs < 600000) return window.wxVal;
     } catch (e) {}
-    return null;
-  }
-  function wxCacheSet(data) {
-    try { localStorage.setItem('zahar_wx_v1', JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
-  }
-  function findTempIn(text) {
-    var m = text.match(/([-−+]?\d+(?:[.,]\d+)?)\s*[°*]/);
-    if (!m) m = text.match(/([-−+]?\d+(?:[.,]\d+)?)\s*(?:градус|C\b)/i);
-    if (!m) return null;
-    var v = parseFloat(m[1].replace('−', '-').replace(',', '.'));
-    return isNaN(v) ? null : v;
-  }
-  function scanPage() {
-    var txt = '';
     try {
-      var els = document.querySelectorAll('[class*=weather],[class*=pogoda],[class*=meteo],[id*=weather],[id*=pogoda],[id*=meteo]');
-      for (var i = 0; i < els.length; i++) txt += ' ' + els[i].textContent;
-    } catch (e) {}
-    if (txt.replace(/\s/g, '')) {
-      var t = findTempIn(txt);
-      if (t !== null) return { temp: t, desc: descrFrom(txt), wind: windFrom(txt) };
-    }
-    try {
-      var body = document.body ? document.body.textContent : '';
-      if (body && /погод|температур|метео/i.test(body)) {
-        var t2 = findTempIn(body);
-        if (t2 !== null) return { temp: t2, desc: descrFrom(body), wind: windFrom(body) };
+      var raw = localStorage.getItem('barnaul-wx2');
+      if (raw) {
+        var o = JSON.parse(raw);
+        if (o && typeof o.t === 'number' && typeof o.ts === 'number' && Date.now() - o.ts < 600000) return o.t;
       }
     } catch (e) {}
     return null;
   }
-  function scanPageDebug() {
-    var n = 0;
+  function askSite(cb) {  /* просим блок сайта запустить гонку и опрашиваем его градус */
     try {
-      n = document.querySelectorAll('[class*=weather],[class*=pogoda],[class*=meteo],[id*=weather],[id*=pogoda],[id*=meteo]').length;
-    } catch (e) {}
-    var body = '';
-    try { body = document.body ? document.body.textContent : ''; } catch (e) {}
-    var hasWord = /погод|температур|метео/i.test(body);
-    var hasDeg = findTempIn(body) !== null;
-    return { блоков: n, слово_погод: hasWord, градус_найден: hasDeg };
+      if (typeof window.wxKick === 'function') window.wxKick();
+      if (typeof window.wxFetch === 'function' && !window.wxBusy) window.wxFetch();
+    } catch (e) { warn('запуск гонки сайта не удался: ' + e); }
+    var n = 0;
+    var iv = setInterval(function () {
+      var t = siteTemp();
+      if (t !== null) { clearInterval(iv); cb(t); return; }
+      if (++n > 26) { clearInterval(iv); cb(null); }   /* ~6,5 сек */
+    }, 250);
   }
-  function fetchJson(url) {
-    return new Promise(function (res, rej) {
-      try {
-        fetch(url).then(function (r) {
-          return r.ok ? r.json() : Promise.reject(new Error('http'));
-        }).then(res, rej);
-      } catch (e) { rej(e); }
-    });
-  }
-  function fromOmeteo() {
-    return fetchJson('https://api.open-meteo.com/v1/forecast?latitude=53.35&longitude=83.78&current=temperature_2m,weather_code,wind_direction_10m').then(function (j) {
-      var c = j && j.current;
-      if (!c || c.temperature_2m === undefined) throw new Error('empty');
-      return { temp: Number(c.temperature_2m), desc: wmoDesc(c.weather_code), wind: degToWind(c.wind_direction_10m) };
-    });
-  }
-  function fromWttr() {
-    return fetchJson('https://wttr.in/%D0%91%D0%B0%D1%80%D0%BD%D0%B0%D1%83%D0%BB?format=j1').then(function (j) {
-      var c = j && j.current_condition && j.current_condition[0];
-      if (!c) throw new Error('empty');
-      return { temp: Number(c.temp_C), desc: descrFrom((c.weatherDesc && c.weatherDesc[0] && c.weatherDesc[0].value) || ''), wind: windFrom(c.winddir16Point || '') };
-    });
-  }
-  function getWeather() {
+  function proxyRace() {  /* запасная гонка тем же манером, что у сайта */
+    var OM = 'https://api.open-meteo.com/v1/forecast?latitude=53.35&longitude=83.78&current=temperature_2m';
+    var OMcb = OM + '&_cb=' + Date.now();
+    var enc = encodeURIComponent(OMcb);
+    var RE = /temperature_2m"\s*:\s*(-?\d+(?:\.\d+)?)/;
+    var jobs = [
+      [OM, RE],
+      ['https://api.met.no/weatherapi/locationforecast/2.0/compact?lat=53.35&lon=83.78', null],
+      ['https://corsproxy.io/?url=' + enc, RE],
+      ['https://api.allorigins.win/raw?url=' + enc, RE],
+      ['https://api.codetabs.com/v1/proxy?quest=' + enc, RE]
+    ];
     return new Promise(function (res) {
       var done = false;
-      function fin(x) { if (done) return; done = true; res(x || null); }
-      fromOmeteo().then(fin, function () { fromWttr().then(fin, function () { fin(null); }); });
-      setTimeout(function () { fin(null); }, 6000);
+      jobs.forEach(function (u) {
+        fetch(u[0]).then(function (r) { return r.ok ? r.text() : null; }).then(function (t) {
+          if (done || !t) return;
+          var v = null;
+          if (u[1]) { var m = u[1].exec(t); if (m) v = Math.round(parseFloat(m[1])); }
+          else {
+            try {
+              var o = JSON.parse(t);
+              var ts = o && o.properties && o.properties.timeseries;
+              if (ts && ts.length && ts[0].data && ts[0].data.instant && ts[0].data.instant.details)
+                v = ts[0].data.instant.details.air_temperature;
+            } catch (e) {}
+          }
+          if (v !== null && !done) { done = true; res(Math.round(v)); }
+        }).catch(function () {});
+      });
+      setTimeout(function () { if (!done) { done = true; res(null); } }, 7000);
     });
   }
-  function wxLine(w) {
-    var t = Math.round(w.temp);
+  function wxLine(t) {   /* строка Захара: только честный градус, как на ленте */
     var sign = t < 0 ? 'минус ' + numWords(-t) : (t === 0 ? 'ноль' : 'плюс ' + numWords(t));
-    var line = 'Метеорная станция доносит: ' + sign + ' ' + gradForm(t) +
-      (w.desc ? ', ' + w.desc : '') + (w.wind ? ', ветер ' + w.wind : '') + '. ' + pick(WX_TAIL);
-    return line.replace(/\.\./g, '.');
+    return 'Метеорная станция доносит: ' + sign + ' ' + gradForm(t) + '. ' + pick(WX_TAIL);
   }
   var WX_FAIL = ['Провода к метеостанции молчат, {N} — поди, обметало их снегом. По приметам так: воробьи нахохлились, к холоду.',
     'Приборы молчат, {N}: связь со станцией не идет. Гадаю по приметам: дым столбом — к морозу, ласточки низко — к дождю.'];
   function answerWeather() {
-    var page = scanPage();
-    if (page) { wxCacheSet(page); return Promise.resolve(wxLine(page)); }
-    var c = wxCacheGet();
-    if (c) return Promise.resolve(wxLine(c));
-    return getWeather().then(function (w) {
-      if (w) { wxCacheSet(w); return wxLine(w); }
-      return fill(pick(WX_FAIL));
+    return new Promise(function (res) {
+      var t = siteTemp();
+      if (t !== null) { res(wxLine(t)); return; }
+      askSite(function (t2) {
+        if (t2 !== null) { res(wxLine(t2)); return; }
+        proxyRace().then(function (t3) { res(t3 !== null ? wxLine(t3) : fill(pick(WX_FAIL))); });
+      });
     });
   }
   function answerWeatherDiag() {
-    var page = scanPage(), dbg = scanPageDebug(), c = wxCacheGet();
-    warn('погодная проверка: ' + JSON.stringify(dbg));
-    return getWeather().then(function (w) {
-      return 'Погодная проверка, ' + nmOr() + ': блоков на странице — ' + dbg.блоков +
-        (page ? ', показание с страницы найдено (' + page.temp + ' градуса)' : ', с страницы показаний нет') +
-        '; кэш — ' + (c ? 'есть' : 'пуст') +
-        '; метеолинии (сеть) — ' + (w ? 'отвечают (плюс ' + Math.round(w.temp) + ')' : 'молчат') +
-        '. Подробности в консоли (F12).';
+    return new Promise(function (res) {
+      var t = siteTemp();
+      var fns = (typeof window.wxKick === 'function') || (typeof window.wxFetch === 'function');
+      warn('погодная проверка: сайт=' + t + ', функции сайта=' + fns);
+      if (t !== null) { res('Погодная проверка, ' + nmOr() + ': блок сайта ОТВЕЧАЕТ — на аппарате ' + t + ' ' + gradForm(t) + ' по Цельсию, те же цифры, что на ленте.'); return; }
+      askSite(function (t2) {
+        if (t2 !== null) { res('Погодная проверка, ' + nmOr() + ': блок сайта ОТВЕТИЛ по запросу — ' + t2 + ' ' + gradForm(t2) + '.'); return; }
+        res('Погодная проверка, ' + nmOr() + ': блок сайта и запасная гонка молчат. Подробности в консоли (F12).');
+      });
     });
   }
 
@@ -507,6 +445,6 @@
   else boot();
 
   window.zaharChatStatus = function () {
-    return { файл: 'правка №8', установлен: !!window.__zaharChatInstalled, имя: window.ZAHAR_USER_NAME, год1896: window.ZAHAR_CHAT_1896 };
+    return { файл: 'правка №9', установлен: !!window.__zaharChatInstalled, имя: window.ZAHAR_USER_NAME, год1896: window.ZAHAR_CHAT_1896 };
   };
 })();

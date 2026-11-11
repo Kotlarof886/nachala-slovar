@@ -19,6 +19,82 @@
   if (window.__zaharChatLoaded) return;
   window.__zaharChatLoaded = true;
   var VERSION = 'правка №16';
+   // Добавляем новые функции в начало файла
+var MODERN_TERMS = [
+  'компьютер', 'интернет', 'телефон', 'телевизор', 'машина',
+  'смартфон', 'планшет', 'дрон', 'робот', 'искусственный интеллект'
+];
+
+var HISTORICAL_PROFESSIONS = {
+  'золотарь': 'с нечистотами да скверной дела имеющий',
+  'котельщик': 'котлы да печи мастерящий',
+  'кучер': 'на лошадях разъезжающий',
+  // Добавляем другие исторические профессии
+};
+
+function isModernTerm(text) {
+  return MODERN_TERMS.some(term => text.toLowerCase().includes(term));
+}
+
+function checkProfession(text) {
+  for (var prof in HISTORICAL_PROFESSIONS) {
+    if (text.toLowerCase().includes(prof)) {
+      return HISTORICAL_PROFESSIONS[prof];
+    }
+  }
+  return null;
+}
+
+// Модифицируем функцию chat()
+function chat(raw) {
+  var q = String(raw || '').trim();
+  
+  // Проверяем современные термины ДО основной обработки
+  if (isModernTerm(q)) {
+    return handleModernTerm(q);
+  }
+
+  // Проверяем исторические профессии
+  var profession = checkProfession(q);
+  if (profession) {
+    return handleProfession(profession);
+  }
+
+  // Остальная логика обработки
+  // ... существующий код ...
+
+  function handleModernTerm(term) {
+    return fill(pick([
+      'Не понял, что за словечко такое? Это что на польском?',
+      'Всё равно не пойму о чём вы, на досуге в словаре посмотрю',
+      'Такое словцо при мне не слыхано, сударь'
+    ]));
+  }
+
+  function handleProfession(prof) {
+    return fill('С ' + prof + ' дела имеете, сударь. Да, не завидная работенка, но что делать — раз так, Бог в помощь!');
+  }
+}
+
+// Модифицируем функцию webLine()
+function webLine(r) {
+  var text = String(r.text).replace(/\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
+  
+  // Фильтруем современную лексику
+  if (isModernTerm(text)) {
+    return fill('Такое в моём лексиконе не значится, сударь');
+  }
+
+  return fill(pick(WEB_INTRO)) + ' «' + r.title + '» — ' + formatText(text) + ' ' + fill(pick(WEB_OUTRO));
+}
+
+function formatText(text) {
+  return text
+    .replace(/компьютер/g, 'механический аппарат')
+    .replace(/телефон/g, 'электрический прибор для разговоров')
+    .replace(/интернет/g, 'неведомая сила');
+}
+
   if (typeof window.ZAHAR_CHAT_1896 === 'undefined') window.ZAHAR_CHAT_1896 = true;
   if (typeof window.ZAHAR_WEB_FALLBACK === 'undefined') window.ZAHAR_WEB_FALLBACK = true;
   if (!window.ZAHAR_USER_NAME) window.ZAHAR_USER_NAME = null;

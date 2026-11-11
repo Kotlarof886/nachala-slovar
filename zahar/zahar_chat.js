@@ -1,19 +1,17 @@
 /* ============================================================
-   zahar_chat.js — слой живой болтовни Захара, правка №9.
+   zahar_chat.js — слой живой болтовни Захара, правка №10.
    Подключать ПОСЛЕ zahar_brain.js:
      <script src="zahar/zahar_chat.js"></script>
-   Погода — из блока самого сайта: читает wxVal/wxTs,
-   localStorage barnaul-wx2, при нужде просит сайт запустить
-   гонку (wxFetch); запас — своя гонка через те же прокси.
-   Цифры Захара и ленты совпадают всегда.
-   Диагностика: «проверка», «погода проверка». Логи — F12.
+   Погода — из блока самого сайта (wxVal/wxTs, barnaul-wx2);
+   цифры Захара и ленты совпадают всегда. Диагностика:
+   «проверка» и «погода проверка». Логи — F12, метка [zahar_chat].
+   Дата: Захар отыгрывает 1896 год (window.ZAHAR_CHAT_1896 = false — реальная).
    ============================================================ */
 (function () {
   if (window.__zaharChatLoaded) return;
   window.__zaharChatLoaded = true;
   if (typeof window.ZAHAR_CHAT_1896 === 'undefined') window.ZAHAR_CHAT_1896 = true;
   if (!window.ZAHAR_USER_NAME) window.ZAHAR_USER_NAME = null;
-  if (!window.ZAHAR_USER_JOB) window.ZAHAR_USER_JOB = false;
 
   function warn(m) { try { console.warn('[zahar_chat] ' + m); } catch (e) {} }
 
@@ -37,7 +35,7 @@
   function nmOr() { return window.ZAHAR_USER_NAME ? cap(window.ZAHAR_USER_NAME) : 'сударь'; }
   function fill(s) { return String(s || '').replace(/\{N\}/g, nmOr()); }
 
-  /* ---------- ты -> вы (границы слов без \b — с кириллицей он не работает) ---------- */
+  /* ---------- ты -> вы ---------- */
   var YOU_MAP = [['ты','вы'],['тебя','вас'],['тебе','вам'],['тобой','вами'],
     ['твой','ваш'],['твоя','ваша'],['твое','ваше'],['твою','вашу'],['твои','ваши'],
     ['работаешь','работаете'],['делаешь','делаете'],['живешь','живете'],
@@ -67,12 +65,12 @@
     var t = Math.floor(n / 10), o = n % 10;
     return TENS[t] + (o ? ' ' + ONES[o] : '');
   }
-  function gradForm(n) {
+  function formOf(n, one, few, many) {
     var d = Math.abs(n) % 100, l = d % 10;
-    if (d >= 11 && d <= 14) return 'градусов';
-    if (l === 1) return 'градус';
-    if (l >= 2 && l <= 4) return 'градуса';
-    return 'градусов';
+    if (d >= 11 && d <= 14) return many;
+    if (l === 1) return one;
+    if (l >= 2 && l <= 4) return few;
+    return many;
   }
 
   /* ---------- дата и время ---------- */
@@ -85,10 +83,9 @@
     var h = d.getHours(), m = d.getMinutes();
     var h12 = h % 12; if (h12 === 0) h12 = 12;
     var part = (h >= 5 && h < 12) ? 'утра' : (h >= 12 && h < 17) ? 'пополудни' : (h >= 17) ? 'вечера' : 'ночи';
-    var form = (h12 === 1) ? 'час' : (h12 >= 2 && h12 <= 4) ? 'часа' : 'часов';
-    var mf = (m === 1) ? 'минута' : (m % 10 >= 2 && m % 10 <= 4 && !(m >= 11 && m <= 14)) ? 'минуты' : 'минут';
     return pick(['На аппаратных часах', 'Часы показывают', 'Стенные часы бьют']) +
-      ': ' + numWords(h12) + ' ' + form + ' ' + numWords(m) + ' ' + mf + ' ' + part + ', ' + nmOr() + '.';
+      ': ' + numWords(h12) + ' ' + formOf(h12, 'час', 'часа', 'часов') + ' ' + numWords(m) + ' ' +
+      formOf(m, 'минута', 'минуты', 'минут') + ' ' + part + ', ' + nmOr() + '.';
   }
   function answerDate() {
     var now = new Date();
@@ -104,7 +101,7 @@
     'Такая погода рыбу под лед гонит, приметьте.',
     'На линии то дождь, то снег — провода гудут.',
     'Гулять — да в шубе, сударь.'];
-  function siteTemp() {   /* свежий градус от погодного блока сайта */
+  function siteTemp() {
     try {
       if (typeof window.wxVal === 'number' && isFinite(window.wxVal) &&
           typeof window.wxTs === 'number' && Date.now() - window.wxTs < 600000) return window.wxVal;
@@ -118,7 +115,7 @@
     } catch (e) {}
     return null;
   }
-  function askSite(cb) {  /* просим блок сайта запустить гонку и опрашиваем его градус */
+  function askSite(cb) {
     try {
       if (typeof window.wxKick === 'function') window.wxKick();
       if (typeof window.wxFetch === 'function' && !window.wxBusy) window.wxFetch();
@@ -127,13 +124,12 @@
     var iv = setInterval(function () {
       var t = siteTemp();
       if (t !== null) { clearInterval(iv); cb(t); return; }
-      if (++n > 26) { clearInterval(iv); cb(null); }   /* ~6,5 сек */
+      if (++n > 26) { clearInterval(iv); cb(null); }
     }, 250);
   }
-  function proxyRace() {  /* запасная гонка тем же манером, что у сайта */
+  function proxyRace() {
     var OM = 'https://api.open-meteo.com/v1/forecast?latitude=53.35&longitude=83.78&current=temperature_2m';
-    var OMcb = OM + '&_cb=' + Date.now();
-    var enc = encodeURIComponent(OMcb);
+    var enc = encodeURIComponent(OM);
     var RE = /temperature_2m"\s*:\s*(-?\d+(?:\.\d+)?)/;
     var jobs = [
       [OM, RE],
@@ -163,9 +159,9 @@
       setTimeout(function () { if (!done) { done = true; res(null); } }, 7000);
     });
   }
-  function wxLine(t) {   /* строка Захара: только честный градус, как на ленте */
+  function wxLine(t) {
     var sign = t < 0 ? 'минус ' + numWords(-t) : (t === 0 ? 'ноль' : 'плюс ' + numWords(t));
-    return 'Метеорная станция доносит: ' + sign + ' ' + gradForm(t) + '. ' + pick(WX_TAIL);
+    return 'Метеорная станция доносит: ' + sign + ' ' + formOf(t, 'градус', 'градуса', 'градусов') + '. ' + pick(WX_TAIL);
   }
   var WX_FAIL = ['Провода к метеостанции молчат, {N} — поди, обметало их снегом. По приметам так: воробьи нахохлились, к холоду.',
     'Приборы молчат, {N}: связь со станцией не идет. Гадаю по приметам: дым столбом — к морозу, ласточки низко — к дождю.'];
@@ -182,11 +178,10 @@
   function answerWeatherDiag() {
     return new Promise(function (res) {
       var t = siteTemp();
-      var fns = (typeof window.wxKick === 'function') || (typeof window.wxFetch === 'function');
-      warn('погодная проверка: сайт=' + t + ', функции сайта=' + fns);
-      if (t !== null) { res('Погодная проверка, ' + nmOr() + ': блок сайта ОТВЕЧАЕТ — на аппарате ' + t + ' ' + gradForm(t) + ' по Цельсию, те же цифры, что на ленте.'); return; }
+      warn('погодная проверка: сайт=' + t);
+      if (t !== null) { res('Погодная проверка, ' + nmOr() + ': блок сайта ОТВЕЧАЕТ — на аппарате ' + t + ' ' + formOf(t, 'градус', 'градуса', 'градусов') + ', те же цифры, что на ленте.'); return; }
       askSite(function (t2) {
-        if (t2 !== null) { res('Погодная проверка, ' + nmOr() + ': блок сайта ОТВЕТИЛ по запросу — ' + t2 + ' ' + gradForm(t2) + '.'); return; }
+        if (t2 !== null) { res('Погодная проверка, ' + nmOr() + ': блок сайта ответил по запросу — ' + t2 + ' ' + formOf(t2, 'градус', 'градуса', 'градусов') + '.'); return; }
         res('Погодная проверка, ' + nmOr() + ': блок сайта и запасная гонка молчат. Подробности в консоли (F12).');
       });
     });
@@ -201,16 +196,18 @@
 
   /* ---------- имя собеседника ---------- */
   var NAME_STOP = {};
-  'не,хочу,живу,работаю,думаю,устал,занят,болен,рад,согласен,против,спросить,люблю,нравится,тут,здесь,сегодня,бот,робот,машина,человек,телеграфист,сударь,простой,известно,доволен,готов,молод,стар,должен,свободен,секрет,русский,немец,англичанин,барин,купец,нельма,карась,карп,потом,весело,грустно,плохо,так,знаю,слышал,видел,читал,учусь,один,дома,честный,молчу'.split(',').forEach(function (w) { if (w) NAME_STOP[norm(w)] = 1; });
+  'не,хочу,живу,работаю,думаю,устал,занят,болен,рад,согласен,против,спросить,люблю,нравится,тут,здесь,сегодня,бот,робот,машина,человек,телеграфист,сударь,простой,известно,доволен,готов,молод,стар,должен,свободен,секрет,русский,немец,англичанин,барин,купец,нельма,карась,карп,потом,весело,грустно,плохо,так,знаю,слышал,видел,читал,учусь,один,дома,честный,молчу,год,года,лет,торговле,лавке,конторе,барнаула,городе,барнаул'.split(',').forEach(function (w) { if (w) NAME_STOP[w] = 1; });
   function tryName(raw) {
     var n = norm(raw);
     var m = n.match(/^(?:а\s+)?(?:меня\s+зовут|мо[еи]\s+имя|моя\s+фамилия|звать\s+меня|я)\s+(.+)$/);
     if (!m) return null;
-    var cand = m[1].split(' ')[0];
-    if (!cand || cand.length < 3) return null;
-    if (NAME_STOP[cand]) return null;
-    if (/^(как|что|где|когда|почему|зачем|сколько)$/.test(cand)) return null;
-    return cand;
+    var parts = m[1].split(' ').filter(Boolean);
+    if (!parts.length || parts[0].length < 3) return null;
+    if (NAME_STOP[parts[0]] || /^(как|что|где|когда|почему|зачем|сколько)$/.test(parts[0])) return null;
+    if (parts.length >= 2 && parts[1].length >= 4 && !NAME_STOP[parts[1]] &&
+        !/^(работаю|учусь|жив|родил|в|из|лет|года|год)/.test(parts[1]))
+      return parts[0] + ' ' + parts[1];
+    return parts[0];
   }
   function recallName() {
     if (window.ZAHAR_USER_NAME)
@@ -231,7 +228,7 @@
     'Давно вы в наших краях, {N}?',
     'Чай горячий отведали, {N}? Самовар у меня не зря топится.'
   ];
-  var lastCounter = false, askNameDone = false, lastTopic = null;
+  var lastCounter = false, askNameDone = false, lastTopic = null, awaitingJob = false;
   function counterText() {
     var s;
     if (!window.ZAHAR_USER_NAME && !askNameDone) { askNameDone = true; s = 'Как вас величать, кстати?'; }
@@ -249,7 +246,13 @@
   var GREETS = [
     'Здравствуйте, {N}! Аппарат к вашим услугам — извольте депешу.',
     'Мое почтение, {N}! Ключ наготове, слушаю внимательно.',
-    'Рад слышать, {N}! Телеграф Барнаул на линии. О чем разговор?'
+    'Здравия желаю и вам, {N}! Телеграф Барнаул на линии, слушаю.',
+    'Рад слышать, {N}! О чем разговор?'
+  ];
+  var FAREWELL = [
+    'Честь имею, {N}! Жду новых депеш — аппарат у меня всегда без выходных.',
+    'До свидания, {N}! Заходите — словарь, погода и самовар всегда при мне.',
+    'Всего вам доброго, {N}! Чтоб дороги были гладки и провода не рвались.'
   ];
   var WHERE_LIVE = [
     'Живу при самой станции, {N}: комната малая, зато аппарат у окна — ленту издалека слышно.',
@@ -261,9 +264,20 @@
     'Я здешний, {N}, коренной. Вся жизнь при станции — из Барнаула никуда не отлучался.',
     'Родом с здешних мест, {N}. Отец в мануфактуре служит, мать в конторе — а я при аппарате.'
   ];
+  var CITY_WHICH = [
+    'Барнаул, {N}, — город на Оби, станция наша в нем. Лучший город Западной Сибири — и не спорьте.',
+    'Как какой — Барнаул, {N}! При станции живу, при аппарате. Другого города и не надобно.',
+    'Барнаул наш, {N}: сереброплавильный завод, ярмарки, купцы. Столицами не тешусь — наш хорош.'
+  ];
+  var LANDSMAN = [
+    'Так мы ж земляки, {N}! Барнаул город хороший — гордиться им не грех.',
+    'Здешний, значит, {N}? Свои люди — считайте, аппарат для вас открыт.',
+    'Рад слышать, {N}! Здешних людей сразу узнаю — по тому, как Обь хвалят.'
+  ];
   var WORK_WHERE = [
     'Служу младшим телеграфистом на барнаульской станции, {N}. Депеши принимаю и отправляю — служба казенная.',
-    'При телеграфе я, {N}: станция Барнаул, ключ, лента. Младший телеграфист — но аппарату дай срок, стану старшим.'
+    'При телеграфе я, {N}: станция Барнаул, ключ, лента. Младший телеграфист — но аппарату дай срок, стану старшим.',
+    'Трудлюсь при аппарате, {N}: телеграфная станция Барнаула — мой пост.'
   ];
   var BARN_CONFIRM = [
     'Так точно, {N} — Барнаул и есть: при станции живу, при аппарате. На Оби живем — не на графских именинах.',
@@ -309,14 +323,27 @@
     'Почтеннейше, {N}. А служба ваша — какая: казенная или своя?',
     'Рад слышать, {N}. Давно ли при вашем деле?'
   ];
-  var JOB_PRINT = [
-    'Печатное дѣло, {N}! Станка печатного воочию не видал, а газеты в лавке беру исправно — реклама ваша, поди, и мои глаза ласкала.',
-    'Рекламу, значит, {N}? Дѣло полезное: безъ объявленія теперь и товару не продать. Уважаю людей при станкѣ.'
+  var JOB_TRADE = [
+    'Торговое дело, {N}! Лавка — сердце города: без торговца и ярмарки не бывает. Приветствую сословие ваше.',
+    'Частная лавка, значит, {N}? Купеческое дело — почетное. Авось и в ваших лавках телеграфными бланками торговать станут — тогда зайду.',
+    'Дело ваше полезное, {N}: без объявления ныне и товару не продать. Уважаю людей при печатном станке.'
   ];
   var JOB_FOLLOW = [
-    'Дѣло ваше славно, {N}. Как в нем дела — строгое ли начальство, попроще?',
-    'Почтенно, {N}. Казенное ли дѣло, или свое — на свою волю?',
+    'Дело ваше славно, {N}. Как в нем дела — строгое ли начальство, попроще?',
+    'Почтенно, {N}. Казенное ли дело, или свое — на свою волю?',
     'Занятно, {N}. Давно ли при этом деле? Я вот у аппарата неполный год.'
+  ];
+  var AGE_REACT = [
+    '{AGE} — возраст солидный, {N}. Я ведь только девятнадцать при себе имею — до вашего опыта как до Луны.',
+    '{AGE}, говорите, {N}? В ваши годы и опыт есть, и силы еще. Завидую по-доброму.'
+  ];
+  var SYMPATHY = [
+    'Начальство повсюду строгое, {N}. Наш Аркадий Спиридонович в опозданиях строг, зато дело знает. Переживем — депеши ждать не любят.',
+    'Держитесь, {N}! У нас тоже: шеф ругается, чай остыл — все по-обычному. Главное — дело делать честно.'
+  ];
+  var TEA = [
+    'Чай люблю, {N}, — на смене без него никак: самовар при станции всегда горячий.',
+    'Отвечаю честно, {N}: чай — главное блюдо телеграфиста. С сахаром вприкуску, три стакана.'
   ];
   var HOBBY = [
     'Книжки да рыбалка, {N}. На Оби нельма ходит — серебром отливает, моя заветная добыча.',
@@ -339,28 +366,48 @@
       (window.ZAHAR_USER_NAME ? 'Имя ваше записано: ' + cap(window.ZAHAR_USER_NAME) + '.' : 'Имени вашего еще не слыхал — представьтесь.');
   }
 
+  function ageRun(q, n) {
+    var m = n.match(/(\d+)\s*(лет|год|года|годов)/);
+    var age = m ? numWords(m[1]) + ' ' + formOf(+m[1], 'год', 'года', 'годов') : '';
+    return fill(pick(AGE_REACT)).replace(/\{AGE\}/g, age);
+  }
+
   /* ---------- разбор депеши слоем ---------- */
   var HANDLERS = [
-    { re: /^(проверка|проверка связи)$/, run: diagReply, topic: null },
-    { re: /^(погода проверка|проверка погоды)$/, run: answerWeatherDiag, topic: null },
-    { re: /(погод|температур|сколько градус|как холодно|как тепло|на улице|на дворе|метель)/, run: answerWeather, topic: null },
-    { re: /(который час|сколько времени|какое время|сколько часов)/, run: answerTime, topic: 'time' },
-    { re: /(числ|дат|день недели|какой день|какой год|какой месяц)/, run: answerDate, topic: 'date' },
-    { re: /(кто ты|кто вы|ты кто|как тебя зовут|как вас зовут|твое имя|как твое имя|как фамилия|твоя фамилия|представ)/, run: function () { return fill(pick(IDENTITY)); }, topic: 'id' },
-    { re: /(родил|родом|от\s?куда|из какого.*город|какой ты город|здешний)/, run: function () { return fill(pick(WHERE_FROM)); }, topic: 'from' },
-    { re: /(живе|прожива|обитаешь|в каком городе|где находишься)/, run: function () { return fill(pick(WHERE_LIVE)); }, topic: 'where' },
-    { re: /(где.*работа|кем.*работа|твоя должность|какая должность|кем служишь)/, run: function () { return fill(pick(WORK_WHERE)); }, topic: null },
+    { re: /^(проверка|проверка связи)$/, run: diagReply },
+    { re: /^(погода проверка|проверка погоды)$/, run: answerWeatherDiag },
+    { re: /(погод|температур|сколько градус|как холодно|как тепло|на улице|на дворе|метель)/, run: answerWeather },
+    { re: /(который час|сколько времени|какое время|сколько часов)/, run: answerTime },
+    { re: /^(приве\w*|преве\w*|прив|здравству\w*|здрави[яе]\s*\w*.*|добры[йе]\s+(день|утро|вечер)|салют|хай|мои почтени\w*|почтен)$/,
+      run: function () { lastCounter = true; return fill(pick(GREETS)) + ' ' + counterText(); } },
+    { re: /(до свидан|прощай|всего доброго|до встречи|бывай|покид)/,
+      run: function () { lastCounter = true; return fill(pick(FAREWELL)); } },
+    { re: /(день|числ|дат|календар|какой год|какой месяц)/, run: answerDate },
+    { re: /(кто ты|кто вы|ты кто|как тебя зовут|как вас зовут|твое имя|как твое имя|как фамилия|твоя фамилия|представ)/,
+      run: function () { return fill(pick(IDENTITY)); }, topic: 'id' },
+    { re: /^(как меня зовут|какое мое имя|что мое имя)$/, run: recallName },
+    { re: /(родил|родом|от\s?куда|из какого.*город|здешний)/,
+      run: function () { return fill(pick(WHERE_FROM)); }, topic: 'from' },
+    { re: /(живе|прожива|обитаешь|в каком городе|где находишься)/,
+      run: function () { return fill(pick(WHERE_LIVE)); }, topic: 'where' },
+    { re: /город/, run: function () { return fill(pick(CITY_WHICH)); } },
+    { re: /(где.*работа|где.*труди|кем.*работа|твоя должность|кем служишь|место службы)/,
+      run: function () { return fill(pick(WORK_WHERE)); } },
     { re: /(что ты делаешь|что делаешь|что поделываешь)/, run: function () { return fill(pick(DEEDS)); }, topic: 'deed' },
-    { re: /(что умеешь|что можешь|какие навыки)/, run: function () { return fill(pick(CAN_DO)); }, topic: null },
-    { re: /(любимая еда|любимое блюдо|что ешь|любимая пища)/, run: function () { return fill(pick(FOOD)); }, topic: null },
-    { re: /(сладк|конфет|пряник|варень|карамел|шоколад|печенье)/, run: function () { return fill(pick(SWEET)); }, topic: null },
-    { re: /(любимая книга|любимые книги|что читаешь|любимая книжка)/, run: function () { return fill(pick(BOOKS)); }, topic: null },
-    { re: /(любим.*писател|жюль верн)/, run: function () { return fill(pick(WRITER)); }, topic: null },
-    { re: /(нравится.*работ|любишь.*работ|работа нравится|как.*работа)/, run: function () { return fill(pick(WORK_LIKE)); }, topic: null },
-    { re: /(занимаешься|увлека|хобби|любимое заняти)/, run: function () { return fill(pick(HOBBY)); }, topic: null },
-    { re: /(женат|семья|жена|холост)/, run: function () { return fill(pick(FAMILY)); }, topic: null },
-    { re: /(^| )я (работаю|учусь|студент|школьник|инженер|врач|учитель)/, run: function () { window.ZAHAR_USER_JOB = true; return fill(pick(ABOUT_USER)); }, topic: 'job' },
-    { re: /^(привет|приветствую|здравствуй|здравствуйте|салют|хай)$/, run: function () { var s = fill(pick(GREETS)); lastCounter = true; return s + ' ' + counterText(); }, topic: null }
+    { re: /(что умеешь|что можешь|какие навыки)/, run: function () { return fill(pick(CAN_DO)); } },
+    { re: /(любимая еда|любимое блюдо|что ешь|любимая пища)/, run: function () { return fill(pick(FOOD)); } },
+    { re: /(сладк|конфет|пряник|варень|карамел|шоколад|печенье)/, run: function () { return fill(pick(SWEET)); } },
+    { re: /(любимая книга|любимые книги|что читаешь|любимая книжка)/, run: function () { return fill(pick(BOOKS)); } },
+    { re: /(любим.*писател|жюль верн)/, run: function () { return fill(pick(WRITER)); } },
+    { re: /(нравится.*работ|любишь.*работ|работа нравится|как.*работа)/, run: function () { return fill(pick(WORK_LIKE)); } },
+    { re: /(занимаешься|увлека|хобби|любимое заняти)/, run: function () { return fill(pick(HOBBY)); } },
+    { re: /(женат|семья|жена|холост)/, run: function () { return fill(pick(FAMILY)); } },
+    { re: /(любите чай|любишь чай|про чай|о чае)/, run: function () { return fill(pick(TEA)); } },
+    { re: /(начальство|начальник|шеф|люту|пережив)/, run: function () { return fill(pick(SYMPATHY)); } },
+    { re: /(я\s+из\s+барнаул|я\s+в\s+барнаул|я\s+из\s+города)/, run: function () { return fill(pick(LANDSMAN)); } },
+    { re: /мне\s+\d+|\d+\s+лет|\d+\s+год/, run: ageRun },
+    { re: /(^| )я (работаю|учусь|служу|тружусь)/,
+      run: function () { awaitingJob = true; return fill(pick(ABOUT_USER)); } }
   ];
 
   function chat(raw) {
@@ -370,8 +417,9 @@
     if (!n) return null;
 
     /* «ты в Барнауле?» и короткие подтверждения после разговора о жилье */
-    if (/^(ты|а ты|вы|а вы)?\s*(сейчас)?\s*(в|во) барнаул/.test(n) ||
-        (lastTopic === 'where' && n.split(' ').length <= 4 && /(барнаул|здесь|тут)/.test(n))) {
+    if (!/(погод|холодн|тепло|градус|который час|числ)/.test(n) &&
+        (/^(ты|а ты|вы|а вы)?\s*(сейчас)?\s*(в|во) барнаул/.test(n) ||
+         (lastTopic === 'where' && n.split(' ').length <= 4 && /(барнаул|здесь|тут)/.test(n)))) {
       lastTopic = null;
       return maybeCounter(fill(pick(BARN_CONFIRM)));
     }
@@ -379,21 +427,13 @@
     /* «я» отдельно — предложить договорить */
     if (/^(я|а я)$/.test(n)) return 'Слушаю, ' + nmOr() + '. Договорите депешу — что вы?';
 
-    /* продолжение о деле собеседника */
-    if (window.ZAHAR_USER_JOB && !/(погод|который час|числ|кто ты|как тебя|зовут|\?$)/.test(n) &&
-        n.split(' ').length > 2 && !/^(да|нет|хорошо|ничего)$/.test(n)) {
-      window.ZAHAR_USER_JOB = false;
-      var jr = /печата|печат|реклам|станк/.test(n) ? fill(pick(JOB_PRINT)) : fill(pick(JOB_FOLLOW));
-      lastCounter = true;
-      return jr;
-    }
-
     for (var i = 0; i < HANDLERS.length; i++) {
       var h = HANDLERS[i];
       try {
         if (h.re.test(n)) {
           var out = h.run(q, n);
           if (out) {
+            awaitingJob = false;            /* новый вопрос — очередь о деле закрыта */
             if (typeof out.then === 'function') return out;
             lastTopic = h.topic;
             return maybeCounter(String(out));
@@ -401,7 +441,14 @@
         }
       } catch (e) { warn('ошибка в обработчике #' + i + ': ' + e); }
     }
-    lastTopic = null;
+
+    /* продолжение о деле собеседника: слой спросил — значит, услышит ответ */
+    if (awaitingJob && n.split(' ').length >= 2) {
+      awaitingJob = false;
+      lastCounter = true;
+      return /торгов|лавк|продаж|магазин|купц|станк|печат|реклам/.test(n)
+        ? fill(pick(JOB_TRADE)) : fill(pick(JOB_FOLLOW));
+    }
 
     var nm = tryName(q);
     if (nm) return nameReply(nm);
@@ -445,6 +492,6 @@
   else boot();
 
   window.zaharChatStatus = function () {
-    return { файл: 'правка №9', установлен: !!window.__zaharChatInstalled, имя: window.ZAHAR_USER_NAME, год1896: window.ZAHAR_CHAT_1896 };
+    return { файл: 'правка №10', установлен: !!window.__zaharChatInstalled, имя: window.ZAHAR_USER_NAME, год1896: window.ZAHAR_CHAT_1896 };
   };
 })();

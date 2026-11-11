@@ -1461,27 +1461,7 @@ body.curtain-on .tab .tab-label { visibility: hidden; }
 .tab-curtain-label { font-size: 0.9rem; white-space: nowrap; }
 
 </style>
-<style id="zahar-cards-css">
-/* ===== Захаръ въ эфирѣ: карточки «вопросъ → ответъ» ===== */
-#zahar-cards { display: flex; flex-direction: column; gap: 10px; padding: 8px 12px 2px; }
-body.telegraph-on #zahar-cards { display: none !important; }
-#zahar-cards .zcard-w { overflow: hidden; }
-#zahar-cards .zcard {
-  background: linear-gradient(180deg, #f3e6c8, #e9d7ae);
-  border: 1.5px solid #8a6534;
-  border-radius: 8px;
-  padding: 10px 14px 11px;
-  font-family: Georgia, serif;
-  box-shadow: 0 2px 10px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.4);
-  transform: translateY(calc(-100% - 16px));
-  opacity: 0;
-  transition: transform .55s cubic-bezier(.24,.75,.25,1), opacity .45s ease;
-}
-#zahar-cards .zcard.z-in { transform: none; opacity: 1; }
-#zahar-cards .zq { font-weight: 700; color: #4a3517; font-size: .95rem; line-height: 1.35; word-wrap: break-word; }
-#zahar-cards .zsep { height: 1px; background: #8a6534; opacity: .45; margin: 7px 0; }
-#zahar-cards .za { color: #2e2410; font-size: .92rem; line-height: 1.4; white-space: pre-wrap; word-wrap: break-word; }
-</style>
+
 </head>
 <body>
 
@@ -1860,6 +1840,7 @@ body.telegraph-on #zahar-cards { display: none !important; }
 <script src="zahar/zahar_dict.js"></script>
 <script src="zahar/zahar_phrases.js"></script>
 <script src="zahar/zahar_brain.js"></script>
+<script src="zahar/zahar_chat.js"></script>
 <script src="zahar/zahar_ether.js"></script>
 <script>
 // ---------- Данные: подключается words.js ----------
@@ -5634,7 +5615,7 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
     var dt = last ? Math.min((now - last) / 1000, .05) : .016; last = now;
     if (mode === 'flow') {
       x -= FLOW * dt;
-            if (msg.childNodes.length && xEnd() + x <= -20) {
+      if (msg.childNodes.length && xEnd() + x <= -20) {
         msg.innerHTML = ''; var cb = onDone; onDone = null;
         if (cb) { cb(); } else { mode = 'idle'; setTarget(xIdle()); }
       }
@@ -5740,13 +5721,12 @@ function flushDying() { while (sDying.length) { var d = sDying.pop(); if (d.pare
     else { msg.innerHTML = ''; mode = 'hidden'; if (cb) cb(); }
   };
   /* Сшивъ №400: пробужденіе ленты изъ скрытаго режима — зовётъ Захаръ по отъездѣ */
-    window.sTapeWake = function () {
+  window.sTapeWake = function () {
     if (mode !== 'hidden' && mode !== 'flow') return;
     msg.innerHTML = ''; tape.classList.remove('s-on');
-    mode = 'idle'; tx = xIdle(); x = tx;   /* бумага пуста — прыжокъ невидимъ, дёрганья нетъ */
+    mode = 'idle'; tx = xIdle(); x = tx;   /* бумага пуста — прыжок невидим, дёрганья нет */
     eng.style.transform = 'translateX(' + x.toFixed(2) + 'px)';
   };
-
   /* ---------- Сброс набранного: текст уходит за свой крайъ, надпись входитъ съ противоположного ---------- */
   function startClear(dir) {
     if (!msg.childNodes.length) { mode = 'idle'; setTarget(xIdle()); return; }

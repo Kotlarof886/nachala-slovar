@@ -1,24 +1,26 @@
 /* ============================================================
-   zahar_chat.js — слой живой болтовни Захара, правка №15.
+   zahar_chat.js — слой живой болтовни Захара, правка №16.
    Подключать ПОСЛЕ zahar_brain.js:
      <script src="zahar/zahar_chat.js"></script>
-   ИСПРАВЛЕНО: хвост «мы какъ разъ толковали» отцепляется
-   только у строк; обещания (Promise) мозга проходят насквозь —
-   баг «[object Promise]» устранен.
-   НОВОЕ: дети и пожилые (адрес по возрасту), бытовые темы
-   с пулами ответов: как дела, здоровье, новости, настроение,
-   скучно/весело, устал, еда, морзе, провода, газеты, ярмарка,
-   время года, друзья, «старше/младше меня».
+   НОВОЕ: контекстные слоты («а тебе сколько» после возраста),
+   стемминг (склонения и перестановки слов), очередь встречных
+   вопросов больше не съедает ответы, имена через «величать»,
+   грубости Захар отбивает по-человечески.
+   ЭФИР: если слой и мозг молчат, Захар ищет в открытой
+   Википедии (без ключей, работает и из file://) и перекладывает
+   ответ на свой лад. Выключить: «эфир выкл», включить: «эфир вкл»,
+   или window.ZAHAR_WEB_FALLBACK = false до подключения скриптов.
    Погода — полный пакет (градус, ветер, осадки), кэш 10 минут.
-   Диагностика: «проверка» (называет номер правки), «погода проверка».
+   Диагностика: «проверка», «погода проверка». Логи — F12, [zahar_chat].
    Дата: Захар отыгрывает 1896 год (window.ZAHAR_CHAT_1896 = false — реальная).
    В узорах НЕ использовать \w — в JavaScript он не ловит кириллицу.
    ============================================================ */
 (function () {
   if (window.__zaharChatLoaded) return;
   window.__zaharChatLoaded = true;
-  var VERSION = 'правка №15';
+  var VERSION = 'правка №16';
   if (typeof window.ZAHAR_CHAT_1896 === 'undefined') window.ZAHAR_CHAT_1896 = true;
+  if (typeof window.ZAHAR_WEB_FALLBACK === 'undefined') window.ZAHAR_WEB_FALLBACK = true;
   if (!window.ZAHAR_USER_NAME) window.ZAHAR_USER_NAME = null;
   if (!window.ZAHAR_USER_GENDER) window.ZAHAR_USER_GENDER = null;
   if (!window.ZAHAR_USER_AGE) window.ZAHAR_USER_AGE = null;
@@ -58,7 +60,17 @@
   function nmOr() { return window.ZAHAR_USER_NAME || addr(); }
   function fill(s) { return String(s || '').replace(/\{N\}/g, nmOr()).replace(/\{A\}/g, addr()); }
 
-  /* ---------- нечеткий разбор: Левенштейн ---------- */
+  /* ---------- стемминг и нечеткий разбор ---------- */
+  var ENDINGS = ['иями','ями','ами','иях','ах','ях','ов','ев','ей','ой','ый','ий','ая','яя','ую','юю','ым','им','ом','ем','ых','их','ее','ые','ие','ешь','аешь','ишь','ует','ает','ают','яют','ит','ют','ят','ут','ишь','ешь','а','я','е','у','ю','о','и','ы','й','ть'];
+  function stem(w) {
+    w = String(w || '');
+    if (w.length < 4) return w;
+    for (var i = 0; i < ENDINGS.length; i++) {
+      var e = ENDINGS[i];
+      if (w.length - e.length >= 3 && w.slice(-e.length) === e) return w.slice(0, w.length - e.length);
+    }
+    return w;
+  }
   function lev(a, b) {
     var m = a.length, n = b.length;
     if (!m) return n; if (!n) return m;
@@ -79,8 +91,11 @@
     var toks = n.split(' '), i, j;
     for (i = 0; i < toks.length; i++) {
       if (toks[i].length < 4) continue;
+      var ts = stem(toks[i]);
       for (j = 0; j < keys.length; j++) {
+        var ks = stem(keys[j]);
         if (lev(toks[i], keys[j]) <= tolOf(keys[j])) return true;
+        if (ts.length >= 4 && ks.length >= 4 && lev(ts, ks) <= tolOf(ks)) return true;
       }
     }
     return false;
@@ -138,6 +153,7 @@
   var WD = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
 
   function answerTime() {
+    lastAsked = 'time';
     var d = new Date();
     var h = d.getHours(), m = d.getMinutes();
     var h12 = h % 12; if (h12 === 0) h12 = 12;
@@ -291,7 +307,7 @@
       if (!d || d.ws === undefined || d.ws === null)
         return 'Ветер, ' + nmOr() + ', аппарат не сказывает: он градус ведет, а направление не телеграфирует. А по приметам так: ежели лицо холодит — с Оби ветер, так точно.';
       return 'Ветер нынче ' + degToWind(d.wd) + ' ' + windWord(d.ws) + ', ' +
-        numWords(d.ws) + ' ' + formOf(d.ws, 'метр', 'метра', 'метров') + ' в секунду. Флюгер на станции крутится — наблюдать людно.';
+        numWords(d.ws) + ' ' + formOf(d.ws, 'метр', 'метра', 'метров') + ' в секунду. Флюгер на станции крутится — наблюдать любодно.';
     };
     if (c) return Promise.resolve(rep(c));
     return fetchFull().then(function (d) { return rep(d); });
@@ -330,25 +346,28 @@
 
   /* ---------- имя и пол собеседника ---------- */
   var NAME_STOP = {};
-  'не,хочу,живу,работаю,думаю,устал,занят,болен,рад,согласен,против,спросить,люблю,нравится,тут,здесь,сегодня,бот,робот,машина,человек,телеграфист,сударь,сударыня,простой,известно,доволен,готов,молод,стар,должен,свободен,секрет,русский,немец,англичанин,барин,купец,нельма,карась,карп,потом,весело,грустно,плохо,так,знаю,слышал,видел,читал,учусь,один,дома,честный,молчу,год,года,лет,торговле,лавке,конторе,барнаула,городе,барнаул,проездом,проезд,станции'.split(',').forEach(function (w) { if (w) NAME_STOP[norm(w)] = 1; });
+  'не,хочу,живу,работаю,думаю,устал,занят,болен,рад,согласен,против,спросить,люблю,нравится,тут,здесь,сегодня,бот,робот,машина,человек,телеграфист,сударь,сударыня,простой,известно,доволен,готов,молод,стар,должен,свободен,секрет,русский,немец,англичанин,барин,купец,нельма,карась,карп,потом,весело,грустно,плохо,так,знаю,слышал,видел,читал,учусь,один,дома,честный,молчу,год,года,лет,торговле,лавке,конторе,барнаула,городе,барнаул,проездом,проезд,станции,же,говорю,спрашиваю,давно,родился,родом,сколько,возраст,работаю,служу,тружусь,живу,эх,ах,ну,вот,пора,кстати'.split(',').forEach(function (w) { if (w) NAME_STOP[norm(w)] = 1; });
   function tryName(raw) {
-    var m = String(raw || '').match(/^а?\s*(?:меня\s+зовут|мо[еи]\s+имя|моя\s+фамилия|звать\s+меня|я)\s+(.+)$/i);
-    if (!m) return null;
-    var words = m[1].replace(/[.,!?;:«»"]+$/g, '').split(/\s+/).filter(Boolean);
-    if (!words.length) return null;
-    var first = norm(words[0]);
+    var q2 = String(raw || '').trim().replace(/[.?!,]+$/, '');
+    q2 = q2.replace(/\s+а\s+(?:ты|вы)\b[\s\S]{0,30}$/i, '');   /* «…а ты кто» — отрезать */
+    var m = q2.match(/^\s*(?:меня\s+(?:зовут|величать|величают)|звать\s+меня|зовите\s+меня|мо[еи]\s+имя|моя\s+фамилия)\s+(.+)$/i);
+    var cand = null;
+    if (m) {
+      cand = m[1].split(/\s+/).filter(Boolean);
+    } else {
+      var m2 = q2.match(/^\s*я\s+([А-ЯЁ][а-яёА-ЯЁ-]*(?:\s+[А-ЯЁ][а-яёА-ЯЁ-]+)?)\s*$/);
+      if (!m2) return null;
+      cand = m2[1].split(/\s+/);
+    }
+    if (!cand || !cand.length) return null;
+    var first = norm(cand[0]);
     if (first.length < 3 || NAME_STOP[first]) return null;
     if (/^(как|что|где|когда|почему|зачем|сколько)$/.test(first)) return null;
-    var out = [];
-    for (var i = 0; i < words.length && i < 2; i++) {
-      var w = words[i].replace(/[.,!?;:«»"]+$/, '');
-      if (i === 1) {
-        var w2 = norm(w);
-        if (w2.length < 4 || NAME_STOP[w2] || /^(работаю|учусь|жив|родил|в|из|лет|года|год)$/.test(w2)) break;
-      }
-      out.push(w);
+    var out = [cand[0]];
+    if (cand.length >= 2) {
+      var w2 = norm(cand[1]);
+      if (w2.length >= 4 && !NAME_STOP[w2] && !/^(работаю|учусь|жив|родил|в|из|лет|года|год)$/.test(w2)) out.push(cand[1]);
     }
-    if (!out.length) return null;
     var nice = out.map(cap).join(' ');
     if (!window.ZAHAR_USER_GENDER) {
       var f1 = norm(out[0]), f2 = out[1] ? norm(out[1]) : '';
@@ -362,10 +381,12 @@
       return 'Вы изволили представиться: ' + window.ZAHAR_USER_NAME + '. Память у меня казенная — ничего не теряется.';
     return 'Имени вашего я не слыхал, ' + addr() + '. Представьтесь — и буду звать по имени.';
   }
-  function nameReply(name) {
+  function nameReply(name, wantIdentity) {
     window.ZAHAR_USER_NAME = name;
     lastCounter = true;
-    return 'Приятно познакомиться, ' + name + '! Записал в тетрадку — память депешная, цепкая. ' + counterText();
+    var tail = counterText();
+    if (wantIdentity) tail = 'А сам я, стало быть, Захаръ Кузнецовъ, при аппарате. ' + tail;
+    return 'Приятно познакомиться, ' + name + '! Записал в тетрадку — память депешная, цепкая. ' + tail;
   }
   function detectGender(q) {
     if (window.ZAHAR_USER_GENDER) return;
@@ -384,7 +405,7 @@
     { q: 'Давно вы в наших краях, {N}?', topic: 'kray' },
     { q: 'Чай горячий отведали, {N}? Самовар у меня не зря топится.', topic: 'tea' }
   ];
-  var lastCounter = false, counterTopic = null, askNameDone = false, lastTopic = null, awaitingJob = false;
+  var lastCounter = false, counterTopic = null, askNameDone = false, lastTopic = null, awaitingJob = false, lastAsked = null;
   function counterText() {
     var c;
     if (!window.ZAHAR_USER_NAME && !askNameDone) { askNameDone = true; counterTopic = null; lastCounter = true; return 'Как вас величать, кстати?'; }
@@ -409,7 +430,7 @@
       return fill('А я вот Барнаул люблю, {A}: тут и служба, и Обь, и самовар.');
     }
     if (t === 'kray') {
-      if (/давно|долго|родил|живу|всегда/.test(n)) return fill('Значит, своих же кругов человек, {A} — славно!');
+      if (/давно|долго|живу|всегда/.test(n)) return fill('Значит, своих же кругов человек, {A} — славно!');
       return fill('Понимаю, {A}. Наши края — приволье: Обь да тайга.');
     }
     if (t === 'tea') {
@@ -419,6 +440,57 @@
     }
     if (t === 'job') { awaitingJob = true; return fill(pick(ABOUT_USER)); }
     return null;
+  }
+
+  /* ---------- эфир: подхват из открытой Википедии ---------- */
+  var WEB_INTRO = [
+    'Изыскалъ въ эфирѣ, {A}! Свежая сводка гласитъ:',
+    'Черезъ провода дошло и сіе, {A}. По эфирной сводке:'
+  ];
+  var WEB_OUTRO = [
+    'Записи сіе не изъ лексикона моего, а изъ эфира: свежіе, потому за точность въ 1896 годѣ не поручусь.',
+    'Эфиръ редко вретъ, но сіе знаніе новѣе моихъ записей — сверяйте, {A}.'
+  ];
+  function wikiSearch(term) {
+    var sUrl = 'https://ru.wikipedia.org/w/api.php?action=query&list=search&srlimit=1&format=json&origin=*' +
+      '&srsearch=' + encodeURIComponent(term);
+    return fetch(sUrl).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      var s = j && j.query && j.query.search && j.query.search[0];
+      if (!s) return null;
+      var t = s.title;
+      var eUrl = 'https://ru.wikipedia.org/w/api.php?action=query&prop=extracts&exintro=1&explaintext=1&format=json&origin=*' +
+        '&titles=' + encodeURIComponent(t);
+      return fetch(eUrl).then(function (r) { return r.ok ? r.json() : null; }).then(function (j2) {
+        var pages = j2 && j2.query && j2.query.pages;
+        if (!pages) return null;
+        var k = Object.keys(pages)[0];
+        var ext = pages[k] && pages[k].extract;
+        return ext ? { title: t, text: ext } : null;
+      });
+    });
+  }
+  function webLine(r) {
+    var text = String(r.text).replace(/$[^)]*$/g, '').replace(/\s+/g, ' ').trim();
+    var parts = text.split('. ');
+    var body = parts.slice(0, 2).join('. ');
+    if (body && !/[.!?]$/.test(body)) body += '.';
+    return fill(pick(WEB_INTRO)) + ' «' + r.title + '» — ' + body + ' ' + fill(pick(WEB_OUTRO));
+  }
+  function webAsk(raw) {
+    if (window.ZAHAR_WEB_FALLBACK === false) return Promise.resolve(null);
+    var q = String(raw || '').replace(/что такое|что за|кто такой|кто такая|расскажи (о|про)|объясни|поведай/gi, '').trim();
+    if (!q) q = String(raw || '');
+    var key = 'zahar_wiki_v2:' + norm(q);
+    try {
+      var c = JSON.parse(localStorage.getItem(key) || 'null');
+      if (c && c.ts && Date.now() - c.ts < 86400000) return Promise.resolve(webLine(c));
+    } catch (e) {}
+    return wikiSearch(q).then(function (r) {
+      if (!r) return null;
+      try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), title: r.title, text: r.text })); } catch (e) {}
+      warn('эфиръ ответилъ: ' + r.title);
+      return webLine(r);
+    }, function () { return null; });
   }
 
   /* ---------- пулы ---------- */
@@ -434,13 +506,18 @@
     'До свидания, {A}! Заходите — словарь, погода и самовар всегда при мне.',
     'Всего вам доброго, {A}! Чтоб дороги были гладки и провода не рвались.'
   ];
+  var INSULT = [
+    'Такие словца, {A}, при казенной линии не водятся. Остудите нрав — и продолжим беседу по-людски.',
+    'Помилуйте, {A}! Я человек служивый: на грубость грубостью не отвечаю. Спрошено — отвечу, обругано — промолчу.',
+    'Ох, сурово, {A}. Нервы у аппарата крепкие, но вежливость в цене. Начнем заново, с поклоном?'
+  ];
   var HOW_ARE = [
     'Дела мои казенные, {A}: лента идет, провода целы — жив, не тужу. А у вас как?',
     'Порядок, {A}! Смена идет ровно, чай горяч. Что у вас?',
     'Как у телеграфиста деля: лента рвет, шеф ругается, чай остыл — значит, все по-обычному, {A}.'
   ];
   var HEALTH = [
-    'Здоровье не жалуюсь, {A}: рука тверда, зрение при очках — стало быть, к службе годен. А вы как поживаете?',
+    'Здоровьем не жалуюсь, {A}: рука тверда, зрение при очках — стало быть, к службе годен. А вы как поживаете?',
     'Слава Богу, здоров, {A}. В Сибири здоровье — главный капитал: перемерзнешь — и депешу не отстучишь.',
     'Все цел, {A}: разве что глаза от ленты устают. Очки выправляют.'
   ];
@@ -487,7 +564,7 @@
   ];
   var SEASON = [
     'Люблю зиму, {A}: Обь встанет — и на лед, на жерлицы. Только иней на проводах — враг телеграфа.',
-    'Лето — моя пора, {A}: рыбалка, вёсла, нельма ходит. А осень слякотна — депешам расплываюсь.',
+    'Лето — моя пора, {A}: рыбалка, весла, нельма ходит. А осень слякотна — депеши размокают.',
     'Весна у нас шумная, {A}: лед на Оби ломается с грохотом — и телеграммы полетят о разливах.'
   ];
   var FRIENDS = [
@@ -597,7 +674,11 @@
   ];
   var AGE_KID = [
     '{AGE}! Славный возраст, {A}: я в ваши годы морзянку зубрил да в чижей играл. К аппарату присядьте — точку и тире покажу.',
-    'Десять годов — самое то, чтобы учиться, {A}: скажите «научи: слово — определение», и выучим вместе.'
+    '{AGE} — самое то, чтобы учиться, {A}: скажите «научи: слово — определение», и выучим вместе.'
+  ];
+  var AGE_SELF = [
+    'Мне, {A}, девятнадцать лет от роду: морзянку зубрю, усы отращиваю с подкрутом — покуда безуспешно.',
+    'Девятнадцать годов, {A}. Молодой, но рука по ключу твердая — не в годах сила, а в практике.'
   ];
   var OLDER_YOUNGER = [
     'Стало быть, вы постарше меня, {A} — опыта у вас боле, буду слушать совета.',
@@ -634,11 +715,12 @@
 
   function diagReply() {
     var st = window.__zaharChatInstalled ? 'Слой болтовни встал на место' : 'Слой болтовни НЕ встал (мозг не найден)';
-    var g = window.ZAHAR_USER_GENDER === 'f' ? 'сударыня' : window.ZAHAR_USER_GENDER === 'm' ? 'сударь' : 'пол еще не определил';
-    return 'Связь исправна, ' + nmOr() + '! ' + VERSION + '; ' + st + '. Опечатки правлю, пол различаю, по возрасту вежливость меняю, быт знаю. ' +
+    return 'Связь исправна, ' + nmOr() + '! ' + VERSION + '; ' + st + '. Опечатки правлю, пол различаю, по возрасту вежливость меняю, контекст держу, эфир ' +
+      (window.ZAHAR_WEB_FALLBACK === false ? 'закрыт' : 'открыт') + '. ' +
       (window.ZAHAR_USER_NAME ? 'Имя ваше записано: ' + window.ZAHAR_USER_NAME + '.' : 'Имени вашего еще не слыхал — представьтесь.');
   }
   function ageRun(q, n) {
+    lastAsked = 'age';
     var m = n.match(/(\d+)\s*(лет|год|года|годов)/);
     var ageNum = null, age;
     if (m) { ageNum = +m[1]; }
@@ -652,13 +734,13 @@
       if (ageNum <= 14) return fill(pick(AGE_KID)).replace(/\{AGE\}/g, age);
       return fill(pick(AGE_REACT)).replace(/\{AGE\}/g, age);
     }
-    return fill(pick(AGE_REACT)).replace(/\{AGE\}/g, 'Возраст ваш почтенный');
+    return fill(pick(AGE_SELF));
   }
   function ageCompare(n) {
+    lastAsked = 'age';
     var a = window.ZAHAR_USER_AGE;
     if (/старше/.test(n)) {
-      if (a && a > 19) return fill(pick(OLDER_YOUNGER).split('|')[0]);
-      if (a && a < 19) return 'Старше меня? При девятнадцати годах, {A}, я себя старшим не назначаю — но с вами поспорю не против.';
+      if (a && a > 19) return fill(pick(OLDER_YOUNGER));
       return 'Кто старше — по годам судят, {A}, а я по опыту: аппарату моему два года, и он старше меня нравом.';
     }
     if (/младше/.test(n)) {
@@ -671,6 +753,12 @@
   /* ---------- разбор депеши слоем ---------- */
   var HANDLERS = [
     { re: /^(проверка|проверка связи)$/, run: diagReply },
+    { re: /^эфир\s+(вкл|выкл)$/, run: function (q, n) {
+        window.ZAHAR_WEB_FALLBACK = /вкл/.test(n);
+        return fill(window.ZAHAR_WEB_FALLBACK
+          ? 'Эфир открыт, {A}: буду изыскивать сведения в сети, ежели лексикон молчит.'
+          : 'Эфир закрыт, {A}: отвечаю только по записям и лексикону.');
+      } },
     { re: /^(погода проверка|проверка погоды)$/, run: answerWeatherDiag },
     { re: /(погод|температур|сколько градус|как холодно|как тепло|на улице|на дворе|метель)/, run: answerWeather },
     { re: /(ветер|ветр|флюгер)/, run: answerWind },
@@ -681,14 +769,18 @@
     { re: /здрави[яе]/, run: function () { lastCounter = true; return fill(pick(GREETS)) + ' ' + counterText(); } },
     { re: /(до свидан|прощай|всего доброго|до встречи|бывай|покид)/,
       run: function () { lastCounter = true; return fill(pick(FAREWELL)); } },
+    { re: /(нафиг|нахрен|нахер|пшел|пош[её]л вон|иди вон|болван|идиот|тупиц|пофи|заткни)/,
+      run: function () { return fill(pick(INSULT)); } },
     { re: /(попил|попивал|выпил|любите чай|любишь чай|про чай|о чае|чай)/, run: function () { return fill(pick(TEA)); } },
     { re: /(день|числ|дат|календар|какой год|какой месяц)/, run: answerDate },
     { re: /(кто ты|кто вы|ты кто|(тебя|вас)\s+(?:как[ъь]?\s+)?[зз]ову?т[а-я]*|зову?[ть]?\s+(тебя|вас)|твое имя|как твое имя|как фамилия|твоя фамилия|представ)/,
       run: function () {
+        lastAsked = 'id';
         if (lastTopic === 'id') return 'Уже рапортовал о себе, ' + addr() + ', но повторю кратко: Захаръ Кузнецовъ, младший телеграфист барнаульской станции. А что вас интересует сверх того?';
         return fill(pick(IDENTITY));
       }, topic: 'id' },
     { re: /^(как меня зовут|какое мое имя|что мое имя|мое имя)$/, run: recallName },
+    { re: /(сколько лет|сколько тебе|сколько годов|возраст|лет тебе|сколько у тебя|тебе сколько)/, run: ageRun },
     { re: /(выглядите|выглядишь|внешность|какой ты на вид|какой я на вид)/, run: function () { return fill(pick(APPEAR)); } },
     { re: /(морз|азбук|скорость приема|ключ стуч)/, run: function () { return fill(pick(MORSE)); } },
     { re: /(провод|лини|авари|изолятор|столб)/, run: function () { return fill(pick(WIRES)); } },
@@ -704,7 +796,7 @@
     { re: /(настроен|дух|весело ли)/, run: function () { return fill(pick(MOOD)); } },
     { re: /(скучно|скука|занудно)/, run: function () { return fill(pick(BORED)); } },
     { re: /(устал|отдых|отдохн)/, run: function () { return fill(pick(TIRED)); } },
-    { re: /(завтрак|обед|ужин|голоден|голоден ли|ел ли|пое)/, run: function () { return fill(pick(MEALS)); } },
+    { re: /(завтрак|обед|ужин|голод|ел ли|пое)/, run: function () { return fill(pick(MEALS)); } },
     { re: /(старше|младше)/, run: ageCompare },
     { re: /(проездом|проезд|транзит|мимо еду)/, run: function () { return fill(pick(TRANSIT)); } },
     { re: /(родил|родом|от\s?куда|из какого.*город|здешний)/,
@@ -713,7 +805,6 @@
       run: function () { return fill(pick(WHERE_LIVE)); }, topic: 'where' },
     { re: /(где.*работа|где.*труди|кем.*работа|твоя должность|кем служишь|место службы)/,
       run: function () { return fill(pick(WORK_WHERE)); } },
-    { re: /(сколько лет|сколько тебе|сколько годов|возраст|лет тебе)/, run: ageRun },
     { re: /(что ты делаешь|что делаешь|что поделываешь|чем занят|чем занятой)/, run: function () { return fill(pick(DEEDS)); }, topic: 'deed' },
     { re: /(что умеешь|что можешь|какие навыки)/, run: function () { return fill(pick(CAN_DO)); } },
     { re: /(любимая еда|любимое блюдо|что ешь|любимая пища)/, run: function () { return fill(pick(FOOD)); } },
@@ -731,23 +822,23 @@
       run: function () { awaitingJob = true; lastCounter = true; return fill(pick(ABOUT_USER)); } }
   ];
 
-  /* нечеткий запас: те же намерения, но с опечатками */
+  /* нечеткий запас: намерения с опечатками и склонениями */
   var FUZZ = [
-    { keys: ['погод', 'температур', 'погодк'], run: function () { return answerWeather(); } },
-    { keys: ['зовут', 'зоведе', 'зовете', 'зовите', 'зовешь'], run: function (n) { return /меня|мое имя/.test(n) ? recallName() : fill(pick(IDENTITY)); } },
-    { keys: ['привет', 'здравству', 'здрави', 'здорово', 'салют'], run: function () { lastCounter = true; return fill(pick(GREETS)) + ' ' + counterText(); } },
-    { keys: ['свидани', 'прощай'], run: function () { lastCounter = true; return fill(pick(FAREWELL)); } },
-    { keys: ['выглядиш', 'внешност'], run: function () { return fill(pick(APPEAR)); } },
+    { keys: ['погод', 'температур'], run: function () { return answerWeather(); } },
+    { keys: ['зовут', 'зовешь', 'зовете'], run: function (n) { return /меня|мое имя/.test(n) ? recallName() : fill(pick(IDENTITY)); } },
+    { keys: ['привет', 'здравствуй', 'здравие', 'здорово'], run: function () { lastCounter = true; return fill(pick(GREETS)) + ' ' + counterText(); } },
+    { keys: ['свидание', 'прощай'], run: function () { lastCounter = true; return fill(pick(FAREWELL)); } },
+    { keys: ['выглядишь', 'внешность'], run: function () { return fill(pick(APPEAR)); } },
     { keys: ['чай', 'чаю'], run: function () { return fill(pick(TEA)); } },
-    { keys: ['времени', 'часов', 'котрый'], run: function () { return answerTime(); } },
-    { keys: ['возраст', 'возрост', 'годков'], run: function (n) { return ageRun(n, n); } },
+    { keys: ['времени', 'часов'], run: function () { return answerTime(); } },
+    { keys: ['возраст', 'годков'], run: function (n) { return ageRun(n, n); } },
     { keys: ['занят', 'занимаешь', 'делаешь'], run: function () { return fill(pick(DEEDS)); } },
     { keys: ['умеешь', 'можешь'], run: function () { return fill(pick(CAN_DO)); } },
     { keys: ['морзе', 'азбука'], run: function () { return fill(pick(MORSE)); } },
     { keys: ['устал', 'отдых'], run: function () { return fill(pick(TIRED)); } },
     { keys: ['голоден', 'завтрак', 'обед'], run: function () { return fill(pick(MEALS)); } },
     { keys: ['здоровье', 'болею'], run: function () { return fill(pick(HEALTH)); } },
-    { keys: ['новости', 'новосте'], run: function () { return fill(pick(NEWS)); } },
+    { keys: ['новости'], run: function () { return fill(pick(NEWS)); } },
     { keys: ['настроение'], run: function () { return fill(pick(MOOD)); } },
     { keys: ['скучно'], run: function () { return fill(pick(BORED)); } },
     { keys: ['друзья', 'приятели'], run: function () { return fill(pick(FRIENDS)); } },
@@ -762,12 +853,28 @@
 
     detectGender(q);
 
-    if (counterTopic && n.split(' ').length <= 6 &&
-        !/\?|погод|который час|сколько времени|числ|кто ты|зовут/.test(n)) {
-      var cr = counterReply(n);
-      if (cr) return maybeCounter(cr);
+    /* 1. последующий вопрос по контексту: «а тебе сколько» */
+    if (/сколь/.test(n) && n.split(' ').length <= 4 && !/врем|час|мне|лет|года|годов|\d/.test(n)) {
+      if (lastAsked === 'time') { lastAsked = null; return answerTime(); }
+      lastAsked = null;
+      return ageRun(q, n);
     }
 
+    /* 2. представление — раньше всего, чтобы «я Тимофей а ты кто» записало имя */
+    if (/^(меня\s+(зовут|величать|величают)|звать меня|зовите меня|мо[еи] имя|я\s+[А-ЯЁ])/i.test(q)) {
+      var nm0 = tryName(q);
+      if (nm0) {
+        counterTopic = null; lastCounter = false;
+        return nameReply(nm0, /ты кто|как тебя|как звать/.test(n));
+      }
+    }
+
+    if (/^(я|а я)$/.test(n)) return 'Слушаю, ' + nmOr() + '. Договорите депешу — что вы?';
+
+    /* 3. грубость — по-человечески */
+    if (/(нафиг|нахрен|нахер|пшел|болван|идиот|тупиц|пофи|заткни)/.test(n)) return fill(pick(INSULT));
+
+    /* 4. «ты в Барнауле?» и короткие подтверждения */
     if (!/(погод|холодн|тепло|градус|который час|числ|осадк|ветер)/.test(n) &&
         (/^(ты|а ты|вы|а вы)?\s*(сейчас)?\s*(в|во) барнаул/.test(n) ||
          (lastTopic === 'where' && n.split(' ').length <= 4 && /(барнаул|здесь|тут)/.test(n)))) {
@@ -775,15 +882,14 @@
       return maybeCounter(fill(pick(BARN_CONFIRM)));
     }
 
-    if (/^(я|а я)$/.test(n)) return 'Слушаю, ' + nmOr() + '. Договорите депешу — что вы?';
-
+    /* 5. точные узоры; встречный вопрос при этом растворяется */
     for (var i = 0; i < HANDLERS.length; i++) {
       var h = HANDLERS[i];
       try {
         if (h.re.test(n)) {
           var out = h.run(q, n);
           if (out) {
-            awaitingJob = false;
+            counterTopic = null; lastCounter = false; awaitingJob = false;
             if (typeof out.then === 'function') return out;
             lastTopic = h.topic;
             return maybeCounter(String(out));
@@ -792,6 +898,13 @@
       } catch (e) { warn('ошибка в обработчике #' + i + ': ' + e); }
     }
 
+    /* 6. ответ на встречный вопрос Захара (нельма, чай, Барнаул, края, дело) */
+    if (counterTopic && n.split(' ').length <= 6 && q.indexOf('?') < 0) {
+      var cr = counterReply(n);
+      if (cr) return maybeCounter(cr);
+    }
+
+    /* 7. продолжение о деле собеседника */
     if (awaitingJob && n.split(' ').length >= 2) {
       awaitingJob = false;
       lastCounter = true;
@@ -800,13 +913,14 @@
         ? fill(pick(JOB_TRADE)) : fill(pick(JOB_FOLLOW));
     }
 
+    /* 8. нечеткий разбор: опечатки, склонения, перестановки */
     if (q.length <= 60 && n.split(' ').length <= 8) {
       for (var f = 0; f < FUZZ.length; f++) {
         try {
           if (fuzzyHas(n, FUZZ[f].keys)) {
             var fo = FUZZ[f].run(n);
             if (fo) {
-              awaitingJob = false;
+              counterTopic = null; lastCounter = false; awaitingJob = false;
               if (typeof fo.then === 'function') return fo;
               return maybeCounter(String(fo));
             }
@@ -821,6 +935,12 @@
     for (var j = 0; j < SHORTS.length; j++) {
       if (SHORTS[j][0].test(n)) return maybeCounter(fill(pick(SHORTS[j][1])));
     }
+
+    /* 9. эфир: фоновый запрос в открытую энциклопедию */
+    if (window.ZAHAR_WEB_FALLBACK !== false && n.split(' ').length >= 2 && q.length <= 80) {
+      return webAsk(q);
+    }
+
     return null;
   }
 
@@ -829,7 +949,6 @@
   function stripTail(s) {
     return String(s).replace(TAIL_RE, '').replace(/\s{2,}/g, ' ').trim();
   }
-  /* хвост отцепляем только у строк; обещания мозга проходят насквозь */
   function stripSafe(x) {
     if (x && typeof x.then === 'function') return x.then(stripSafe, function () { return x; });
     return stripTail(x);
@@ -843,7 +962,12 @@
       var h = null;
       try { h = chat(q); } catch (e) { warn('сбой слоя: ' + e); h = null; }
       if (h === null || h === undefined) return stripSafe(_ask.call(this, polite(q)));
-      if (typeof h.then === 'function') return h;
+      if (typeof h.then === 'function') {
+        return h.then(function (s) {
+          if (s === null || s === undefined) return stripSafe(_ask.call(this, q));
+          return s;
+        }.bind(this), function () { return stripSafe(_ask.call(this, q)); }.bind(this));
+      }
       return h;
     };
     return true;
@@ -861,6 +985,7 @@
 
   window.zaharChatStatus = function () {
     return { файл: VERSION, установлен: !!window.__zaharChatInstalled, имя: window.ZAHAR_USER_NAME,
-             пол: window.ZAHAR_USER_GENDER, возраст: window.ZAHAR_USER_AGE, год1896: window.ZAHAR_CHAT_1896 };
+             пол: window.ZAHAR_USER_GENDER, возраст: window.ZAHAR_USER_AGE,
+             эфир: window.ZAHAR_WEB_FALLBACK !== false, год1896: window.ZAHAR_CHAT_1896 };
   };
 })();

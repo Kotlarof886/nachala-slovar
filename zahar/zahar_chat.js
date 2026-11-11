@@ -1,0 +1,404 @@
+/* ============================================================
+   zahar_chat.js — слой живой болтовни Захара, правка №5.
+   Подключать ПОСЛЕ zahar_brain.js (одной строкой):
+     <script src="zahar/zahar_chat.js"></script>
+   Слой перехватывает живые депеши прежде мозга: приветствие,
+   время, число, погоду, имя, быт (еда, книги, писатели, работа),
+   короткие реплики. Всё прочее уходит мозгу.
+   Диагностика: наберите «проверка». О проблемах слой пишет
+   в консоль (F12) с меткой [zahar_chat].
+   Дата: Захар отыгрывает 1896 год. Реальная дата:
+   window.ZAHAR_CHAT_1896 = false; — до подключения скриптов.
+   ============================================================ */
+(function () {
+  if (window.__zaharChatLoaded) return;
+  window.__zaharChatLoaded = true;
+  if (typeof window.ZAHAR_CHAT_1896 === 'undefined') window.ZAHAR_CHAT_1896 = true;
+  if (!window.ZAHAR_USER_NAME) window.ZAHAR_USER_NAME = null;
+
+  function warn(m) { try { console.warn('[zahar_chat] ' + m); } catch (e) {} }
+
+  /* ---------- утилиты ---------- */
+  function norm(s) {
+    return String(s || '').toLowerCase()
+      .replace(/ё/g, 'е').replace(/[ъь]/g, '')
+      .replace(/[іi]/g, 'и').replace(/ѳ/g, 'ф')
+      .replace(/[^a-zа-я0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ').trim();
+  }
+  function pick(arr) {
+    if (!arr || !arr.length) return '';
+    if (arr.length === 1) return arr[0];
+    if (typeof arr._last !== 'number') arr._last = -1;
+    var i = Math.floor(Math.random() * arr.length);
+    if (i === arr._last) i = (i + 1) % arr.length;
+    arr._last = i;
+    return arr[i];
+  }
+  function cap(w) { return w ? w.charAt(0).toUpperCase() + w.slice(1) : w; }
+  function nmOr() { return window.ZAHAR_USER_NAME ? cap(window.ZAHAR_USER_NAME) : 'сударь'; }
+  function fill(s) { return String(s || '').replace(/\{N\}/g, nmOr()); }
+
+  /* ---------- ты -> вы (границы слов без \b — с кириллицей он не работает) ---------- */
+  var YOU_MAP = [['ты','вы'],['тебя','вас'],['тебе','вам'],['тобой','вами'],
+    ['твой','ваш'],['твоя','ваша'],['твое','ваше'],['твою','вашу'],['твои','ваши'],
+    ['работаешь','работаете'],['делаешь','делаете'],['живешь','живете'],
+    ['служишь','служите'],['любишь','любите'],['знаешь','знаете'],['думаешь','думаете'],
+    ['умеешь','умеете'],['хочешь','хотите'],['можешь','можете']];
+  function polite(q) {
+    var s = String(q || '').replace(/ё/gi, 'е').replace(/і/gi, 'и');
+    s = s.replace(/что\s+ты\s+делаешь/gi, 'чем занимаетесь');
+    s = s.replace(/чем\s+ты\s+занимаешься/gi, 'чем занимаетесь');
+    s = s.replace(/как\s+тво[ия]\s+дела/gi, 'как дела');
+    YOU_MAP.forEach(function (p) {
+      var re = new RegExp('(^|[^а-яa-z0-9])' + p[0] + '(?=$|[^а-яa-z0-9])', 'gi');
+      s = s.replace(re, function (m, pre) {
+        var w = m.slice(pre.length);
+        return pre + ((w.charAt(0) >= 'А' && w.charAt(0) <= 'Я') ? cap(p[1]) : p[1]);
+      });
+    });
+    return s;
+  }
+
+  /* ---------- числа словами ---------- */
+  var ONES = ['ноль','один','два','три','четыре','пять','шесть','семь','восемь','девять','десять','одиннадцать','двенадцать','тринадцать','четырнадцать','пятнадцать','шестнадцать','семнадцать','восемнадцать','девятнадцать'];
+  var TENS = ['','','двадцать','тридцать','сорок','пятьдесят','шестьдесят','семьдесят','восемьдесят','девяносто'];
+  function numWords(n) {
+    n = Math.round(Math.abs(Number(n) || 0));
+    if (n < 20) return ONES[n] || String(n);
+    var t = Math.floor(n / 10), o = n % 10;
+    return TENS[t] + (o ? ' ' + ONES[o] : '');
+  }
+  function gradForm(n) {
+    var d = Math.abs(n) % 100, l = d % 10;
+    if (d >= 11 && d <= 14) return 'градусов';
+    if (l === 1) return 'градус';
+    if (l >= 2 && l <= 4) return 'градуса';
+    return 'градусов';
+  }
+
+  /* ---------- дата и время ---------- */
+  var ORD = ['первое','второе','третье','четвертое','пятое','шестое','седьмое','восьмое','девятое','десятое','одиннадцатое','двенадцатое','тринадцатое','четырнадцатое','пятнадцатое','шестнадцатое','семнадцатое','восемнадцатое','девятнадцатое','двадцатое','двадцать первое','двадцать второе','двадцать третье','двадцать четвертое','двадцать пятое','двадцать шестое','двадцать седьмое','двадцать восьмое','двадцать девятое','тридцатое','тридцать первое'];
+  var MON_G = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  var WD = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+
+  function answerTime() {
+    var d = new Date();
+    var h = d.getHours(), m = d.getMinutes();
+    var h12 = h % 12; if (h12 === 0) h12 = 12;
+    var part = (h >= 5 && h < 12) ? 'утра' : (h >= 12 && h < 17) ? 'пополудни' : (h >= 17) ? 'вечера' : 'ночи';
+    var form = (h12 === 1) ? 'час' : (h12 >= 2 && h12 <= 4) ? 'часа' : 'часов';
+    var mf = (m === 1) ? 'минута' : (m % 10 >= 2 && m % 10 <= 4 && !(m >= 11 && m <= 14)) ? 'минуты' : 'минут';
+    return pick(['На аппаратных часах', 'Часы показывают', 'Стенные часы бьют']) +
+      ': ' + numWords(h12) + ' ' + form + ' ' + numWords(m) + ' ' + mf + ' ' + part + ', ' + nmOr() + '.';
+  }
+
+  function answerDate() {
+    var now = new Date();
+    var y = window.ZAHAR_CHAT_1896 ? 1896 : now.getFullYear();
+    var d = now.getDate(), mo = now.getMonth();
+    var wd = WD[new Date(y, mo, d).getDay()];
+    var tail = pick(['Число казенное, не с меня спрос.', 'Календарь на стене не врет.', 'Депешируйте смело — число верное.']);
+    return 'Сегодня ' + wd + ', ' + ORD[d - 1] + ' ' + MON_G[mo] + ' ' + y + ' года, ' + nmOr() + '. ' + tail;
+  }
+
+  /* ---------- погода: блок сайта -> Open-Meteo -> wttr.in, кэш 10 минут ---------- */
+  var WX_TAIL = ['Мороз не беда — чай горячий спасает.',
+    'Такая погода рыбу под лед гонит, приметьте.',
+    'На линии то дождь, то снег — провода гудут.',
+    'Гулять — да в шубе, сударь.'];
+  var WDESC = [
+    [/снег|снежн|snow/i, 'снегопад'],
+    [/гроз|thunder/i, 'гроза'],
+    [/туман|fog|mist|haze/i, 'туман'],
+    [/ливень|ливни|heavy rain/i, 'ливень'],
+    [/дожд|rain|drizzle|морос/i, 'дождь'],
+    [/перемен|partly|малооблачн/i, 'переменная облачность'],
+    [/пасмурн|overcast/i, 'пасмурно'],
+    [/облачн|cloudy/i, 'облачно'],
+    [/ясно|clear|sunny|солнеч/i, 'ясно']
+  ];
+  function descrFrom(t) {
+    for (var i = 0; i < WDESC.length; i++) if (WDESC[i][0].test(t)) return WDESC[i][1];
+    return 'переменная облачность';
+  }
+  var WINDS = [['северо-западн','северо-западный'],['северо-восточн','северо-восточный'],
+    ['юго-западн','юго-западный'],['юго-восточн','юго-восточный'],
+    ['северн','северный'],['южн','южный'],['западн','западный'],['восточн','восточный']];
+  function windFrom(t) {
+    var l = String(t).toLowerCase();
+    for (var i = 0; i < WINDS.length; i++) if (l.indexOf(WINDS[i][0]) >= 0) return WINDS[i][1];
+    return null;
+  }
+  function wmoDesc(c) {
+    c = Number(c) || 0;
+    if (c === 0) return 'ясно';
+    if (c === 1 || c === 2) return 'малооблачно';
+    if (c === 3) return 'пасмурно';
+    if (c === 45 || c === 48) return 'туман';
+    if (c >= 51 && c <= 57) return 'морось';
+    if (c >= 61 && c <= 67) return 'дождь';
+    if (c >= 71 && c <= 77) return 'снегопад';
+    if (c >= 80 && c <= 82) return 'ливень';
+    if (c >= 85 && c <= 86) return 'снегопад';
+    if (c >= 95) return 'гроза';
+    return 'переменная облачность';
+  }
+  function degToWind(d) {
+    var names = ['северный','северо-восточный','восточный','юго-восточный','южный','юго-западный','западный','северо-западный'];
+    return names[Math.round((d % 360) / 45) % 8];
+  }
+  function wxCacheGet() {
+    try {
+      var s = JSON.parse(localStorage.getItem('zahar_wx_v1') || 'null');
+      if (s && s.ts && (Date.now() - s.ts) < 600000) return s.data;
+    } catch (e) {}
+    return null;
+  }
+  function wxCacheSet(data) {
+    try { localStorage.setItem('zahar_wx_v1', JSON.stringify({ ts: Date.now(), data: data })); } catch (e) {}
+  }
+  function scanPage() {
+    var txt = '';
+    try {
+      var els = document.querySelectorAll('[class*=weather],[class*=pogoda],[class*=meteo],[id*=weather],[id*=pogoda],[id*=meteo],[class*=погод]');
+      for (var i = 0; i < els.length; i++) txt += ' ' + els[i].textContent;
+    } catch (e) {}
+    if (!txt.replace(/\s/g, '')) return null;
+    var m = txt.match(/[-−+]?\s?\d+(\.\d+)?\s?[°*]/);
+    if (!m) return null;
+    var num = parseFloat(m[0].replace('−', '-').replace(/[°*\s]/g, ''));
+    if (isNaN(num)) return null;
+    return { temp: num, desc: descrFrom(txt), wind: windFrom(txt) };
+  }
+  function fetchJson(url) {
+    return new Promise(function (res, rej) {
+      try {
+        fetch(url).then(function (r) {
+          return r.ok ? r.json() : Promise.reject(new Error('http'));
+        }).then(res, rej);
+      } catch (e) { rej(e); }
+    });
+  }
+  function fromOmeteo() {
+    return fetchJson('https://api.open-meteo.com/v1/forecast?latitude=53.35&longitude=83.78&current=temperature_2m,weather_code,wind_direction_10m').then(function (j) {
+      var c = j && j.current;
+      if (!c || c.temperature_2m === undefined) throw new Error('empty');
+      return { temp: Number(c.temperature_2m), desc: wmoDesc(c.weather_code), wind: degToWind(c.wind_direction_10m) };
+    });
+  }
+  function fromWttr() {
+    return fetchJson('https://wttr.in/%D0%91%D0%B0%D1%80%D0%BD%D0%B0%D1%83%D0%BB?format=j1').then(function (j) {
+      var c = j && j.current_condition && j.current_condition[0];
+      if (!c) throw new Error('empty');
+      return { temp: Number(c.temp_C), desc: descrFrom((c.weatherDesc && c.weatherDesc[0] && c.weatherDesc[0].value) || ''), wind: windFrom(c.winddir16Point || '') };
+    });
+  }
+  function getWeather() {
+    return new Promise(function (res) {
+      var page = scanPage();
+      if (page) { wxCacheSet(page); res(page); return; }
+      var done = false;
+      function fin(x) { if (done) return; done = true; res(x || null); }
+      fromOmeteo().then(fin, function () { fromWttr().then(fin, function () { fin(null); }); });
+      setTimeout(function () { fin(null); }, 6000);
+    });
+  }
+  function wxLine(w) {
+    var t = Math.round(w.temp);
+    var sign = t < 0 ? 'минус ' + numWords(-t) : (t === 0 ? 'ноль' : 'плюс ' + numWords(t));
+    var line = 'Метеорная станция доносит: ' + sign + ' ' + gradForm(t) +
+      (w.desc ? ', ' + w.desc : '') + (w.wind ? ', ветер ' + w.wind : '') + '. ' + pick(WX_TAIL);
+    return line.replace(/\.\./g, '.');
+  }
+  function answerWeather() {
+    var c = wxCacheGet();
+    if (c) return Promise.resolve(wxLine(c));
+    return getWeather().then(function (w) {
+      return w ? wxLine(w) : 'Провода к метеостанции молчат, ' + nmOr() + ' — поди, обметало их снегом. По приметам так: воробьи нахохлились, к холоду.';
+    });
+  }
+
+  /* ---------- имя собеседника ---------- */
+  var NAME_STOP = {};
+  'не,хочу,живу,работаю,думаю,устал,занят,болен,рад,согласен,против,спросить,люблю,нравится,тут,здесь,сегодня,бот,робот,машина,человек,телеграфист,сударь,простой,известно,доволен,готов,молод,стар,должен,свободен,секрет,русский,немец,англичанин,барин,купец,нельма,карась,карп,потом,весело,грустно,плохо,так,знаю,слышал,видел,читал,учусь,один,дома,честный,молчу'.split(',').forEach(function (w) { if (w) NAME_STOP[norm(w)] = 1; });
+  function tryName(raw) {
+    var n = norm(raw);
+    var m = n.match(/^(?:а\s+)?(?:меня\s+зовут|мо[еи]\s+имя|моя\s+фамилия|звать\s+меня|я)\s+(.+)$/);
+    if (!m) return null;
+    var cand = m[1].split(' ')[0];
+    if (!cand || cand.length < 3) return null;
+    if (NAME_STOP[cand]) return null;
+    if (/^(как|что|где|когда|почему|зачем|сколько)$/.test(cand)) return null;
+    return cand;
+  }
+  function recallName() {
+    if (window.ZAHAR_USER_NAME)
+      return 'Вы изволили представиться: ' + cap(window.ZAHAR_USER_NAME) + '. Память у меня казенная — ничего не теряется.';
+    return 'Имени вашего я не слыхал, сударь. Представьтесь — и буду звать по имени.';
+  }
+  function nameReply(name) {
+    window.ZAHAR_USER_NAME = name;
+    lastCounter = true;
+    return 'Приятно познакомиться, ' + cap(name) + '! Записал в тетрадку — память депешная, цепкая. ' + counterText();
+  }
+
+  /* ---------- встречные вопросы ---------- */
+  var COUNTERS = [
+    'А вы кроме депеш чем занимаетесь, {N}?',
+    'Как вам Барнаул наш, {N} — по нраву?',
+    'Слыхали вы о нельме, {N}? Лучшая рыба в Оби, серебром отливающая.',
+    'Давно вы в наших краях, {N}?',
+    'Чай горячий отведали, {N}? Самовар у меня не зря топится.'
+  ];
+  var lastCounter = false, askNameDone = false;
+  function counterText() {
+    var s;
+    if (!window.ZAHAR_USER_NAME && !askNameDone) { askNameDone = true; s = 'Как вас величать, кстати?'; }
+    else s = fill(pick(COUNTERS));
+    lastCounter = true;
+    return s;
+  }
+  function maybeCounter(s) {
+    if (lastCounter) { lastCounter = false; return s; }
+    if (Math.random() < 0.45) return s + ' ' + counterText();
+    return s;
+  }
+
+  /* ---------- пулы быта ---------- */
+  var GREETS = [
+    'Здравствуйте, {N}! Аппарат к вашим услугам — извольте депешу.',
+    'Мое почтение, {N}! Ключ наготове, слушаю внимательно.',
+    'Рад слышать, {N}! Телеграф Барнаул на линии. О чем разговор?'
+  ];
+  var WHERE_LIVE = [
+    'Живу при самой станции, {N}: комната малая, зато аппарат у окна — ленту издалека слышно.',
+    'При телеграфной станции обитаю, {N}. Казенная квартира: простая, но провода под боком.',
+    'Здесь же, в Барнауле, {N}, — станция мой дом: смена, чай, лента.'
+  ];
+  var CAN_DO = [
+    'Многое умею, {N}: депеши отстукиваю, слова по лексикону толкую, обучиться могу — скажите «научи: слово — определение», и запомню на всю жизнь.',
+    'Способностей не счесть, {N}: точки и тире — моя грамота, словарь знаю наизусть, погоду да время тоже доложу.',
+    'Служба такая, {N}: принимаю и отправляю депеши, слова толкую, учусь от людей. А в свободную минуту — книжки да рыбалка.'
+  ];
+  var FOOD = [
+    'Из еды уважаю уху из налима, {N} — навариста, духонна. Да чай с сахаром вприкуску.',
+    'Простая еда мне по душе, {N}: карась в сметане — гордость стола в постные дни.',
+    'Чай — главное блюдо телеграфиста, {N}. А ежели щука тушеная с хреном — так и праздник.'
+  ];
+  var BOOKS = [
+    'Жюль Верна читаю, {N}! «Таинственный остров» в два вечера осилил — вот бы в явь такой остров.',
+    'Фантастические брошюры — моя слабость, {N}: про аппараты да дальние страны.',
+    'Книжек много перечитал, {N}, но Верна помню лучше всех: о машинах, что летают да плавают.'
+  ];
+  var WRITER = [
+    'Жюль Верн, {N}! Видеть Лондон не отходя от печи — сие моя мечта, а он о таких полетах пишет.',
+    'Писатель мой — Жюль Верн, {N}. Всякие машины описывает — прямо про аппарат без проводов.'
+  ];
+  var WORK_LIKE = [
+    'Работа нравится, {N}: каждый день чужие слова издалека — сам лично приобщаюсь к столицам.',
+    'Не скажу, что мед — смена долгая, шеф строгий, {N}, но аппарат я люблю. Он умнее иных людей.',
+    'По нраву мне служба, {N}: провода, ключ и лента. Только жалованье маловато.'
+  ];
+  var AGE = [
+    'Девятнадцать лет от роду, {N}. Усы отращиваю с подкрутом — покуда безуспешно.',
+    'Девятнадцать, {N}. Молодой еще, зато рука по ключу твердая.'
+  ];
+  var HOBBY = [
+    'Книжки да рыбалка, {N}. На Оби нельма ходит — серебром отливает, моя заветная добыча.',
+    'Вечерами читаю и мечтаю об автоматическом аппарате без проводов, {N} — изобрету когда-нибудь.'
+  ];
+  var FAMILY = [
+    'Холост, {N}: при аппарате живу, у аппарата и обедаю.',
+    'Семьи пока нет, {N} — служба не велит. Так что аппарат мой — все семейство.'
+  ];
+
+  var SHORTS = [
+    [/^(да|ага|конечно|точно|верно|именно)$/, ['Так и запишем, {N}.', 'Рад слышать, {N}.', 'Так тому и быть, {N}.']],
+    [/^(нет|ни за что|ни зачто)$/, ['Что ж, воля ваша, {N}.', 'И без того обойдемся, {N}.']],
+    [/^(хорошо|нормально|норм|ничего|порядок|отлично|неплохо)$/, ['Славно! Депеши ваши радуют.', 'Дай Бог, чтобы и завтра так же было, {N}.', 'Ну и хвалебно. Аппарат доволен.']],
+    [/^(понятно|ясно|ок|окей|понял)$/, ['Записал в блокнот, {N}.', 'Согласен, {N}. Депеша принята.']]
+  ];
+
+  function diagReply() {
+    var st = window.__zaharChatInstalled ? 'Слой болтовни встал на место' : 'Слой болтовни НЕ встал (мозг не найден)';
+    return 'Связь исправна, ' + nmOr() + '! ' + st + '. Время, число, погода, имя — все принимаю. ' +
+      (window.ZAHAR_USER_NAME ? 'Имя ваше записано: ' + cap(window.ZAHAR_USER_NAME) + '.' : 'Имени вашего еще не слыхал — представьтесь.');
+  }
+
+  /* ---------- разбор депеши слоем ---------- */
+  var HANDLERS = [
+    { re: /^(проверка|проверка связи)$/, run: diagReply },
+    { re: /(погод|температур|сколько градус|как холодно|как тепло|на улице|на дворе|мороз|жарко|метель)/, run: answerWeather },
+    { re: /(который час|сколько времени|какое время|сколько часов)/, run: answerTime },
+    { re: /(день недели|какой день|какое число|какая дата|какой год|какой месяц)/, run: answerDate },
+    { re: /^(как меня зовут|какое мое имя|что мое имя)$/, run: recallName },
+    { re: /(где.*живешь|где.*проживаешь|в каком городе|где находишься|где обитаешь|где служишь|где работаешь)/, run: function () { return fill(pick(WHERE_LIVE)); } },
+    { re: /(что умеешь|что можешь|что вы умеете|какие навыки)/, run: function () { return fill(pick(CAN_DO)); } },
+    { re: /(сколько лет|сколько тебе|какой возраст|сколько годов)/, run: function () { return fill(pick(AGE)); } },
+    { re: /(любимая еда|любимое блюдо|любимая пища|что любишь есть|что ешь|какую еду)/, run: function () { return fill(pick(FOOD)); } },
+    { re: /(любимая книга|любимые книги|какую книгу|что читаешь|любимая книжка)/, run: function () { return fill(pick(BOOKS)); } },
+    { re: /(любимый писатель|любимые писатели|какой писатель|жюль верн)/, run: function () { return fill(pick(WRITER)); } },
+    { re: /(нравится.*работ|любишь.*работ|работа нравится|работа тяжела|как.*работа)/, run: function () { return fill(pick(WORK_LIKE)); } },
+    { re: /(чем увлекаешься|увлечения|любимое занятие|что любишь делать|чем увлекаетесь)/, run: function () { return fill(pick(HOBBY)); } },
+    { re: /(женат|семья|жена|холост|есть ли жена)/, run: function () { return fill(pick(FAMILY)); } },
+    { re: /^(привет|приветствую|здравствуй|здравствуйте|салют|хай)$/, run: function () { var s = fill(pick(GREETS)); lastCounter = true; return s + ' ' + counterText(); } }
+  ];
+
+  function chat(raw) {
+    var q = String(raw || '').trim();
+    if (!q) return null;
+    var n = norm(q);
+    if (!n) return null;
+
+    for (var i = 0; i < HANDLERS.length; i++) {
+      var h = HANDLERS[i];
+      try {
+        if (h.re.test(n)) {
+          var out = h.run(q, n);
+          if (out) {
+            if (typeof out.then === 'function') return out;   /* погода — обещание, отдаем как есть */
+            return maybeCounter(String(out));
+          }
+        }
+      } catch (e) { warn('ошибка в обработчике #' + i + ': ' + e); }
+    }
+
+    var nm = tryName(q);
+    if (nm) return nameReply(nm);
+
+    for (var j = 0; j < SHORTS.length; j++) {
+      if (SHORTS[j][0].test(n)) return maybeCounter(fill(pick(SHORTS[j][1])));
+    }
+    return null; /* слой молчит — депеша идет мозгу */
+  }
+
+  /* ---------- установка поверх мозга ---------- */
+  function install() {
+    if (window.__zaharChatInstalled) return true;
+    if (typeof window.ZAHAR_ASK !== 'function') return false;
+    window.__zaharChatInstalled = true;
+    var _ask = window.ZAHAR_ASK;
+    window.ZAHAR_ASK = function (q) {
+      var h = null;
+      try { h = chat(q); } catch (e) { warn('сбой слоя: ' + e); h = null; }
+      if (h !== null && h !== undefined) return h;
+      return _ask.call(this, polite(q));
+    };
+    return true;
+  }
+  function boot() {
+    if (install()) { warn('слой встал поверх мозга'); return; }
+    var tries = 0;
+    var iv = setInterval(function () {
+      if (install()) { warn('слой встал поверх мозга'); clearInterval(iv); return; }
+      if (++tries > 200) { clearInterval(iv); warn('мозг не найден за 10 секунд — слой НЕ встал. Проверьте подключение скрипта.'); }
+    }, 50);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  window.zaharChatStatus = function () {
+    return { файл: 'правка №5', установлен: !!window.__zaharChatInstalled, имя: window.ZAHAR_USER_NAME, год1896: window.ZAHAR_CHAT_1896 };
+  };
+})();

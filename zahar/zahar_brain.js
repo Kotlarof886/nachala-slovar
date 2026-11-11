@@ -48,7 +48,8 @@ function zaharTokensMatch(a, b) {
 
 /* ---------- разбор записи: Слово-Определеніе-Записка или Вопрос-Отвѣт-Отвѣт ---------- */
 function zaharParseLine(line) {
-  return String(line).split(/\s*[-—]\s+(?=[А-ЯЁA-Z«0-9])|(?<=[а-яёa-z.!?»"])-(?=[А-ЯЁA-Z«0-9])/)
+    return String(line).split(/\s+[-—]\s+(?=[А-ЯЁA-Z«0-9а-яёa-z0-9«])|(?<=[а-яёa-z.!?»"])-(?=[А-ЯЁA-Z«0-9])/)
+
     .map(function (s) { return s.trim(); }).filter(Boolean);
 }
 

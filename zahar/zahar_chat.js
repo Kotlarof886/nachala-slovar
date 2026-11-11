@@ -1,5 +1,5 @@
 /* ============================================================
-   zahar_chat.js — слой живой болтовни Захара, правка №15.
+   zahar_chat.js — слой живой болтовни Захара, правка №18.
    Подключать ПОСЛЕ zahar_brain.js:
      <script src="zahar/zahar_chat.js"></script>
    ИСПРАВЛЕНО: хвост «мы какъ разъ толковали» отцепляется
@@ -12,12 +12,20 @@
    Погода — полный пакет (градус, ветер, осадки), кэш 10 минут.
    Диагностика: «проверка» (называет номер правки), «погода проверка».
    Дата: Захар отыгрывает 1896 год (window.ZAHAR_CHAT_1896 = false — реальная).
+   НОВОЕ (№18) — связность чата: живой подхват слов из ОБАИХ словарей
+   (личный zahar_dict.js + словарь сайта words.js) в обычной речи;
+   общая память тем с мозгом (window.ZAHAR_SESSION);
+   расширенные договаривания («а подробнее», «расскажи еще», «дальше»);
+   тематические встречные вопросы после подхвата (рыбалка, тайга, город).
+   Прямые вопросы «что такое X» подхват НЕ перехватывает — идут в мозг.
+   Стем-индекс: флективные формы («нельму», «соболя») ловятся через
+   zaharStem мозга — ключи индексируются и прямой формой, и стемом.
    В узорах НЕ использовать \w — в JavaScript он не ловит кириллицу.
    ============================================================ */
 (function () {
   if (window.__zaharChatLoaded) return;
   window.__zaharChatLoaded = true;
-  var VERSION = 'правка №15';
+  var VERSION = 'правка №18';
   if (typeof window.ZAHAR_CHAT_1896 === 'undefined') window.ZAHAR_CHAT_1896 = true;
   if (!window.ZAHAR_USER_NAME) window.ZAHAR_USER_NAME = null;
   if (!window.ZAHAR_USER_GENDER) window.ZAHAR_USER_GENDER = null;
@@ -754,6 +762,174 @@
     { keys: ['провода', 'линия'], run: function () { return fill(pick(WIRES)); } }
   ];
 
+  /* ================= связность чата (правка №18) ================= */
+  var MENTION_NOTQ = /(что такое|что за|что значит|означает|что означает|кто такой|кто таков|кто такая|что это|расскажи|поведай|объясни|толкуй|проверка|погода|который час|сколько времени|сколько тебе|как тебя|как вас|меня зовут|зовут меня)/;
+  var MENTION_SKIP = { аки: 1, аж: 1, ажно: 1, аккурат: 1, тако: 1 };
+  var OLD_TOPICS = { nelma: 1, barnaul: 1, kray: 1, tea: 1, job: 1, id: 1, from: 1, where: 1, deed: 1 };
+  var THEMED_COUNTERS = {
+    fish:   { q: 'А вы на Оби рыбачили, {N}? Нельма нынче в цене — знатный улов держать надобно.' },
+    beast:  { q: 'В тайгу ходить доводилось, {N}? Соболь да белка нынче по весу золото.' },
+    bird:   { q: 'Глухариный ток слыхивали, {N}? Утром за версту слышно.' },
+    forest: { q: 'Грибы с ягодами нынче на базаре бойко идут, {N}? Кедрач нынче хорош.' },
+    craft:  { q: 'Ремесло какое держите, {N}? У нас всякий мастер себе цену знает.' },
+    city:   { q: 'На пристани бывали, {N}? Пароводы по Оби нынче споро ходят.' },
+    merchant: { q: 'На ярмарке бывали, {N}? Теперь купцы туда всем миром съезжаются.' }
+  };
+  var THEMED_ANSWERS = {
+    fish:     { yes: 'Завидно, {A}! Нельма нынче в цене, так что ловите, пока Обь не смерзлась.',
+                no:  'Надо бы восполнить пробел, {A}: как со смены — зайдем на базар, налима возьмем.' },
+    beast:    { yes: 'О, тайганили, значит, {A}! Соболь хоть и царь, а белка — казна сибирская.',
+                no:  'И умно, {A}: тайга нынче злее обыкновенного. Я и то по вечерам через бор к Оби выхожу.' },
+    bird:     { yes: 'Знатное дѣло, {A}! Токование глухаря иные говаривают — что концерт.',
+                no:  'И не надо, {A}: ток в мае — протишину встаешь и слушаешь, славно.' },
+    forest:   { yes: 'Дело доброе, {A}: груздь постом с луком — икра не надобна.',
+                no:  'Прогульте, {A}: кедрач нынче хорош, а брусника к зиме так и просится в моченку.' },
+    craft:    { yes: 'Почтенно, {A}: ремесло — что грамота, всегда с человеком.',
+                no:  'Всякое ремесло почтенно, {A}: хоть тот же золотарь без которого город в грязи утонет.' },
+    city:     { yes: 'Пристань — горло Оби, {A}: пароходы, баржи, крики лоцманов.', no: 'Зайдите как-нибудь, {A}: музей у нас старейший в Сибири, стоит взгляда.' },
+    merchant: { yes: 'Славно, {A}: ярмарка — что депеша, только сплетни съезжаются.',
+                no:  'Надо бы, {A}: съезд ярмарочный у нас осенью — товару море, и глаз рад.' }
+  };
+  /* темы: слово → группа, для живых реакций и встречных вопросов */
+  var THEME_WORDS = {
+    fish: 'нельма муксун сырок пелядь щука налим хариус таймень ленок карась окунь язь елец пескарь ерш',
+    beast: 'соболь медведь белка векша лисица волк росомаха колонок горностай куница бурундук лось марал кабарга заяц сурок выдра барсук рысь хорь',
+    bird: 'глухарь тетерев рябчик кедровка дятел сова филин сорока ворона синица снегирь журавль лебедь гусь коршун',
+    forest: 'груздь рыжик боровик подберезовик подосиновик опенок волнушка масленок чага брусника клюква черника морошка княженика земляника смородина рябина',
+    craft: 'кузнец плотник столяр сапожник портной золотарь извозчик ямщик прачка бурлак углежог смолокур пасечник промысловик приказчик',
+    city: 'изба гостиница трактир чайная лавка базар пристань почтамт станция управа каланча баня амбар мельница острог церковь барнаул барнаулка обь бор демидов завод музей библиотека собор площадь бульвар уезд пароход',
+    merchant: 'купец гильдия комиссионер скупщик барыш ассигнация вексель акциз полтинник ярмарка биржа контора пуд фунт золотник'
+  };
+  var THEME_REACT = {
+    fish: ['О, про {W} изволите, {N}? Завидная тема: я хоть поэму слагай про такую рыбу.', '{W}, говорите, {N}? Заветное словечко — про такое и на Оби спорят да гордятся.'],
+    beast: ['Ах, {W}! Тайга, {N}, всех кумирит — и этого зверя не миновать.', '{W} у нас не редкость, {N}, а все ж таки зверь таежный, почитать надобно.'],
+    bird: ['{W}! Птица-то у нас бойкая, {N}, слыхивали небось?', 'Про {W} и мне доводилось слыхивать, {N} — завидная тема.'],
+    forest: ['{W}! Здешняя сладость, {N}: постом без нее и стол не стол.', 'О, {W} — наше лесное богатство, {N}. Хвалите, хвалите.'],
+    craft: ['{W}, значит, {N}? Ремесло почтенное: без такого мастера и город не город.', 'Про {W} и я скажу, {N}: ремесло — что грамота, всегда с человеком.'],
+    city: ['{W}! Наше, барнаульское, {N}: чем не тема для разговора.', 'Про {W} и я скажу, {N}: место славное, стоит взгляда.'],
+    merchant: ['{W} — дельце купеческое, {N}: такому у нас в Барнауле всегда причина.', 'Ах, {W}! Купеческое словцо, {N}: у нас им базар перетирают.'],
+    generic: ['Словечко-то занятно, {N}: «{W}» у нас все слышат, да не всяк толкует.', 'Ах, вы про {W}, {N}? Записал в блокнот — нынче почище депеши иногда попадается.', 'Про {W} говорите, {N}? Полезная тема — я как раз за такие и люблю.']
+  };
+  var _THEME_MAP = {};
+  (function () {
+    for (var t in THEME_WORDS) {
+      THEME_WORDS[t].split(' ').forEach(function (w) { if (w) _THEME_MAP[w] = t; });
+    }
+  })();
+
+  /* стем через мозг, если он уже загрузился; иначе — упрощенный запасной */
+  function chatStem(w) {
+    try { if (typeof zaharStem === 'function') return zaharStem(w); } catch (e) {}
+    if (w && w.length >= 5) {
+      var end = /(ами|ями|ах|ях|ов|ев|ей|ой|ый|ий|ая|яя|ую|юю|ым|им|ом|ем|ых|их|ее|ые|ие|ы|а|я|е|у|ю|о)$/;
+      return w.replace(end, '');
+    }
+    return w;
+  }
+
+  /* картотека упоминаний: оба словаря; личный приоритетен */
+  var MENTION_IDX = null, MENTION_PHR = null;
+  function buildMention() {
+    MENTION_IDX = {}; MENTION_PHR = {};
+    function addEntry(e) {
+      if (!e || !e.w) return;
+      var key = norm(e.w);
+      if (!key) return;
+      var own = !!(e.b && String(e.b).trim());
+      var entry = { w: String(e.w).trim(), b: String(e.b || '').trim(), d: String(e.d || '').trim(), own: own };
+      if (/[^а-я0-9\s-]/.test(key)) return;          /* латиница, цифры, номера — мимо */
+      if (MENTION_SKIP[key]) return;
+      if (key.indexOf(' ') >= 0) {                    /* фразы — по вхождению с границами */
+        if (!MENTION_PHR[key]) MENTION_PHR[key] = entry;
+        return;
+      }
+      if (key.length < 4) return;                     /* «язь», «аж» — слишком короткие */
+      if (!MENTION_IDX[key] || !MENTION_IDX[key].own) MENTION_IDX[key] = entry;
+      var st = chatStem(key);                         /* стем-индекс: «нельму» → «нельм» */
+      if (st && st !== key && st.length >= 4 && (!MENTION_IDX[st] || !MENTION_IDX[st].own)) MENTION_IDX[st] = entry;
+    }
+    if (typeof ENTRIES !== 'undefined' && Array.isArray(ENTRIES)) ENTRIES.forEach(addEntry);
+    if (typeof ZAHAR_DICT_FILE !== 'undefined' && Array.isArray(ZAHAR_DICT_FILE)) ZAHAR_DICT_FILE.forEach(addEntry);
+  }
+
+  function themeOf(word) {
+    var k = norm(word);
+    if (_THEME_MAP[k]) return _THEME_MAP[k];
+    var st = chatStem(k);
+    for (var t in THEME_WORDS) {
+      var ws = ' ' + THEME_WORDS[t] + ' ';
+      if (ws.indexOf(' ' + st + ' ') >= 0) return t;
+    }
+    return 'generic';
+  }
+
+  var lastMention = null;
+  function mentionReply(q, n) {
+    var toks = n.split(' ');
+    if (toks.length <= 1) return null;             /* одиночное слово — пусть мозг отвечает справкой */
+    if (MENTION_NOTQ.test(n)) return null;          /* прямой вопрос — путь в мозг */
+    if (!MENTION_IDX) buildMention();
+    var padded = ' ' + n + ' ', hit = null;
+    for (var pk in MENTION_PHR) {
+      if (padded.indexOf(' ' + pk + ' ') >= 0) { hit = MENTION_PHR[pk]; break; }
+    }
+    if (!hit) {
+      for (var i = 0; i < toks.length; i++) {
+        var t = toks[i];
+        hit = MENTION_IDX[t] || MENTION_IDX[chatStem(t)];
+        if (hit) break;
+      }
+    }
+    if (!hit) return null;
+    lastMention = hit;
+    /* общая память с мозгом: его «еще» выдаст записку (b) — потому у личной статьи поле d */
+    try {
+      window.ZAHAR_SESSION = window.ZAHAR_SESSION || { lastWord: null, lastField: null };
+      window.ZAHAR_SESSION.lastWord = { w: hit.w, b: hit.b, d: hit.d };
+      window.ZAHAR_SESSION.lastField = hit.own ? 'd' : 'b';
+      counterTopic = themeOf(hit.w);
+    } catch (e) {}
+    var pool = THEME_REACT[themeOf(hit.w)] || THEME_REACT.generic;
+    return fill(pick(pool)).replace(/\{W\}/g, hit.w);
+  }
+
+  /* расширенные договаривания: «а подробнее», «расскажи еще», «дальше» */
+  function extendFollow(n) {
+    if (!window.ZAHAR_SESSION || !window.ZAHAR_SESSION.lastWord) return null;
+    if (!/(подробнее|подробней|расскажи еще|расскажи ещё|еще про|ещё про|что еще|что ещё|ну-с, дальше|ну-с дальше|^дальше)/.test(n)) return null;
+    if (typeof zaharFollowUp !== 'function') return null;
+    try { return zaharFollowUp(); } catch (e) { return null; }
+  }
+
+  /* общая память тем: чат и мозг видят одну и ту же тему */
+  function syncTopic(t) {
+    try {
+      window.ZAHAR_SESSION = window.ZAHAR_SESSION || { lastWord: null, lastField: null };
+      window.ZAHAR_SESSION.chatTopic = t;
+    } catch (e) {}
+  }
+  /* тематические встречные вопросы поверх старой механики counterText/counterReply */
+  var _counterText = counterText, _counterReply = counterReply;
+  counterText = function () {
+    if (counterTopic && THEMED_COUNTERS[counterTopic] && !OLD_TOPICS[counterTopic]) {
+      var c = THEMED_COUNTERS[counterTopic]; lastCounter = true;
+      return fill(c.q);
+    }
+    return _counterText();
+  };
+  counterReply = function (n) {
+    var r = _counterReply(n);
+    if (r) return r;
+    var t = counterTopic;
+    if (t && THEMED_ANSWERS[t]) {
+      counterTopic = null; lastCounter = false;
+      var a = THEMED_ANSWERS[t];
+      return fill(/да|бывал|ходил|люблю|пивал|отведал|слыхал/.test(n) ? a.yes : a.no);
+    }
+    return null;
+  };
+  /* ================= конец блока связности ================= */
+
   function chat(raw) {
     var q = String(raw || '').trim();
     if (!q) return null;
@@ -777,6 +953,10 @@
 
     if (/^(я|а я)$/.test(n)) return 'Слушаю, ' + nmOr() + '. Договорите депешу — что вы?';
 
+    /* 18: расширенные договаривания — подробнее, расскажи еще, дальше */
+    var ef = extendFollow(n);
+    if (ef) { awaitingJob = false; return ef; }
+
     for (var i = 0; i < HANDLERS.length; i++) {
       var h = HANDLERS[i];
       try {
@@ -786,6 +966,7 @@
             awaitingJob = false;
             if (typeof out.then === 'function') return out;
             lastTopic = h.topic;
+            syncTopic(h.topic);
             return maybeCounter(String(out));
           }
         }
@@ -821,6 +1002,10 @@
     for (var j = 0; j < SHORTS.length; j++) {
       if (SHORTS[j][0].test(n)) return maybeCounter(fill(pick(SHORTS[j][1])));
     }
+
+    /* 18: живой подхват слов из словарей в обычной речи */
+    var mr = mentionReply(q, n);
+    if (mr) { awaitingJob = false; return maybeCounter(mr); }
     return null;
   }
 
